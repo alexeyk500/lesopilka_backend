@@ -1,0 +1,15 @@
+version: '3.1'
+services:
+  db:
+    image: postgres:14.2
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=a500
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - db:/var/lib/postgresql/data
+volumes:
+  db:
+    driver: local

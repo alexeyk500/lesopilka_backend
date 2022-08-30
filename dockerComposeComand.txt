@@ -1,0 +1,38 @@
+// Пересобрать и запустить контенеры в docker-compose.yml
+docker-compose up --build
+
+// Запуск только PostgresSql в Docker локально - для разработы сервера
+
+//Отановить все контейнеры
+docker stop $(docker ps -a -q)
+
+//Остановить и удалить все контенеры
+docker rm -f $(docker ps -aq)
+
+//Удалить все остановленнные контейнеры
+docker rm $(docker ps -a -f status=exited -q)
+
+//Удалит все контейнеры
+docker rm -vf $(docker ps -a -q)
+
+//Удалить все images
+docker rmi -f $(docker images -a -q)
+
+//Удалить все volumes
+docker volume rm $(docker volume ls -qf dangling=true)
+
+// Удалить неиспользуеммые volumes
+docker volume prune
+
+// Удалить неиспользуеммые контенеры
+docker container prune
+
+// Удалить неиспользуеммые images
+docker image prune
+
+//Get into container
+docker exec -it <mycontainer> bash
+
+
+
+

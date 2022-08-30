@@ -1,0 +1,33 @@
+version: '3.1'
+services:
+  db:
+    image: postgres:14.2
+    restart: always
+#    comment ports for Prod
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=a500
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - db:/var/lib/postgresql/data
+#  server:
+#    build: ./server
+#    restart: always
+#    ports:
+#      - "5000:5000"
+#    environment:
+#      - PORT=5000
+#      - DB_NAME=postgres
+#      - DB_USER=a500
+#      - DB_PASSWORD=secret
+#      - DB_HOST=db
+#      - DB_PORT=5432
+#      - SECRET_KEY=Secret_Key_123
+#    volumes:
+#      - server_static:/server/static
+volumes:
+  db:
+    driver: local
+#  server_static:
+#    driver: local
