@@ -10,7 +10,6 @@ const generateJwt = ({ userId, userEmail, userRole, secretKey }) => {
 
 class UserController {
   async registration(req, res, next) {
-    console.log('registration.req =', req.body)
     const { email, password, role } = req.body;
     if (!email || !password) {
       return next(ApiError.badRequest('Not valid user password or email'));
@@ -21,7 +20,6 @@ class UserController {
     }
     const hashPassword = await bcrypt.hash(password, 3);
     const user = await User.create({ email, password: hashPassword, role });
-    console.log('user =', user);
     // const basket = await Basket.create({ userId: user.id });
     // console.log('basket =', basket);
     const token = generateJwt({
@@ -30,7 +28,6 @@ class UserController {
       userRole: user.role,
       secretKey: process.env.SECRET_KEY,
     });
-    console.log('token =', token);
     return res.json({ token });
   }
 
