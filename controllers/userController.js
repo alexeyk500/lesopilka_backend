@@ -1,7 +1,8 @@
 const ApiError = require('../error/apiError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User, Basket } = require('../models/models');
+// const { User, Basket } = require('../models/models');
+const { User } = require('../models/models');
 
 const generateJwt = ({ userId, userEmail, userRole, secretKey }) => {
   return jwt.sign({ id: userId, email: userEmail, role: userRole }, secretKey, { expiresIn: '24h' });
@@ -9,6 +10,7 @@ const generateJwt = ({ userId, userEmail, userRole, secretKey }) => {
 
 class UserController {
   async registration(req, res, next) {
+    console.log('registration.req =', req.body)
     const { email, password, role } = req.body;
     if (!email || !password) {
       return next(ApiError.badRequest('Not valid user password or email'));
