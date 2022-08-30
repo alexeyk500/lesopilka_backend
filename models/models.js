@@ -48,5 +48,5 @@ module.exports = {
   City,
   Street,
   Address,
-  User
-}
+  User,
+};

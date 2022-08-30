@@ -1,5 +1,5 @@
 const { Region } = require('../models/models');
-const ApiError = require("../error/apiError");
+const ApiError = require('../error/apiError');
 
 class AddressController {
   async createRegion(req, res, next) {
@@ -8,7 +8,7 @@ class AddressController {
       const region = await Region.create({ name });
       return res.json(region);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail))
+      return next(ApiError.badRequest(e.original.detail));
     }
   }
 
