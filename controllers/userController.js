@@ -1,8 +1,7 @@
 const ApiError = require('../error/apiError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-// const { User, Basket } = require('../models/models');
-const { User } = require('../models/models');
+const { User } = require('../models/userModels');
 
 const generateJwt = ({ userId, userEmail, userRole, secretKey }) => {
   return jwt.sign({ id: userId, email: userEmail, role: userRole }, secretKey, { expiresIn: '24h' });
