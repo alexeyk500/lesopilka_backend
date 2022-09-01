@@ -68,6 +68,7 @@ class ProductController {
         sorts.push({ id, title });
       }
       return res.json({
+        id: product_id,
         title,
         price,
         category: {
