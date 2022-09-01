@@ -1,5 +1,5 @@
 const ApiError = require('../error/apiError');
-const { Product, CategorySize_Product, CategorySort_Product } = require('../models/productModels');
+const { Product, CategorySize_Product, CategorySort_Product, ProductDescription, ProductReview} = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 
 class ProductController {
@@ -26,6 +26,34 @@ class ProductController {
       }
 
       return res.json(product);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async createDescription(req, res, next) {
+    try {
+      const { product_id, description } = req.body;
+      if (!product_id || !description) {
+        return next(ApiError.badRequest('createDescription - not complete data'));
+      }
+      const newDescription = await ProductDescription.create({ productId: product_id, description });
+      return res.json(newDescription);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async createReview(req, res, next) {
+    try {
+      const { product_id, user_id, review } = req.body;
+      console.log(product_id, user_id, review)
+      if (!product_id || !user_id || !review) {
+        return next(ApiError.badRequest('createReview - not complete data'));
+      }
+      const newReview = await ProductReview.create({ productId: product_id, userId: user_id, review });
+
+      return res.json(newReview);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
@@ -67,6 +95,9 @@ class ProductController {
         const title = sort.get('title');
         sorts.push({ id, title });
       }
+      const description = await ProductDescription.findOne({ where: { productId: product_id } });
+      const descriptionId = description.get('id');
+      const descriptionText = description.get('description');
       return res.json({
         id: product_id,
         title,
@@ -82,7 +113,11 @@ class ProductController {
         sizes,
         sorts,
         editionDate,
-        publicationDate
+        publicationDate,
+        description : {
+          id: descriptionId,
+          description: descriptionText
+        },
       });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

@@ -1,6 +1,7 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Address } = require('./addressModels');
+const {ProductReview} = require("./productModels");
 
 const User = sequelize.define(
   'user',
@@ -15,6 +16,9 @@ const User = sequelize.define(
 
 User.hasMany(Address);
 Address.belongsTo(User);
+
+User.hasMany(ProductReview);
+ProductReview.belongsTo(User);
 
 module.exports = {
   User,
