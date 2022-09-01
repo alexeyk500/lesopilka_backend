@@ -40,6 +40,8 @@ class ProductController {
       const product = await Product.findByPk(product_id);
       const title = await product.get('title');
       const price = await product.get('price');
+      const editionDate = await product.get('edition_date');
+      const publicationDate = await product.get('publication_date');
       const subCategoryId = await product.get('subCategoryId');
       const subCategory = await SubCategory.findByPk(subCategoryId);
       const categoryId = subCategory.get('categoryId');
@@ -58,10 +60,8 @@ class ProductController {
       }
       const productSorts = await CategorySort_Product.findAll({ where: { productId: product_id } });
       const sorts = [];
-      console.log('productSorts =', productSorts);
       for (const productSort of productSorts) {
         const productSortId = productSort.get('categorySortId');
-        console.log('productSortId =', productSortId);
         const sort = await CategorySort.findByPk(productSortId);
         const id = sort.get('id');
         const title = sort.get('title');
@@ -81,6 +81,8 @@ class ProductController {
         },
         sizes,
         sorts,
+        editionDate,
+        publicationDate
       });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
