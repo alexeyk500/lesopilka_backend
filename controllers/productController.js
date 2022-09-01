@@ -1,6 +1,6 @@
 const ApiError = require('../error/apiError');
-const { Product} = require('../models/productModels');
-const {CategorySize} = require("../models/categoryModels");
+const { Product } = require('../models/productModels');
+const { CategorySize } = require('../models/categoryModels');
 
 class ProductController {
   async createProduct(req, res, next) {
@@ -16,8 +16,8 @@ class ProductController {
         edition_date,
         subCategoryId: subcategory_id,
       });
-      const categorySize = await CategorySize.findByPk(category_size_id)
-      await product.addCategory_size(categorySize)
+      const categorySize = await CategorySize.findByPk(category_size_id);
+      await product.addCategory_size(categorySize);
       return res.json(product);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

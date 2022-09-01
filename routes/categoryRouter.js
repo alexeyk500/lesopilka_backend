@@ -5,10 +5,10 @@ const checkRoleMiddleware = require('../middleware/checkRoleMiddleware');
 
 categoryRouter.post('/category', checkRoleMiddleware('ADMIN'), categoryController.createCategory);
 categoryRouter.post('/sub_category', checkRoleMiddleware('ADMIN'), categoryController.createSubCategory);
-categoryRouter.post('/class', checkRoleMiddleware('ADMIN'), categoryController.createCategoryClass);
+categoryRouter.post('/sort', checkRoleMiddleware('ADMIN'), categoryController.createCategorySort);
 categoryRouter.post('/size', checkRoleMiddleware('ADMIN'), categoryController.createCategorySize);
 categoryRouter.get('/categories', categoryController.getAllCategories);
 categoryRouter.get('/sub_categories', categoryController.getAllSubCategories);
-categoryRouter.get('/classes', categoryController.getAllCategoryClasses);
+categoryRouter.get('/sorts', categoryController.getAllCategorySorts);
 categoryRouter.get('/sizes', categoryController.getAllCategorySizes);
 module.exports = categoryRouter;

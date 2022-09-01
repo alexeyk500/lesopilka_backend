@@ -1,4 +1,4 @@
-const { Category, SubCategory, CategoryClass, CategorySize } = require('../models/categoryModels');
+const { Category, SubCategory, CategorySize, CategorySort } = require('../models/categoryModels');
 const ApiError = require('../error/apiError');
 
 class CategoryController {
@@ -40,22 +40,22 @@ class CategoryController {
     return res.json(categories);
   }
 
-  async createCategoryClass(req, res, next) {
+  async createCategorySort(req, res, next) {
     try {
-      const { name, category_id } = req.body;
-      if (!name || !category_id) {
-        return next(ApiError.badRequest('createProductClass - not complete data'));
+      const { title, category_id } = req.body;
+      if (!title || !category_id) {
+        return next(ApiError.badRequest('createCategorySort - not complete data'));
       }
-      const order = (await CategoryClass.max('order')) + 1;
-      const categoryClass = await CategoryClass.create({ name, categoryId: category_id, order });
-      return res.json(categoryClass);
+      const order = (await CategorySort.max('order')) + 1;
+      const categorySort = await CategorySort.create({ title, categoryId: category_id, order });
+      return res.json(categorySort);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
   }
 
-  async getAllCategoryClasses(req, res) {
-    const categories = await CategoryClass.findAll();
+  async getAllCategorySorts(req, res) {
+    const categories = await CategorySort.findAll();
     return res.json(categories);
   }
 

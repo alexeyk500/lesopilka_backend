@@ -14,9 +14,12 @@ const Product = sequelize.define(
   { timestamps: false }
 );
 
-const CategorySize_Product = sequelize.define('CategorySize_Product', {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-}, { timestamps: false }
+const CategorySize_Product = sequelize.define(
+  'CategorySize_Product',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  },
+  { timestamps: false }
 );
 
 SubCategory.hasMany(Product);

@@ -21,18 +21,18 @@ const SubCategory = sequelize.define(
   { timestamps: false }
 );
 
-const CategoryClass = sequelize.define(
-  'category_class',
+const CategorySort = sequelize.define(
+  'categorySort',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    name: { type: DataTypes.STRING, unique: true, allowNull: false },
+    title: { type: DataTypes.STRING, unique: true, allowNull: false },
     order: { type: DataTypes.INTEGER, unique: true, allowNull: false },
   },
   { timestamps: false }
 );
 
 const CategorySize = sequelize.define(
-  'category_size',
+  'categorySize',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     type: { type: DataTypes.STRING, allowNull: false },
@@ -45,8 +45,8 @@ const CategorySize = sequelize.define(
 Category.hasMany(SubCategory);
 SubCategory.belongsTo(Category);
 
-Category.hasMany(CategoryClass);
-CategoryClass.belongsTo(Category);
+Category.hasMany(CategorySort);
+CategorySort.belongsTo(Category);
 
 Category.hasMany(CategorySize);
 CategorySize.belongsTo(Category);
@@ -54,6 +54,6 @@ CategorySize.belongsTo(Category);
 module.exports = {
   Category,
   SubCategory,
-  CategoryClass,
+  CategorySort,
   CategorySize,
 };
