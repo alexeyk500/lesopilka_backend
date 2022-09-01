@@ -1,7 +1,7 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Address } = require('./addressModels');
-const {ProductReview} = require("./productModels");
+const { ProductReview } = require('./productModels');
 
 const User = sequelize.define(
   'user',

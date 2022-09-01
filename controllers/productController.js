@@ -1,5 +1,11 @@
 const ApiError = require('../error/apiError');
-const { Product, CategorySize_Product, CategorySort_Product, ProductDescription, ProductReview} = require('../models/productModels');
+const {
+  Product,
+  CategorySize_Product,
+  CategorySort_Product,
+  ProductDescription,
+  ProductReview,
+} = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 
 class ProductController {
@@ -47,7 +53,6 @@ class ProductController {
   async createReview(req, res, next) {
     try {
       const { product_id, user_id, review } = req.body;
-      console.log(product_id, user_id, review)
       if (!product_id || !user_id || !review) {
         return next(ApiError.badRequest('createReview - not complete data'));
       }
@@ -114,9 +119,9 @@ class ProductController {
         sorts,
         editionDate,
         publicationDate,
-        description : {
+        description: {
           id: descriptionId,
-          description: descriptionText
+          description: descriptionText,
         },
       });
     } catch (e) {
