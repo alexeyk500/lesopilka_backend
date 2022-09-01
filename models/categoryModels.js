@@ -5,17 +5,17 @@ const Category = sequelize.define(
   'category',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    name: { type: DataTypes.STRING, unique: true, allowNull: false },
+    title: { type: DataTypes.STRING, unique: true, allowNull: false },
     order: { type: DataTypes.INTEGER, unique: true, allowNull: false },
   },
   { timestamps: false }
 );
 
 const SubCategory = sequelize.define(
-  'sub_category',
+  'subCategory',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    name: { type: DataTypes.STRING, unique: true, allowNull: false },
+    title: { type: DataTypes.STRING, unique: true, allowNull: false },
     order: { type: DataTypes.INTEGER },
   },
   { timestamps: false }

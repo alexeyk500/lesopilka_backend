@@ -4,12 +4,12 @@ const ApiError = require('../error/apiError');
 class CategoryController {
   async createCategory(req, res, next) {
     try {
-      const { name } = req.body;
-      if (!name) {
+      const { title } = req.body;
+      if (!title) {
         return next(ApiError.badRequest('createCategory - not complete data'));
       }
       const order = (await Category.max('order')) + 1;
-      const category = await Category.create({ name, order });
+      const category = await Category.create({ title, order });
       return res.json(category);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -18,12 +18,12 @@ class CategoryController {
 
   async createSubCategory(req, res, next) {
     try {
-      const { name, category_id } = req.body;
-      if (!name || !category_id) {
+      const { title, category_id } = req.body;
+      if (!title || !category_id) {
         return next(ApiError.badRequest('createSubCategory - not complete data'));
       }
       const order = (await SubCategory.max('order')) + 1;
-      const subCategory = await SubCategory.create({ name, categoryId: category_id, order });
+      const subCategory = await SubCategory.create({ title, categoryId: category_id, order });
       return res.json(subCategory);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
