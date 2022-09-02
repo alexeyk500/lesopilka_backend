@@ -30,7 +30,6 @@ class ProductController {
         const categorySort = await CategorySort.findByPk(category_sort_id);
         await product.addCategorySort(categorySort);
       }
-
       return res.json(product);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

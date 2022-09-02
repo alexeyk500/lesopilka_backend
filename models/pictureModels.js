@@ -7,7 +7,7 @@ const Picture = sequelize.define(
   'picture',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    file_name: { type: DataTypes.STRING, unique: true },
+    file_name: { type: DataTypes.STRING },
   },
   { timestamps: false }
 );
