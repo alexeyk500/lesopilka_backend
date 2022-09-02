@@ -8,7 +8,7 @@ class PictureController {
     try {
       const { category_id, sub_category_id, product_id } = req.body;
       const { img } = req.files;
-      if (!img && !(!!category_id || !!sub_category_id || !!product_id)) {
+      if (!img || !(!!category_id || !!sub_category_id || !!product_id)) {
         return next(ApiError.badRequest('Not valid data for uploadPicture'));
       }
       const fileName = uuid.v4() + '.jpg';
