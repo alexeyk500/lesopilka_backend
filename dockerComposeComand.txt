@@ -2,6 +2,7 @@
 docker-compose up --build
 
 // Запуск только PostgresSql в Docker локально - для разработы сервера
+docker-compose -f docker-compose.only.docker.db.yml up --build
 
 //Отановить все контейнеры
 docker stop $(docker ps -a -q)
