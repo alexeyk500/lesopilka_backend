@@ -6,18 +6,18 @@ const { Picture } = require('../models/pictureModels');
 class PictureController {
   async uploadPicture(req, res, next) {
     try {
-      const { category_id, sub_category_id, product_id } = req.body;
+      const { categoryId, subCategoryId, productId } = req.body;
       const { img } = req.files;
-      if (!img || !(!!category_id || !!sub_category_id || !!product_id)) {
+      if (!img || !(!!categoryId || !!subCategoryId || !!productId)) {
         return next(ApiError.badRequest('Not valid data for uploadPicture'));
       }
       const fileName = uuid.v4() + '.jpg';
       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
       const picture = await Picture.create({
-        file_name: fileName,
-        categoryId: category_id,
-        subCategoryId: sub_category_id,
-        productId: product_id,
+        fileName,
+        categoryId,
+        subCategoryId,
+        productId,
       });
       return res.json({ picture });
     } catch (e) {
