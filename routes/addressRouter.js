@@ -5,8 +5,7 @@ const checkRoleMiddleware = require('../middleware/checkRoleMiddleware');
 
 addressRouter.post('/region', checkRoleMiddleware('ADMIN'), addressController.createRegion);
 addressRouter.post('/city', checkRoleMiddleware('ADMIN'), addressController.createCity);
-addressRouter.post('/street', checkRoleMiddleware('ADMIN'), addressController.createStreet);
 addressRouter.post('/address', checkRoleMiddleware('ADMIN'), addressController.createAddress);
-addressRouter.get('/user_addresses/:user_id', addressController.getUserAddresses);
+addressRouter.get('/user_addresses/:userId', addressController.getUserAddresses);
 
 module.exports = addressRouter;
