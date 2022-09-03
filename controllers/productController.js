@@ -100,8 +100,6 @@ class ProductController {
         sorts.push({ id, title });
       }
       const description = await ProductDescription.findOne({ where: { productId: product_id } });
-      const descriptionId = description.get('id');
-      const descriptionText = description.get('description');
       return res.json({
         id: product_id,
         title,
@@ -118,10 +116,7 @@ class ProductController {
         sorts,
         editionDate,
         publicationDate,
-        description: {
-          id: descriptionId,
-          description: descriptionText,
-        },
+        description,
       });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

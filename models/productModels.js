@@ -1,6 +1,7 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { SubCategory, CategorySize, CategorySort } = require('./categoryModels');
+const {Basket} = require("./basketModels");
 
 const Product = sequelize.define(
   'product',
@@ -62,6 +63,9 @@ Product.belongsToMany(CategorySort, { through: CategorySort_Product });
 
 Product.hasMany(ProductReview);
 ProductReview.belongsTo(Product);
+
+Product.hasMany(Basket);
+Basket.belongsTo(Product);
 
 module.exports = {
   Product,
