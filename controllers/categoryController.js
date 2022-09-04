@@ -18,12 +18,12 @@ class CategoryController {
 
   async createSubCategory(req, res, next) {
     try {
-      const { title, category_id } = req.body;
-      if (!title || !category_id) {
+      const { title, categoryId } = req.body;
+      if (!title || !categoryId) {
         return next(ApiError.badRequest('createSubCategory - not complete data'));
       }
       const order = (await SubCategory.max('order')) + 1;
-      const subCategory = await SubCategory.create({ title, categoryId: category_id, order });
+      const subCategory = await SubCategory.create({ title, categoryId, order });
       return res.json(subCategory);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -42,12 +42,12 @@ class CategoryController {
 
   async createCategorySort(req, res, next) {
     try {
-      const { title, category_id } = req.body;
-      if (!title || !category_id) {
+      const { title, categoryId } = req.body;
+      if (!title || !categoryId) {
         return next(ApiError.badRequest('createCategorySort - not complete data'));
       }
       const order = (await CategorySort.max('order')) + 1;
-      const categorySort = await CategorySort.create({ title, categoryId: category_id, order });
+      const categorySort = await CategorySort.create({ title, categoryId, order });
       return res.json(categorySort);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -61,12 +61,12 @@ class CategoryController {
 
   async createCategorySize(req, res, next) {
     try {
-      const { type, value, category_id } = req.body;
-      if (!type || !value || !category_id) {
+      const { type, value, categoryId } = req.body;
+      if (!type || !value || !categoryId) {
         return next(ApiError.badRequest('createCategorySize - not complete data'));
       }
       const order = (await CategorySize.max('order')) + 1;
-      const categorySize = await CategorySize.create({ type, value, categoryId: category_id, order });
+      const categorySize = await CategorySize.create({ type, value, categoryId, order });
       return res.json(categorySize);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

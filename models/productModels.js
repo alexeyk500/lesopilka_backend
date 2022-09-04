@@ -9,8 +9,8 @@ const Product = sequelize.define(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     title: { type: DataTypes.STRING, allowNull: false },
     price: { type: DataTypes.INTEGER, allowNull: false },
-    edition_date: { type: DataTypes.DATE },
-    publication_date: { type: DataTypes.DATE },
+    editionDate: { type: DataTypes.DATE },
+    publicationDate: { type: DataTypes.DATE },
   },
   { timestamps: false }
 );
@@ -49,6 +49,18 @@ const CategorySort_Product = sequelize.define(
   { timestamps: false }
 );
 
+const ProductSeptic = sequelize.define(
+  'productSeptic',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    value: { type: DataTypes.BOOLEAN, defaultValue: false },
+  },
+  { timestamps: false }
+);
+
+Product.hasOne(ProductSeptic);
+ProductSeptic.belongsTo(Product);
+
 SubCategory.hasMany(Product);
 Product.belongsTo(SubCategory);
 
@@ -73,4 +85,5 @@ module.exports = {
   CategorySize_Product,
   CategorySort_Product,
   ProductReview,
+  ProductSeptic,
 };

@@ -4,31 +4,34 @@ const {
   CategorySize_Product,
   CategorySort_Product,
   ProductDescription,
-  ProductReview,
+  ProductReview, ProductSeptic,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 
 class ProductController {
   async createProduct(req, res, next) {
     try {
-      const { title, price, subcategory_id, category_sizes_ids, category_sorts_ids } = req.body;
-      if (!title || !price) {
+      const { title, price, subcategoryId, categorySizesIds, categorySortsIds, isSeptic } = req.body;
+      if (!title || !price || !subcategoryId) {
         return next(ApiError.badRequest('createProduct - not complete data'));
       }
-      const edition_date = new Date().toISOString();
+      const editionDate = new Date().toISOString();
       const product = await Product.create({
         title,
         price,
-        edition_date,
-        subCategoryId: subcategory_id,
+        editionDate,
+        subCategoryId: subcategoryId,
       });
-      for (const category_size_id of category_sizes_ids) {
-        const categorySize = await CategorySize.findByPk(category_size_id);
+      for (const categorySizeId of categorySizesIds) {
+        const categorySize = await CategorySize.findByPk(categorySizeId);
         await product.addCategorySize(categorySize);
       }
-      for (const category_sort_id of category_sorts_ids) {
-        const categorySort = await CategorySort.findByPk(category_sort_id);
+      for (const categorySortId of categorySortsIds) {
+        const categorySort = await CategorySort.findByPk(categorySortId);
         await product.addCategorySort(categorySort);
+      }
+      if (isSeptic) {
+        await ProductSeptic.create({productId: product.productId, value: isSeptic})
       }
       return res.json(product);
     } catch (e) {
@@ -38,11 +41,11 @@ class ProductController {
 
   async createDescription(req, res, next) {
     try {
-      const { product_id, description } = req.body;
-      if (!product_id || !description) {
+      const { productId, description } = req.body;
+      if (!productId || !description) {
         return next(ApiError.badRequest('createDescription - not complete data'));
       }
-      const newDescription = await ProductDescription.create({ productId: product_id, description });
+      const newDescription = await ProductDescription.create({ productId, description });
       return res.json(newDescription);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -51,11 +54,11 @@ class ProductController {
 
   async createReview(req, res, next) {
     try {
-      const { product_id, user_id, review } = req.body;
-      if (!product_id || !user_id || !review) {
+      const { productId, user_id, review } = req.body;
+      if (!productId || !user_id || !review) {
         return next(ApiError.badRequest('createReview - not complete data'));
       }
-      const newReview = await ProductReview.create({ productId: product_id, userId: user_id, review });
+      const newReview = await ProductReview.create({ productId, userId: user_id, review });
 
       return res.json(newReview);
     } catch (e) {
@@ -65,11 +68,11 @@ class ProductController {
 
   async getProduct(req, res, next) {
     try {
-      const { product_id } = req.params;
-      if (!product_id) {
+      const { productId } = req.params;
+      if (!productId) {
         return next(ApiError.badRequest('getProduct - not complete data'));
       }
-      const product = await Product.findByPk(product_id);
+      const product = await Product.findByPk(productId);
       const title = await product.get('title');
       const price = await product.get('price');
       const editionDate = await product.get('edition_date');
@@ -80,7 +83,7 @@ class ProductController {
       const category = await Category.findByPk(categoryId);
       const subCategoryTitle = subCategory.get('title');
       const categoryTitle = category.get('title');
-      const productSizes = await CategorySize_Product.findAll({ where: { productId: product_id } });
+      const productSizes = await CategorySize_Product.findAll({ where: { productId } });
       const sizes = [];
       for (const productSize of productSizes) {
         const productSizeId = productSize.get('categorySizeId');
@@ -90,7 +93,7 @@ class ProductController {
         const value = size.get('value');
         sizes.push({ id, type, value });
       }
-      const productSorts = await CategorySort_Product.findAll({ where: { productId: product_id } });
+      const productSorts = await CategorySort_Product.findAll({ where: { productId } });
       const sorts = [];
       for (const productSort of productSorts) {
         const productSortId = productSort.get('categorySortId');
@@ -99,26 +102,23 @@ class ProductController {
         const title = sort.get('title');
         sorts.push({ id, title });
       }
-      const description = await ProductDescription.findOne({ where: { productId: product_id } });
+      const description = await ProductDescription.findOne({ where: { productId } });
+      const isSeptic = await ProductSeptic.findOne({ where: { productId } });
       return res.json({
-        id: product_id,
+        productId,
         title,
         price,
-        category: {
-          id: categoryId,
-          title: categoryTitle,
-        },
-        subCategory: {
-          id: subCategoryId,
-          title: subCategoryTitle,
-        },
-        sizes,
-        sorts,
-        editionDate,
-        publicationDate,
-        description,
+        categoryTitle,
+        subCategoryTitle,
+        sizes: sizes ? sizes.map(size => {return{type: size.type, value: size.value}}) : null,
+        sorts: sorts? sorts.map(sort => sort.title) : null,
+        editionDate: editionDate ? editionDate : null,
+        publicationDate: publicationDate ? publicationDate : null,
+        description: description? description.description : null,
+        isSeptic: isSeptic? isSeptic.value : null,
       });
     } catch (e) {
+      console.log('e', e)
       return next(ApiError.badRequest(e.original.detail));
     }
   }
