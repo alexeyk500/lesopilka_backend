@@ -2,7 +2,7 @@ const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Address } = require('./addressModels');
 const { ProductReview } = require('./productModels');
-const {Basket} = require("./basketModels");
+const { Basket } = require('./basketModels');
 
 const User = sequelize.define(
   'user',

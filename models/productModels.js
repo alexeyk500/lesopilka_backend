@@ -1,7 +1,7 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { SubCategory, CategorySize, CategorySort } = require('./categoryModels');
-const {Basket} = require("./basketModels");
+const { Basket } = require('./basketModels');
 
 const Product = sequelize.define(
   'product',

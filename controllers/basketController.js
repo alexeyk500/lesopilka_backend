@@ -1,8 +1,7 @@
 const ApiError = require('../error/apiError');
-const {Basket} = require("../models/basketModels");
+const { Basket } = require('../models/basketModels');
 
 class BasketController {
-
   async putToBasket(req, res, next) {
     try {
       const { userId, productId } = req.body;
@@ -15,7 +14,6 @@ class BasketController {
       return next(ApiError.badRequest(e.original.detail));
     }
   }
-
 }
 
 module.exports = new BasketController();

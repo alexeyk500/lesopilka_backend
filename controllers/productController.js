@@ -4,7 +4,8 @@ const {
   CategorySize_Product,
   CategorySort_Product,
   ProductDescription,
-  ProductReview, ProductSeptic,
+  ProductReview,
+  ProductSeptic,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 
@@ -31,7 +32,7 @@ class ProductController {
         await product.addCategorySort(categorySort);
       }
       if (isSeptic) {
-        await ProductSeptic.create({productId: product.productId, value: isSeptic})
+        await ProductSeptic.create({ productId: product.productId, value: isSeptic });
       }
       return res.json(product);
     } catch (e) {
@@ -110,15 +111,18 @@ class ProductController {
         price,
         categoryTitle,
         subCategoryTitle,
-        sizes: sizes ? sizes.map(size => {return{type: size.type, value: size.value}}) : null,
-        sorts: sorts? sorts.map(sort => sort.title) : null,
+        sizes: sizes
+          ? sizes.map((size) => {
+              return { type: size.type, value: size.value };
+            })
+          : null,
+        sorts: sorts ? sorts.map((sort) => sort.title) : null,
         editionDate: editionDate ? editionDate : null,
         publicationDate: publicationDate ? publicationDate : null,
-        description: description? description.description : null,
-        isSeptic: isSeptic? isSeptic.value : null,
+        description: description ? description.description : null,
+        isSeptic: isSeptic ? isSeptic.value : null,
       });
     } catch (e) {
-      console.log('e', e)
       return next(ApiError.badRequest(e.original.detail));
     }
   }

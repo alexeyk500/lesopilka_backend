@@ -10,5 +10,5 @@ const Basket = sequelize.define(
 );
 
 module.exports = {
- Basket,
+  Basket,
 };
