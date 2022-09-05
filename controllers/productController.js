@@ -11,6 +11,7 @@ const {
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
+const { Basket } = require('../models/basketModels');
 
 class ProductController {
   async createProduct(req, res, next) {
@@ -77,19 +78,22 @@ class ProductController {
         return next(ApiError.badRequest('deleteProduct - not complete data'));
       }
       const picture = await Picture.findOne({ where: { productId } });
-      const fullFileName = await (path.resolve(__dirname, '..', 'static', picture.fileName));
-      fs.unlink(fullFileName, function(err) {
-        if (err) {
-          console.log(fullFileName, '- does not exist');
-        } else {
-          console.log(fullFileName, '- removed');
-        }
-      });
-      await ProductSeptic.destroy({where: {productId}});
-      await ProductDescription.destroy({where: {productId}});
-      await ProductReview.destroy({where: {productId}});
-      await Picture.destroy({where: {productId}});
-      const result = await Product.destroy({where: {id: productId}})
+      if (picture && picture.fileName) {
+        const fullFileName = path.resolve(__dirname, '..', 'static', picture.fileName);
+        fs.unlink(fullFileName, function (err) {
+          if (err) {
+            console.log(fullFileName, '- does not exist');
+          } else {
+            console.log(fullFileName, '- removed');
+          }
+        });
+      }
+      await ProductSeptic.destroy({ where: { productId } });
+      await ProductDescription.destroy({ where: { productId } });
+      await ProductReview.destroy({ where: { productId } });
+      await Basket.destroy({ where: { productId } });
+      await Picture.destroy({ where: { productId } });
+      const result = await Product.destroy({ where: { id: productId } });
       return res.json({ productId, result });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
