@@ -57,6 +57,19 @@ class ProductController {
     }
   }
 
+  async updateDescription(req, res, next) {
+    try {
+      const { productId, description } = req.body;
+      if (!productId) {
+        return next(ApiError.badRequest('updateDescription - not complete data'));
+      }
+      const newDescription = await ProductDescription.update({ description }, { where: { productId } });
+      return res.json(newDescription);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
   async createReview(req, res, next) {
     try {
       const { productId, user_id, review } = req.body;
@@ -66,6 +79,39 @@ class ProductController {
       const newReview = await ProductReview.create({ productId, userId: user_id, review });
 
       return res.json(newReview);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async updateReview(req, res, next) {
+    try {
+      const { productId, review } = req.body;
+      if (!productId) {
+        return next(ApiError.badRequest('updateReview - not complete data'));
+      }
+      const newReview = await ProductReview.update({ review }, { where: { productId } });
+      return res.json(newReview);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async updateSeptic(req, res, next) {
+    try {
+      const { productId, isSeptic } = req.body;
+      if (!productId) {
+        return next(ApiError.badRequest('updateSeptic - not complete data'));
+      }
+      const oldIsSeptic = await ProductSeptic.findOne({ where: { productId } });
+      let result;
+      if (isSeptic && !oldIsSeptic) {
+        result = await ProductSeptic.create({ productId, value: isSeptic });
+      }
+      if (!isSeptic && oldIsSeptic) {
+        result = await ProductSeptic.destroy({ where: { productId } });
+      }
+      return res.json(result);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }

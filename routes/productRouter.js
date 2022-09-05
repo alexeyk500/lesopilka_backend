@@ -8,4 +8,8 @@ productRouter.post('/description', checkRoleMiddleware('ADMIN'), productControll
 productRouter.post('/review', checkRoleMiddleware('ADMIN'), productController.createReview);
 productRouter.get('/product/:productId', productController.getProduct);
 productRouter.delete('/product', checkRoleMiddleware('ADMIN'), productController.deleteProduct);
+productRouter.put('/description', checkRoleMiddleware('ADMIN'), productController.updateDescription);
+productRouter.put('/review', checkRoleMiddleware('ADMIN'), productController.updateReview);
+productRouter.put('/septic', checkRoleMiddleware('ADMIN'), productController.updateSeptic);
+
 module.exports = productRouter;
