@@ -7,4 +7,5 @@ productRouter.post('/product', checkRoleMiddleware('ADMIN'), productController.c
 productRouter.post('/description', checkRoleMiddleware('ADMIN'), productController.createDescription);
 productRouter.post('/review', checkRoleMiddleware('ADMIN'), productController.createReview);
 productRouter.get('/product/:productId', productController.getProduct);
+productRouter.delete('/product', checkRoleMiddleware('ADMIN'), productController.deleteProduct);
 module.exports = productRouter;

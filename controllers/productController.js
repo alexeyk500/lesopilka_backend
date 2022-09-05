@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const ApiError = require('../error/apiError');
 const {
   Product,
@@ -8,6 +10,7 @@ const {
   ProductSeptic,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
+const { Picture } = require('../models/pictureModels');
 
 class ProductController {
   async createProduct(req, res, next) {
@@ -32,7 +35,7 @@ class ProductController {
         await product.addCategorySort(categorySort);
       }
       if (isSeptic) {
-        await ProductSeptic.create({ productId: product.productId, value: isSeptic });
+        await ProductSeptic.create({ productId: product.id, value: isSeptic });
       }
       return res.json(product);
     } catch (e) {
@@ -62,6 +65,32 @@ class ProductController {
       const newReview = await ProductReview.create({ productId, userId: user_id, review });
 
       return res.json(newReview);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async deleteProduct(req, res, next) {
+    try {
+      const { productId } = req.body;
+      if (!productId) {
+        return next(ApiError.badRequest('deleteProduct - not complete data'));
+      }
+      const picture = await Picture.findOne({ where: { productId } });
+      const fullFileName = await (path.resolve(__dirname, '..', 'static', picture.fileName));
+      fs.unlink(fullFileName, function(err) {
+        if (err) {
+          console.log(fullFileName, '- does not exist');
+        } else {
+          console.log(fullFileName, '- removed');
+        }
+      });
+      await ProductSeptic.destroy({where: {productId}});
+      await ProductDescription.destroy({where: {productId}});
+      await ProductReview.destroy({where: {productId}});
+      await Picture.destroy({where: {productId}});
+      const result = await Product.destroy({where: {id: productId}})
+      return res.json({ productId, result });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
