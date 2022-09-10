@@ -1,10 +1,10 @@
 const makeRegistrationConfirmLetter = (code) => {
-  const siteHost = process.env.SITE_HOST
-  const siteName = process.env.SITE_NAME
-  const baseConfirmURL = process.env.BASE_CONFIRM_URL
-  const emailAddress = process.env.EMAIL_ADDRESS
-  const confirmUrl = `${baseConfirmURL}/${code}`
-  return (`
+  const siteHost = process.env.SITE_HOST;
+  const siteName = process.env.SITE_NAME;
+  const baseConfirmURL = process.env.BASE_CONFIRM_URL;
+  const emailAddress = process.env.EMAIL_ADDRESS;
+  const confirmUrl = `${baseConfirmURL}/${code}`;
+  return `
     <h3 style="color: #4A90E2; margin-bottom: 32px">
         <span>Подтвердите свою регистрацию на сайте:&nbsp;</span>
         <a href=${siteHost}>${siteName}</a>
@@ -19,7 +19,7 @@ const makeRegistrationConfirmLetter = (code) => {
     </p>
     <p style="color: #4A90E2; margin-bottom: 48px">Служба поддержки: ${emailAddress}</p>
 
-  `)
+  `;
 };
 
-module.exports.makeRegistrationConfirmLetter = makeRegistrationConfirmLetter
+module.exports.makeRegistrationConfirmLetter = makeRegistrationConfirmLetter;

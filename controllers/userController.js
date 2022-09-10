@@ -1,10 +1,10 @@
 const ApiError = require('../error/apiError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/userModels');
+const { User, UnconfirmedUser } = require('../models/userModels');
 const uuid = require('uuid');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
-const {makeRegistrationConfirmLetter} = require("../nodemailer/registrationConfirmEmail");
+const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
 
 const generateJwt = ({ userId, userEmail, userRole, secretKey }) => {
   return jwt.sign({ id: userId, email: userEmail, role: userRole }, secretKey, { expiresIn: '24h' });
@@ -66,23 +66,45 @@ class UserController {
       if (!email && !password) {
         return next(ApiError.internal('User not found'));
       }
+      const candidate = await User.findOne({ where: { email } });
+      if (candidate) {
+        return next(ApiError.badRequest(`User with email ${email} already exist`));
+      }
       const code = uuid.v4();
       const time = new Date().toISOString();
-
       const subject = 'Подтверждение регистрации на lesopilka24.ru';
       const html = makeRegistrationConfirmLetter(code);
-      // const html = `<h3>Подтвердите свою регистрацию на сайте lesopilka24.ru</h3><br>This is our first message sent with Nodemailer<br/><b>${code}</b>`;
-
       const mailData = makeMailData({ to: email, subject, html });
-
-      await transporter.sendMail(mailData, function (err, info) {
+      await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending Confirmation Registration letter, ${err}`));
         } else {
           console.log(`sendMail-${info}`);
         }
+        const hashPassword = await bcrypt.hash(password, 3);
+        await UnconfirmedUser.create({ email, password: hashPassword, code, time });
         return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}` });
       });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async confirmRegistration(req, res, next) {
+    try {
+      const { code } = req.params;
+      if (!code) {
+        return next(ApiError.internal('Wrong link from registration email'));
+      }
+      const candidate = await UnconfirmedUser.findOne({ where: { code } });
+      if (!candidate) {
+        return next(ApiError.badRequest(`Wrong link from registration email`));
+      }
+      const email = await candidate.get('email');
+      const password = await candidate.get('password');
+      await User.create({ email, password });
+      await UnconfirmedUser.destroy({ where: { code } });
+      return res.redirect(process.env.SITE_HOST);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }

@@ -16,7 +16,7 @@ const User = sequelize.define(
 );
 
 const UnconfirmedUser = sequelize.define(
-  'user',
+  'unconfirmedUser',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     email: { type: DataTypes.STRING, unique: true },
