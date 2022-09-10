@@ -2,6 +2,7 @@ const ApiError = require('../error/apiError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models/userModels');
+const uuid = require('uuid');
 
 const generateJwt = ({ userId, userEmail, userRole, secretKey }) => {
   return jwt.sign({ id: userId, email: userEmail, role: userRole }, secretKey, { expiresIn: '24h' });
@@ -55,6 +56,21 @@ class UserController {
       secretKey: process.env.SECRET_KEY,
     });
     return res.json({ token });
+  }
+
+  async sendConfirmationEmail(req, res, next) {
+    try {
+      const { email, password } = req.body;
+      if (!email && !password) {
+        return next(ApiError.internal('User not found'));
+      }
+      const code = uuid.v4();
+      const time = new Date().toISOString();
+      console.log(`sendConfirmationEmail ${email} ${password} ${code} ${time}`);
+      return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}` });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
   }
 }
 
