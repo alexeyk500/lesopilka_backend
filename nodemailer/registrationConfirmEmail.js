@@ -14,7 +14,7 @@ const makeRegistrationConfirmLetter = (code) => {
         <a href=${confirmUrl}>${confirmUrl}</a>
     </p>
     <p style="color: #FF0000; margin-top: 64px margin-bottom: 32px; white-space: pre-line" >
-        - Если по нажатию ссылки в письме переход на сайт не произошел,<br>&nbsp;&nbsp;&nbsp;то скопируйте данную сыылку
+        - Если по нажатию ссылки в письме переход на сайт не произошел,<br>&nbsp;&nbsp;&nbsp;то скопируйте данную ссылку
         и вставьте ее в адресную сроку браузера.
     </p>
     <p style="color: #4A90E2; margin-bottom: 48px">Служба поддержки: ${emailAddress}</p>
