@@ -104,7 +104,7 @@ class UserController {
       const password = await candidate.get('password');
       await User.create({ email, password });
       await UnconfirmedUser.destroy({ where: { code } });
-      return res.redirect(process.env.SITE_HOST);
+      return res.redirect(process.env.SUCCESS_REGISTRATION_SITE_PAGE);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
