@@ -27,6 +27,17 @@ const UnconfirmedUser = sequelize.define(
   { timestamps: false }
 );
 
+const PasswordRecoveryCode = sequelize.define(
+  'passwordRecoveryCode',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    email: { type: DataTypes.STRING, unique: true },
+    code: { type: DataTypes.STRING },
+    time: { type: DataTypes.DATE },
+  },
+  { timestamps: false }
+);
+
 User.hasMany(Address);
 Address.belongsTo(User);
 
@@ -39,4 +50,5 @@ Basket.belongsTo(User);
 module.exports = {
   User,
   UnconfirmedUser,
+  PasswordRecoveryCode,
 };
