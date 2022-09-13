@@ -48,7 +48,8 @@ class UserController {
       userRole: user.role,
       secretKey: process.env.SECRET_KEY,
     });
-    return res.json({ token });
+    const name = await user.get('name')
+    return res.json({ user: {name: name ?name :email, email}, token });
   }
 
   async check(req, res) {
