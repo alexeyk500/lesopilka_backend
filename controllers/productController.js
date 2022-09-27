@@ -155,8 +155,8 @@ class ProductController {
       const product = await Product.findByPk(productId);
       const title = await product.get('title');
       const price = await product.get('price');
-      const editionDate = await product.get('edition_date');
-      const publicationDate = await product.get('publication_date');
+      const editionDate = await product.get('editionDate');
+      const publicationDate = await product.get('publicationDate');
       const subCategoryId = await product.get('subCategoryId');
       const subCategory = await SubCategory.findByPk(subCategoryId);
       const categoryId = subCategory.get('categoryId');
