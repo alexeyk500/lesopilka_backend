@@ -48,8 +48,8 @@ class UserController {
       userRole: user.role,
       secretKey: process.env.SECRET_KEY,
     });
-    const name = await user.get('name')
-    return res.json({ user: {name: name ?name :email, email}, token });
+    const name = await user.get('name');
+    return res.json({ user: { name: name ? name : email, email }, token });
   }
 
   async check(req, res) {
@@ -60,6 +60,26 @@ class UserController {
       secretKey: process.env.SECRET_KEY,
     });
     return res.json({ token });
+  }
+
+  async getUserByToken(req, res, next) {
+    try {
+      const email = req.user.email;
+      const user = await User.findOne({ where: { email } });
+      if (!user) {
+        return next(ApiError.internal('User not found'));
+      }
+      const name = await user.get('name');
+      const newToken = generateJwt({
+        userId: req.user.id,
+        userEmail: req.user.email,
+        userRole: req.user.role,
+        secretKey: process.env.SECRET_KEY,
+      });
+      return res.json({ user: { name: name ? name : email, email }, token: newToken });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
   }
 
   async sendConfirmationEmail(req, res, next) {
