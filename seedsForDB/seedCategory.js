@@ -1,4 +1,4 @@
-const { Category } = require('../models/categoryModels');
+const { Category} = require('../models/categoryModels');
 const categoryController = require('../controllers/categoryController');
 
 const res = {
@@ -10,7 +10,7 @@ const res = {
 const categories = ['Брус', 'Доска', 'Вагонка', 'Погонаж', 'БлокХаус и Лендхаус', 'Бревно', 'Опилки и Пеллеты'];
 
 const seedCategory = async () => {
-  await Category.destroy({ truncate: true, restartIdentity: true });
+  await Category.truncate({cascade: true, restartIdentity:true});
   for (let category of categories) {
     await categoryController.createCategory({ body: { title: category } }, res, () => {});
     console.log(`Создано ${category}`);
