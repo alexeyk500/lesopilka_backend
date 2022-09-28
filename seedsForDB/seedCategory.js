@@ -7,7 +7,7 @@ const res = {
   },
 };
 
-const categories = ['Брус', 'Доска', 'Вагонка', 'Погонаж', 'БлокХаус и Лендхаус', 'Бревно', 'Опилки и Пеллеты'];
+const categories = ['Брус', 'Доска', 'Вагонка', 'Погонаж', 'Блокxаус и Лендxаус', 'Бревно', 'Опилки и Пеллеты'];
 
 const seedCategory = async () => {
   await Category.truncate({ cascade: true, restartIdentity: true });

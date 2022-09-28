@@ -1,5 +1,6 @@
 const { Category, SubCategory, CategorySize, CategorySort } = require('../models/categoryModels');
 const ApiError = require('../error/apiError');
+const { Picture } = require('../models/pictureModels');
 
 class CategoryController {
   async createCategory(req, res, next) {
@@ -31,7 +32,20 @@ class CategoryController {
   }
 
   async getAllCategories(req, res) {
-    const categories = await Category.findAll();
+    let fileName;
+    const categories = [];
+    const categoriesDB = await Category.findAll();
+    for (let category of categoriesDB) {
+      const id = await category.get('id');
+      const title = await category.get('title');
+      const order = await category.get('order');
+      const picture = await Picture.findOne({ where: { categoryId: id } });
+      if (picture) {
+        const shortFileName = await picture.get('fileName');
+        fileName = req.protocol + '://' + req.headers.host + '/' + shortFileName;
+      }
+      categories.push({ id, title, image: fileName, order });
+    }
     return res.json(categories);
   }
 
