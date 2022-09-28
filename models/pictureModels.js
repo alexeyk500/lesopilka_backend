@@ -1,7 +1,7 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Product } = require('./productModels');
-const { Category, SubCategory } = require('./categoryModels');
+const { Category } = require('./categoryModels');
 
 const Picture = sequelize.define(
   'picture',
@@ -17,9 +17,6 @@ Picture.belongsTo(Product);
 
 Category.hasMany(Picture);
 Picture.belongsTo(Category);
-
-SubCategory.hasMany(Picture);
-Picture.belongsTo(SubCategory);
 
 module.exports = {
   Picture,

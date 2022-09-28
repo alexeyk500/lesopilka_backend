@@ -48,7 +48,7 @@ const subCategories = [
 ];
 
 const seedSubCategories = async () => {
-  await SubCategory.truncate({cascade: true, restartIdentity:true})
+  await SubCategory.truncate({ cascade: true, restartIdentity: true });
   for (let subCategory of subCategories) {
     await categoryController.createSubCategory({ body: subCategory }, res, () => {});
     console.log(`Создано ${subCategory}`);
