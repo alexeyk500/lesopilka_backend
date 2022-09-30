@@ -8,21 +8,22 @@ const res = {
 };
 
 const subCategories = [
-  { categoryId: '1', title: 'Брус' },
+  { categoryId: '1', title: 'Обычный Брус' },
   { categoryId: '1', title: 'Калиброваннный Брус' },
   { categoryId: '1', title: 'Профилированный Брус' },
   { categoryId: '1', title: 'Оцилиндрованный Брус' },
   { categoryId: '1', title: 'Строганный Брус' },
+  { categoryId: '1', title: 'Клееный Брус' },
   { categoryId: '1', title: 'Имитация Бруса' },
 
-  { categoryId: '2', title: 'Доска' },
+  { categoryId: '2', title: 'Обычная Доска' },
   { categoryId: '2', title: 'Обрезная Доска' },
   { categoryId: '2', title: 'Половая Доска' },
   { categoryId: '2', title: 'Террасная Доска' },
   { categoryId: '2', title: 'Необрезанная Доска' },
   { categoryId: '2', title: 'Шпунтованная Доска' },
 
-  { categoryId: '3', title: 'Вагонка' },
+  { categoryId: '3', title: 'Обычная Вагонка' },
   { categoryId: '3', title: 'Штиль Вагонка' },
   { categoryId: '3', title: 'Евро Вагонка' },
   { categoryId: '3', title: 'Планкен' },
@@ -36,7 +37,7 @@ const subCategories = [
   { categoryId: '5', title: 'Блокхаус' },
   { categoryId: '5', title: 'Лендхаус' },
 
-  { categoryId: '6', title: 'Бревно' },
+  { categoryId: '6', title: 'Обычное Бревно' },
   { categoryId: '6', title: 'Окоренное Бревно' },
   { categoryId: '6', title: 'Оцилиндрованное Бревно' },
   { categoryId: '6', title: 'Калиброванное Бревно' },

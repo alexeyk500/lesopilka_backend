@@ -58,6 +58,24 @@ const ProductSeptic = sequelize.define(
   { timestamps: false }
 );
 
+const ProductMaterial = sequelize.define(
+  'productMaterial',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    material: { type: DataTypes.TEXT, allowNull: false },
+    isPine: { type: DataTypes.BOOLEAN, defaultValue: false },
+  },
+  { timestamps: false }
+);
+
+const ProductMaterial_Product = sequelize.define(
+  'ProductMaterial_Product',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  },
+  { timestamps: false }
+);
+
 Product.hasOne(ProductSeptic);
 ProductSeptic.belongsTo(Product);
 
@@ -79,6 +97,8 @@ ProductReview.belongsTo(Product);
 Product.hasMany(Basket);
 Basket.belongsTo(Product);
 
+ProductMaterial.belongsToMany(Product, { through: ProductMaterial_Product });
+
 module.exports = {
   Product,
   ProductDescription,
@@ -86,4 +106,5 @@ module.exports = {
   CategorySort_Product,
   ProductReview,
   ProductSeptic,
+  ProductMaterial,
 };

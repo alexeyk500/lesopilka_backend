@@ -8,6 +8,7 @@ const {
   ProductDescription,
   ProductReview,
   ProductSeptic,
+  ProductMaterial,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
@@ -77,8 +78,20 @@ class ProductController {
         return next(ApiError.badRequest('createReview - not complete data'));
       }
       const newReview = await ProductReview.create({ productId, userId: user_id, review });
-
       return res.json(newReview);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async createMaterial(req, res, next) {
+    try {
+      const { material } = req.body;
+      if (!material) {
+        return next(ApiError.badRequest('createMaterial - not complete data'));
+      }
+      const newMaterial = await ProductMaterial.create({ material });
+      return res.json(newMaterial);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
