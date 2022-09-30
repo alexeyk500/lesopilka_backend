@@ -62,8 +62,9 @@ const ProductMaterial = sequelize.define(
   'productMaterial',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    material: { type: DataTypes.TEXT, allowNull: false },
+    material: { type: DataTypes.TEXT, unique: true, allowNull: false },
     isPine: { type: DataTypes.BOOLEAN, defaultValue: false },
+    order: { type: DataTypes.INTEGER, unique: true, allowNull: false },
   },
   { timestamps: false }
 );

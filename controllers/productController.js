@@ -84,17 +84,23 @@ class ProductController {
     }
   }
 
-  async createMaterial(req, res, next) {
+  async createProductMaterial(req, res, next) {
     try {
-      const { material } = req.body;
+      const { material, isPine } = req.body;
       if (!material) {
         return next(ApiError.badRequest('createMaterial - not complete data'));
       }
-      const newMaterial = await ProductMaterial.create({ material });
+      const order = (await ProductMaterial.max('order')) + 1;
+      const newMaterial = await ProductMaterial.create({ material, isPine, order });
       return res.json(newMaterial);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
+  }
+
+  async getAllProductMaterials(req, res) {
+    const materials = await ProductMaterial.findAll();
+    return res.json(materials);
   }
 
   async updateReview(req, res, next) {
