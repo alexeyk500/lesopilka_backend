@@ -24,6 +24,23 @@ const materials = [
   { material: 'Ясень', isPine: false },
 ];
 
+// const materials = [
+//   { material: 'Береза', isPine: false },
+//   { material: 'Бук', isPine: false },
+//   { material: 'Дуб', isPine: false },
+//   { material: 'Ель', isPine: false },
+//   { material: 'Кедр', isPine: false },
+//   { material: 'Клен', isPine: false },
+//   { material: 'Липа', isPine: false },
+//   { material: 'Лиственница', isPine: false },
+//   { material: 'Ольха', isPine: false },
+//   { material: 'Орех', isPine: false },
+//   { material: 'Осина', isPine: false },
+//   { material: 'Пихта', isPine: false },
+//   { material: 'Сосна', isPine: false },
+//   { material: 'Ясень', isPine: false },
+// ];
+
 const seedProductMaterial = async () => {
   await ProductMaterial.truncate({ cascade: true, restartIdentity: true });
   for (let material of materials) {
