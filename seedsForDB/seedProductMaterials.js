@@ -13,6 +13,15 @@ const materials = [
   { material: 'Лиственница', isPine: true },
   { material: 'Пихта', isPine: true },
   { material: 'Сосна', isPine: true },
+  { material: 'Береза', isPine: false },
+  { material: 'Бук', isPine: false },
+  { material: 'Дуб', isPine: false },
+  { material: 'Клен', isPine: false },
+  { material: 'Липа', isPine: false },
+  { material: 'Ольха', isPine: false },
+  { material: 'Орех', isPine: false },
+  { material: 'Осина', isPine: false },
+  { material: 'Ясень', isPine: false },
 ];
 
 const seedProductMaterial = async () => {
