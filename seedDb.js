@@ -4,6 +4,7 @@ const seedCategory = require('./seedsForDB/seedCategory');
 const seedSubCategories = require('./seedsForDB/seedSubCategories');
 const seedPictures = require('./seedsForDB/seedPictures');
 const seedProductMaterial = require('./seedsForDB/seedProductMaterials');
+const seedCategorySizes = require('./seedsForDB/seedCategorySizes')
 
 const seedDB = async () => {
   try {
@@ -14,6 +15,8 @@ const seedDB = async () => {
     await seedSubCategories();
     await seedPictures();
     await seedProductMaterial();
+    await seedProductMaterial();
+    await seedCategorySizes();
     console.log('Окончил заполнение БД');
   } catch (e) {
     console.log(e);

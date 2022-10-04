@@ -37,6 +37,7 @@ const CategorySize = sequelize.define(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     type: { type: DataTypes.STRING, allowNull: false },
     value: { type: DataTypes.INTEGER, allowNull: false },
+    isCustomSize: { type: DataTypes.BOOLEAN, defaultValue: false},
     order: { type: DataTypes.INTEGER, unique: true, allowNull: false },
   },
   { timestamps: false }

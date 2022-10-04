@@ -75,12 +75,12 @@ class CategoryController {
 
   async createCategorySize(req, res, next) {
     try {
-      const { type, value, categoryId } = req.body;
+      const { type, value, categoryId, isCustomSize } = req.body;
       if (!type || !value || !categoryId) {
         return next(ApiError.badRequest('createCategorySize - not complete data'));
       }
       const order = (await CategorySize.max('order')) + 1;
-      const categorySize = await CategorySize.create({ type, value, categoryId, order });
+      const categorySize = await CategorySize.create({ type, value, categoryId, order, isCustomSize });
       return res.json(categorySize);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
