@@ -86,12 +86,12 @@ class ProductController {
 
   async createProductMaterial(req, res, next) {
     try {
-      const { material, isPine } = req.body;
-      if (!material) {
+      const { title, isPine } = req.body;
+      if (!title) {
         return next(ApiError.badRequest('createMaterial - not complete data'));
       }
       const order = (await ProductMaterial.max('order')) + 1;
-      const newMaterial = await ProductMaterial.create({ material, isPine, order });
+      const newMaterial = await ProductMaterial.create({ title, isPine, order });
       return res.json(newMaterial);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

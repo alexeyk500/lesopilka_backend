@@ -8,20 +8,20 @@ const res = {
 };
 
 const materials = [
-  { material: 'Ель', isPine: true },
-  { material: 'Кедр', isPine: true },
-  { material: 'Лиственница', isPine: true },
-  { material: 'Пихта', isPine: true },
-  { material: 'Сосна', isPine: true },
-  { material: 'Береза', isPine: false },
-  { material: 'Бук', isPine: false },
-  { material: 'Дуб', isPine: false },
-  { material: 'Клен', isPine: false },
-  { material: 'Липа', isPine: false },
-  { material: 'Ольха', isPine: false },
-  { material: 'Орех', isPine: false },
-  { material: 'Осина', isPine: false },
-  { material: 'Ясень', isPine: false },
+  { title: 'Ель', isPine: true },
+  { title: 'Кедр', isPine: true },
+  { title: 'Лиственница', isPine: true },
+  { title: 'Пихта', isPine: true },
+  { title: 'Сосна', isPine: true },
+  { title: 'Береза', isPine: false },
+  { title: 'Бук', isPine: false },
+  { title: 'Дуб', isPine: false },
+  { title: 'Клен', isPine: false },
+  { title: 'Липа', isPine: false },
+  { title: 'Ольха', isPine: false },
+  { title: 'Орех', isPine: false },
+  { title: 'Осина', isPine: false },
+  { title: 'Ясень', isPine: false },
 ];
 
 // const materials = [
