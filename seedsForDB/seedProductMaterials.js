@@ -41,12 +41,12 @@ const materials = [
 //   { material: 'Ясень', isPine: false },
 // ];
 
-const seedProductMaterial = async () => {
+const seedProductMaterials = async () => {
   await ProductMaterial.truncate({ cascade: true, restartIdentity: true });
   for (let material of materials) {
     await productController.createProductMaterial({ body: material }, res, () => {});
-    console.log(`Создано ${material}`);
+    console.log(`Создано ${material.title}`);
   }
 };
 
-module.exports = seedProductMaterial;
+module.exports = seedProductMaterials;

@@ -9,6 +9,7 @@ const {
   ProductReview,
   ProductSeptic,
   ProductMaterial,
+  ProductSort,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
@@ -163,6 +164,24 @@ class ProductController {
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
+  }
+
+  async createProductSort(req, res, next) {
+    try {
+      const { title } = req.body;
+      if (!title) {
+        return next(ApiError.badRequest('createProductSort - not complete data'));
+      }
+      const productSort = await ProductSort.create({ title });
+      return res.json(productSort);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async getAllProductSorts(req, res) {
+    const categories = await ProductSort.findAll();
+    return res.json(categories);
   }
 
   async getProduct(req, res, next) {

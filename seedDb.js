@@ -3,8 +3,9 @@ const sequelize = require('./db');
 const seedCategory = require('./seedsForDB/seedCategory');
 const seedSubCategories = require('./seedsForDB/seedSubCategories');
 const seedPictures = require('./seedsForDB/seedPictures');
-const seedProductMaterial = require('./seedsForDB/seedProductMaterials');
-const seedCategorySizes = require('./seedsForDB/seedCategorySizes')
+const seedProductMaterials = require('./seedsForDB/seedProductMaterials');
+const seedCategorySizes = require('./seedsForDB/seedCategorySizes');
+const seedProductSorts = require('./seedsForDB/seedProductSorts');
 
 const seedDB = async () => {
   try {
@@ -14,9 +15,9 @@ const seedDB = async () => {
     await seedCategory();
     await seedSubCategories();
     await seedPictures();
-    await seedProductMaterial();
-    await seedProductMaterial();
+    await seedProductMaterials();
     await seedCategorySizes();
+    await seedProductSorts();
     console.log('Окончил заполнение БД');
   } catch (e) {
     console.log(e);
