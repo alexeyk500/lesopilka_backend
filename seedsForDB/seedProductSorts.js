@@ -7,7 +7,16 @@ const res = {
   },
 };
 
-const sorts = [{ title: 'Экстра' }, { title: '1-й' }, { title: '2-й' }, { title: '3-й' }, { title: '4-й' }];
+const sorts = [
+  { title: 'Экстра сорт' },
+  { title: '1-й сорт' },
+  { title: '1-й и 2-й сорт' },
+  { title: '2-й сорт' },
+  { title: '2-й и 3-й сорт' },
+  { title: '3-й сорт' },
+  { title: '3-й и 4-й сорт' },
+  { title: '4-й сорт' },
+];
 
 const seedProductSorts = async () => {
   await ProductSort.truncate({ cascade: true, restartIdentity: true });
