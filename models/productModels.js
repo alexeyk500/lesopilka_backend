@@ -8,7 +8,7 @@ const Product = sequelize.define(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     title: { type: DataTypes.STRING, allowNull: false },
-    price: { type: DataTypes.INTEGER, allowNull: false },
+    price: { type: DataTypes.FLOAT, allowNull: false },
     editionDate: { type: DataTypes.DATE },
     publicationDate: { type: DataTypes.DATE },
   },
