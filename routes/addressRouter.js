@@ -7,5 +7,8 @@ addressRouter.post('/region', checkRoleMiddleware('ADMIN'), addressController.cr
 addressRouter.post('/city', checkRoleMiddleware('ADMIN'), addressController.createCity);
 addressRouter.post('/address', checkRoleMiddleware('ADMIN'), addressController.createAddress);
 addressRouter.get('/user_addresses/:userId', addressController.getUserAddresses);
+addressRouter.get('/regions', addressController.getRegions);
+addressRouter.get('/locations', addressController.getLocations);
+addressRouter.get('/locations/:regionId', addressController.getLocationsByRegionId);
 
 module.exports = addressRouter;

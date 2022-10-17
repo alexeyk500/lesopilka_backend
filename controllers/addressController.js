@@ -1,4 +1,4 @@
-const { Region, City, Address } = require('../models/addressModels');
+const { Region, City, Address, Location } = require('../models/addressModels');
 const ApiError = require('../error/apiError');
 
 class AddressController {
@@ -52,6 +52,26 @@ class AddressController {
         include: [{ model: City, include: [{ model: Region }] }],
       });
       return res.json({ userId, userAddresses });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async getRegions(req, res) {
+    const regions = await Region.findAll();
+    return res.json(regions);
+  }
+
+  async getLocations(req, res) {
+    const regions = await Location.findAll();
+    return res.json(regions);
+  }
+
+  async getLocationsByRegionId(req, res, next) {
+    try {
+      const {regionId} = req.params;
+      const locations = await Location.findAll({where: { regionId }});
+      return res.json(locations);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }

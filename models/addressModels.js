@@ -10,8 +10,8 @@ const Region = sequelize.define(
   { timestamps: false }
 );
 
-const City = sequelize.define(
-  'city',
+const Location = sequelize.define(
+  'location',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     title: { type: DataTypes.STRING, unique: true, allowNull: false },
@@ -23,21 +23,21 @@ const Address = sequelize.define(
   'address',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    apartment: { type: DataTypes.STRING },
-    house: { type: DataTypes.STRING, allowNull: false },
+    office: { type: DataTypes.STRING },
+    building: { type: DataTypes.STRING, allowNull: false },
     street: { type: DataTypes.STRING, allowNull: false },
   },
   { timestamps: false }
 );
 
-Region.hasMany(City);
-City.belongsTo(Region);
+Region.hasMany(Location);
+Location.belongsTo(Region);
 
-City.hasMany(Address);
-Address.belongsTo(City);
+Location.hasMany(Address);
+Address.belongsTo(Location);
 
 module.exports = {
   Region,
-  City,
+  Location,
   Address,
 };

@@ -6,7 +6,7 @@ const uuid = require('uuid');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
-const { City } = require('../models/addressModels');
+const { Location } = require('../models/addressModels');
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
@@ -16,7 +16,7 @@ const getUserResponse = async (user) => {
   let location;
   const token = generateUserToken(user);
   if (user.manufacturerTitle && user.manufacturerLocationId) {
-    location = await City.findOne({ where: { id: user.manufacturerLocationId } });
+    location = await Location.findOne({ where: { id: user.manufacturerLocationId } });
   }
   return {
     user: {
@@ -37,7 +37,6 @@ const getUserResponse = async (user) => {
 };
 
 class UserController {
-
   async registration(req, res, next) {
     try {
       const { email, password, role } = req.body;
