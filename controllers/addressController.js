@@ -69,8 +69,8 @@ class AddressController {
 
   async getLocationsByRegionId(req, res, next) {
     try {
-      const {regionId} = req.params;
-      const locations = await Location.findAll({where: { regionId }});
+      const { regionId } = req.params;
+      const locations = await Location.findAll({ where: { regionId } });
       return res.json(locations);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
