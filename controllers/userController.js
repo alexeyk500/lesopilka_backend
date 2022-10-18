@@ -13,17 +13,37 @@ const generateUserToken = (user) => {
 };
 
 const getUserResponse = async (user) => {
-  let location;
+  let searchRegion;
+  let searchLocation;
+  let manufacturerRegion;
+  let manufacturerLocation;
   const token = generateUserToken(user);
-  if (user.manufacturerTitle && user.locationId) {
-    location = await Location.findOne({ where: { id: user.locationId } });
+  if (user.searchLocationId) {
+    searchLocation = await Location.findOne({ where: { id: user.searchLocationId } });
+  }
+  if (user.searchRegionId) {
+    searchRegion = await Location.findOne({ where: { id: user.searchRegionId } });
+  }
+  if (user.manufacturerRegionId) {
+    manufacturerRegion = await Location.findOne({ where: { id: user.manufacturerRegionId } });
+  }
+  if (user.manufacturerLocationId) {
+    manufacturerLocation = await Location.findOne({ where: { id: user.manufacturerLocationId } });
   }
   return {
     user: {
       email: user.email,
       name: user.name ? user.name : user.email,
-      location: location ? { id: user.locationId, title: location.title } : undefined,
-      manufacturer: user.manufacturerTitle ? { inn: user.manufacturerInn, title: user.manufacturerTitle } : undefined,
+      searchRegion: searchRegion ? { id: searchRegion.id, title: searchRegion.title } : undefined,
+      searchLocation: searchLocation ? { id: searchLocation.id, title: searchLocation.title } : undefined,
+      manufacturer: manufacturerLocation
+        ? {
+          inn: user.manufacturerInn,
+          title: user.manufacturerTitle,
+          region: { id: manufacturerRegion.id, title: manufacturerRegion.title },
+          location: { id: manufacturerLocation.id, title: manufacturerLocation.title }
+          }
+        : undefined,
     },
     token,
   };

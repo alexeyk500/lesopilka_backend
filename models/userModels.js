@@ -10,11 +10,14 @@ const User = sequelize.define(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     email: { type: DataTypes.STRING, unique: true },
     name: { type: DataTypes.STRING },
-    locationId: { type: DataTypes.STRING },
-    password: { type: DataTypes.STRING },
     role: { type: DataTypes.STRING, defaultValue: 'USER' },
+    searchRegionId: { type: DataTypes.STRING },
+    searchLocationId: { type: DataTypes.STRING },
     manufacturerInn: { type: DataTypes.STRING, unique: true },
     manufacturerTitle: { type: DataTypes.STRING },
+    manufacturerRegionId: { type: DataTypes.STRING },
+    manufacturerLocationId: { type: DataTypes.STRING },
+    password: { type: DataTypes.STRING },
   },
   { timestamps: false }
 );
