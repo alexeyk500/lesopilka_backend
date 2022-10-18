@@ -15,22 +15,15 @@ const generateUserToken = (user) => {
 const getUserResponse = async (user) => {
   let location;
   const token = generateUserToken(user);
-  if (user.manufacturerTitle && user.manufacturerLocationId) {
-    location = await Location.findOne({ where: { id: user.manufacturerLocationId } });
+  if (user.manufacturerTitle && user.locationId) {
+    location = await Location.findOne({ where: { id: user.locationId } });
   }
   return {
     user: {
       email: user.email,
       name: user.name ? user.name : user.email,
-      manufacturer: location
-        ? {
-            title: user.manufacturerTitle,
-            location: {
-              id: user.manufacturerLocationId,
-              title: location.title,
-            },
-          }
-        : undefined,
+      location: location ? { id: user.locationId, title: location.title } : undefined,
+      manufacturer: user.manufacturerTitle ? { inn: user.manufacturerInn, title: user.manufacturerTitle } : undefined,
     },
     token,
   };
