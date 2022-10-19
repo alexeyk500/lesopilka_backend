@@ -13,10 +13,6 @@ const User = sequelize.define(
     role: { type: DataTypes.STRING, defaultValue: 'USER' },
     searchRegionId: { type: DataTypes.STRING },
     searchLocationId: { type: DataTypes.STRING },
-    manufacturerInn: { type: DataTypes.STRING, unique: true },
-    manufacturerTitle: { type: DataTypes.STRING },
-    manufacturerRegionId: { type: DataTypes.STRING },
-    manufacturerLocationId: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
   },
   { timestamps: false }
@@ -45,8 +41,8 @@ const PasswordRecoveryCode = sequelize.define(
   { timestamps: false }
 );
 
-User.hasMany(Address);
-Address.belongsTo(User);
+Address.hasOne(User);
+User.belongsTo(Address);
 
 User.hasMany(ProductReview);
 ProductReview.belongsTo(User);
