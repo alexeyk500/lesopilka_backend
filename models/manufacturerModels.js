@@ -9,6 +9,7 @@ const Manufacturer = sequelize.define(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     inn: { type: DataTypes.STRING, unique: true },
     title: { type: DataTypes.STRING },
+    phone: { type: DataTypes.STRING },
     approved: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   { timestamps: false }
