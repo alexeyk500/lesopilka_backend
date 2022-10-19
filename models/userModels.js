@@ -10,6 +10,7 @@ const User = sequelize.define(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     email: { type: DataTypes.STRING, unique: true },
     name: { type: DataTypes.STRING },
+    phone: { type: DataTypes.STRING },
     role: { type: DataTypes.STRING, defaultValue: 'USER' },
     searchRegionId: { type: DataTypes.STRING },
     searchLocationId: { type: DataTypes.STRING },

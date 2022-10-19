@@ -6,42 +6,72 @@ const uuid = require('uuid');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
-const { Location } = require('../models/addressModels');
+const { Location, Region, Address} = require('../models/addressModels');
+const {Manufacturer} = require("../models/manufacturerModels");
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
 };
 
-const getUserResponse = async (user) => {
+const updateModelsField = async (model, field) => {
+  if (field) {
+    return await model.update(field);
+  }
+}
+
+const getUserResponse = async (user, tokenRaw) => {
   let searchRegion;
   let searchLocation;
-  let manufacturerRegion;
-  let manufacturerLocation;
-  const token = generateUserToken(user);
+  let manufacturerAddress;
+  let token;
+  if (tokenRaw) {
+    token = tokenRaw
+  } else {
+    token=generateUserToken(user)
+  }
+  if (user.searchRegionId) {
+    searchRegion = await Region.findOne({ where: { id: user.searchRegionId } });
+  }
   if (user.searchLocationId) {
     searchLocation = await Location.findOne({ where: { id: user.searchLocationId } });
   }
-  if (user.searchRegionId) {
-    searchRegion = await Location.findOne({ where: { id: user.searchRegionId } });
+  const manufacturer = await Manufacturer.findOne({where: { userId: user.id }})
+  if (manufacturer) {
+    let manufacturerLocation;
+    let manufacturerRegion;
+    const manufacturerAddressRaw = await Address.findOne({ where: { id: manufacturer.addressId } });
+    if (manufacturerAddressRaw.locationId) {
+      manufacturerLocation = await Location.findOne({ where: { id: manufacturerAddressRaw.locationId } });
+    }
+    if (manufacturerLocation.regionId) {
+      manufacturerRegion = await Region.findOne({ where: { id: manufacturerLocation.regionId } });
+    }
+    if (manufacturerAddressRaw) {
+      manufacturerAddress = {
+        id: manufacturerAddressRaw.id,
+        region: manufacturerRegion,
+        location: manufacturerLocation ? {id: manufacturerLocation.id, title: manufacturerLocation.title} :undefined,
+        street: manufacturerAddressRaw.street ?manufacturerAddressRaw.street :undefined,
+        building: manufacturerAddressRaw.building ?manufacturerAddressRaw.building :undefined,
+        office: manufacturerAddressRaw.office ?manufacturerAddressRaw.office :undefined
+      }
+    }
   }
-  if (user.manufacturerRegionId) {
-    manufacturerRegion = await Location.findOne({ where: { id: user.manufacturerRegionId } });
-  }
-  if (user.manufacturerLocationId) {
-    manufacturerLocation = await Location.findOne({ where: { id: user.manufacturerLocationId } });
-  }
+
   return {
     user: {
       email: user.email,
       name: user.name ? user.name : user.email,
+      phone: user.phone ? user.phone : undefined,
       searchRegion: searchRegion ? { id: searchRegion.id, title: searchRegion.title } : undefined,
       searchLocation: searchLocation ? { id: searchLocation.id, title: searchLocation.title } : undefined,
-      manufacturer: manufacturerLocation
+      manufacturer: manufacturer
         ? {
-          inn: user.manufacturerInn,
-          title: user.manufacturerTitle,
-          region: { id: manufacturerRegion.id, title: manufacturerRegion.title },
-          location: { id: manufacturerLocation.id, title: manufacturerLocation.title }
+            id: manufacturer.id,
+            inn: manufacturer.inn,
+            title: manufacturer.title,
+            phone: manufacturer.phone,
+            address: manufacturerAddress,
           }
         : undefined,
     },
@@ -104,19 +134,21 @@ class UserController {
   async updateUser(req, res, next) {
     try {
       const userEmail = req.user.email;
+      const token = req.headers.authorization.split(' ')[1]
       const user = await User.findOne({ where: { email: userEmail } });
       if (!user) {
         return next(ApiError.internal('User not found'));
       }
-      const { name, password } = req.body;
-      if (name) {
-        await user.update({ name });
-      }
+      const { name, phone, password, searchRegionId, searchLocationId } = req.body;
+      await updateModelsField(user, {name});
+      await updateModelsField(user, {phone});
+      await updateModelsField(user, {searchRegionId});
+      await updateModelsField(user, {searchLocationId});
       if (password) {
         const hashPassword = await bcrypt.hash(password, 3);
         await user.update({ password: hashPassword });
       }
-      const response = await getUserResponse(user);
+      const response = await getUserResponse(user, token);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
