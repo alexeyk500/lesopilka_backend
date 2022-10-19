@@ -1,4 +1,4 @@
-const { Region, City, Address, Location } = require('../models/addressModels');
+const { Region, Location, Address } = require('../models/addressModels');
 const ApiError = require('../error/apiError');
 
 class AddressController {
@@ -15,14 +15,14 @@ class AddressController {
     }
   }
 
-  async createCity(req, res, next) {
+  async createLocation(req, res, next) {
     try {
       const { title, regionId } = req.body;
       if (!title || !regionId) {
         return next(ApiError.badRequest('createCity - not complete data'));
       }
-      const city = await City.create({ title, regionId });
-      return res.json(city);
+      const location = await Location.create({ title, regionId });
+      return res.json(location);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
@@ -30,28 +30,12 @@ class AddressController {
 
   async createAddress(req, res, next) {
     try {
-      const { apartment, house, street, cityId, userId } = req.body;
-      if (!house || !street || !cityId) {
+      const { street, building, office, manufacturerId } = req.body;
+      if (!street || !building || !manufacturerId) {
         return next(ApiError.badRequest('createAddress - not complete data'));
       }
-      const address = await Address.create({ apartment, house, street, cityId, userId });
+      const address = await Address.create({ street, building, office, manufacturerId });
       return res.json(address);
-    } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
-    }
-  }
-
-  async getUserAddresses(req, res, next) {
-    try {
-      const { userId } = req.params;
-      if (!userId || !Number(userId)) {
-        return next(ApiError.badRequest('getUserAddresses - not complete data'));
-      }
-      const userAddresses = await Address.findAll({
-        where: { userId },
-        include: [{ model: City, include: [{ model: Region }] }],
-      });
-      return res.json({ userId, userAddresses });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }

@@ -23,9 +23,9 @@ const Address = sequelize.define(
   'address',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    office: { type: DataTypes.STRING },
-    building: { type: DataTypes.STRING, allowNull: false },
     street: { type: DataTypes.STRING, allowNull: false },
+    building: { type: DataTypes.STRING, allowNull: false },
+    office: { type: DataTypes.STRING },
   },
   { timestamps: false }
 );
