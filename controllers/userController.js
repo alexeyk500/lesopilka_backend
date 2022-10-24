@@ -53,7 +53,8 @@ const getUserResponse = async (user, tokenRaw) => {
         location: manufacturerLocation ? {id: manufacturerLocation.id, title: manufacturerLocation.title} :undefined,
         street: manufacturerAddressRaw.street ?manufacturerAddressRaw.street :undefined,
         building: manufacturerAddressRaw.building ?manufacturerAddressRaw.building :undefined,
-        office: manufacturerAddressRaw.office ?manufacturerAddressRaw.office :undefined
+        office: manufacturerAddressRaw.office ?manufacturerAddressRaw.office :undefined,
+        postIndex: manufacturerAddressRaw.postIndex ?manufacturerAddressRaw.postIndex :undefined
       }
     }
   }
@@ -113,7 +114,7 @@ class UserController {
       const response = await getUserResponse(user);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e.original?.detail));
     }
   }
 

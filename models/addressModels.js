@@ -26,6 +26,7 @@ const Address = sequelize.define(
     street: { type: DataTypes.STRING, allowNull: false },
     building: { type: DataTypes.STRING, allowNull: false },
     office: { type: DataTypes.STRING },
+    postIndex: { type: DataTypes.STRING },
   },
   { timestamps: false }
 );
