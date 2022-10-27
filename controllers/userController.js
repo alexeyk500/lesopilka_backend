@@ -6,8 +6,8 @@ const uuid = require('uuid');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
-const { Location, Region, Address} = require('../models/addressModels');
-const {Manufacturer} = require("../models/manufacturerModels");
+const { Location, Region, Address } = require('../models/addressModels');
+const { Manufacturer } = require('../models/manufacturerModels');
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
@@ -17,7 +17,7 @@ const updateModelsField = async (model, field) => {
   if (field) {
     return await model.update(field);
   }
-}
+};
 
 const getUserResponse = async (user, tokenRaw) => {
   let searchRegion;
@@ -25,9 +25,9 @@ const getUserResponse = async (user, tokenRaw) => {
   let manufacturerAddress;
   let token;
   if (tokenRaw) {
-    token = tokenRaw
+    token = tokenRaw;
   } else {
-    token=generateUserToken(user)
+    token = generateUserToken(user);
   }
   if (user.searchRegionId) {
     searchRegion = await Region.findOne({ where: { id: user.searchRegionId } });
@@ -35,7 +35,7 @@ const getUserResponse = async (user, tokenRaw) => {
   if (user.searchLocationId) {
     searchLocation = await Location.findOne({ where: { id: user.searchLocationId } });
   }
-  const manufacturer = await Manufacturer.findOne({where: { userId: user.id }})
+  const manufacturer = await Manufacturer.findOne({ where: { userId: user.id } });
   if (manufacturer) {
     let manufacturerLocation;
     let manufacturerRegion;
@@ -50,12 +50,12 @@ const getUserResponse = async (user, tokenRaw) => {
       manufacturerAddress = {
         id: manufacturerAddressRaw.id,
         region: manufacturerRegion,
-        location: manufacturerLocation ? {id: manufacturerLocation.id, title: manufacturerLocation.title} :undefined,
-        street: manufacturerAddressRaw.street ?manufacturerAddressRaw.street :undefined,
-        building: manufacturerAddressRaw.building ?manufacturerAddressRaw.building :undefined,
-        office: manufacturerAddressRaw.office ?manufacturerAddressRaw.office :undefined,
-        postIndex: manufacturerAddressRaw.postIndex ?manufacturerAddressRaw.postIndex :undefined
-      }
+        location: manufacturerLocation ? { id: manufacturerLocation.id, title: manufacturerLocation.title } : undefined,
+        street: manufacturerAddressRaw.street ? manufacturerAddressRaw.street : undefined,
+        building: manufacturerAddressRaw.building ? manufacturerAddressRaw.building : undefined,
+        office: manufacturerAddressRaw.office ? manufacturerAddressRaw.office : undefined,
+        postIndex: manufacturerAddressRaw.postIndex ? manufacturerAddressRaw.postIndex : undefined,
+      };
     }
   }
 
@@ -114,7 +114,7 @@ class UserController {
       const response = await getUserResponse(user);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e.original?.detail));
+      return next(ApiError.badRequest(e.original.detail));
     }
   }
 
@@ -135,16 +135,16 @@ class UserController {
   async updateUser(req, res, next) {
     try {
       const userEmail = req.user.email;
-      const token = req.headers.authorization.split(' ')[1]
+      const token = req.headers.authorization.split(' ')[1];
       const user = await User.findOne({ where: { email: userEmail } });
       if (!user) {
         return next(ApiError.internal('User not found'));
       }
       const { name, phone, password, searchRegionId, searchLocationId } = req.body;
-      await updateModelsField(user, {name});
-      await updateModelsField(user, {phone});
-      await updateModelsField(user, {searchRegionId});
-      await updateModelsField(user, {searchLocationId});
+      await updateModelsField(user, { name });
+      await updateModelsField(user, { phone });
+      await updateModelsField(user, { searchRegionId });
+      await updateModelsField(user, { searchLocationId });
       if (password) {
         const hashPassword = await bcrypt.hash(password, 3);
         await user.update({ password: hashPassword });

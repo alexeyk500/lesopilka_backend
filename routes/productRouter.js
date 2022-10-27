@@ -7,9 +7,9 @@ productRouter.post('/product', checkRoleMiddleware('ADMIN'), productController.c
 productRouter.post('/description', checkRoleMiddleware('ADMIN'), productController.createDescription);
 productRouter.post('/review', checkRoleMiddleware('ADMIN'), productController.createReview);
 productRouter.post('/material', checkRoleMiddleware('ADMIN'), productController.createProductMaterial);
-productRouter.get('/materials', checkRoleMiddleware('ADMIN'), productController.getAllProductMaterials);
 productRouter.post('/sort', checkRoleMiddleware('ADMIN'), productController.createProductSort);
 productRouter.get('/sorts', productController.getAllProductSorts);
+productRouter.get('/materials', productController.getAllProductMaterials);
 productRouter.get('/product/:productId', productController.getProduct);
 productRouter.delete('/product', checkRoleMiddleware('ADMIN'), productController.deleteProduct);
 productRouter.put('/description', checkRoleMiddleware('ADMIN'), productController.updateDescription);

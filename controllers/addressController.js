@@ -30,7 +30,7 @@ class AddressController {
 
   async createAddress(req, res, next) {
     try {
-      const {locationId, street, building, office, postIndex} = req.body;
+      const { locationId, street, building, office, postIndex } = req.body;
       if (!locationId || !street || !building) {
         return next(ApiError.badRequest('createAddress - request data is not complete'));
       }
