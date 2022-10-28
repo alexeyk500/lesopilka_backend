@@ -157,7 +157,75 @@ const categoryDoska = [
   },
 ];
 
-const categorySizes = [...categoryBrus, ...categoryDoska];
+const categoryBrevno = [
+  {
+    type: 'length',
+    value: 3000,
+    categoryId: 6,
+  },
+  {
+    type: 'length',
+    value: 4000,
+    categoryId: 6,
+  },
+  {
+    type: 'length',
+    value: 5000,
+    categoryId: 6,
+  },
+  {
+    type: 'length',
+    value: 6000,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 100,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 150,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 180,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 200,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 220,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 280,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 300,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 400,
+    categoryId: 6,
+  },
+  {
+    type: 'caliber',
+    value: 500,
+    categoryId: 6,
+  },
+];
+
+const categorySizes = [...categoryBrus, ...categoryDoska, ...categoryBrevno];
 
 const seedCategorySizes = async () => {
   await CategorySize.truncate({ cascade: true, restartIdentity: true });
