@@ -1,7 +1,6 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Address } = require('./addressModels');
-const { ProductReview } = require('./productModels');
 const { Basket } = require('./basketModels');
 
 const User = sequelize.define(
@@ -44,9 +43,6 @@ const PasswordRecoveryCode = sequelize.define(
 
 Address.hasOne(User);
 User.belongsTo(Address);
-
-User.hasMany(ProductReview);
-ProductReview.belongsTo(User);
 
 User.hasMany(Basket);
 Basket.belongsTo(User);

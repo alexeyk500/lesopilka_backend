@@ -1,7 +1,6 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { SubCategory, CategorySize } = require('./categoryModels');
-const { Basket } = require('./basketModels');
 
 const Product = sequelize.define(
   'product',
@@ -25,15 +24,6 @@ const ProductDescription = sequelize.define(
   { timestamps: false }
 );
 
-const ProductReview = sequelize.define(
-  'productReview',
-  {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    review: { type: DataTypes.TEXT, allowNull: false },
-  },
-  { timestamps: false }
-);
-
 const CategorySize_Product = sequelize.define(
   'CategorySize_Product',
   {
@@ -51,14 +41,6 @@ const ProductSort = sequelize.define(
   { timestamps: false }
 );
 
-const ProductSort_Product = sequelize.define(
-  'ProductSort_Product',
-  {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  },
-  { timestamps: false }
-);
-
 const ProductMaterial = sequelize.define(
   'productMaterial',
   {
@@ -70,12 +52,14 @@ const ProductMaterial = sequelize.define(
   { timestamps: false }
 );
 
-
 SubCategory.hasMany(Product);
 Product.belongsTo(SubCategory);
 
 ProductMaterial.hasMany(Product);
 Product.belongsTo(ProductMaterial);
+
+ProductSort.hasMany(Product);
+Product.belongsTo(ProductSort);
 
 Product.hasOne(ProductDescription);
 ProductDescription.belongsTo(Product);
@@ -83,19 +67,10 @@ ProductDescription.belongsTo(Product);
 CategorySize.belongsToMany(Product, { through: CategorySize_Product });
 Product.belongsToMany(CategorySize, { through: CategorySize_Product });
 
-Product.hasMany(ProductReview);
-ProductReview.belongsTo(Product);
-
-Product.hasMany(Basket);
-Basket.belongsTo(Product);
-
-ProductSort.belongsToMany(Product, { through: ProductSort_Product });
-
 module.exports = {
   Product,
   ProductDescription,
   CategorySize_Product,
-  ProductReview,
   ProductMaterial,
   ProductSort,
 };
