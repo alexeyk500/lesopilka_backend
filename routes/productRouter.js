@@ -14,6 +14,6 @@ productRouter.put('/review', checkRoleMiddleware('ADMIN'), productController.upd
 productRouter.put('/septic', checkRoleMiddleware('ADMIN'), productController.updateSeptic);
 productRouter.get('/sorts', productController.getAllProductSorts);
 productRouter.get('/materials', productController.getAllProductMaterials);
-productRouter.get('/product/:productId', productController.getProduct);
+productRouter.get('/:id', productController.getProduct);
 
 module.exports = productRouter;

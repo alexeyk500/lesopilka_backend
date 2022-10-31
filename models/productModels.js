@@ -1,33 +1,18 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { SubCategory, CategorySize } = require('./categoryModels');
+const { Picture } = require('./pictureModels');
+const { Manufacturer } = require('./manufacturerModels');
 
 const Product = sequelize.define(
   'product',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    title: { type: DataTypes.STRING, allowNull: false },
+    code: { type: DataTypes.STRING, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
-    isSeptic: {type: DataTypes.BOOLEAN, defaultValue: false},
+    isSeptic: { type: DataTypes.BOOLEAN, defaultValue: false },
     editionDate: { type: DataTypes.DATE },
     publicationDate: { type: DataTypes.DATE },
-  },
-  { timestamps: false }
-);
-
-const ProductDescription = sequelize.define(
-  'productDescription',
-  {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    description: { type: DataTypes.TEXT, allowNull: false },
-  },
-  { timestamps: false }
-);
-
-const CategorySize_Product = sequelize.define(
-  'CategorySize_Product',
-  {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   },
   { timestamps: false }
 );
@@ -51,6 +36,26 @@ const ProductMaterial = sequelize.define(
   },
   { timestamps: false }
 );
+
+const ProductDescription = sequelize.define(
+  'productDescription',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    description: { type: DataTypes.TEXT, allowNull: false },
+  },
+  { timestamps: false }
+);
+
+const CategorySize_Product = sequelize.define(
+  'CategorySize_Product',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  },
+  { timestamps: false }
+);
+
+Manufacturer.hasMany(Product);
+Product.belongsTo(Manufacturer);
 
 SubCategory.hasMany(Product);
 Product.belongsTo(SubCategory);

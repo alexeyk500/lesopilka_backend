@@ -14,31 +14,52 @@ const {
 const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
+const { Manufacturer } = require('../models/manufacturerModels');
 
 class ProductController {
   async createProduct(req, res, next) {
     try {
-      const { title, price, subcategoryId, categorySizesIds, categorySortsIds, isSeptic } = req.body;
-      if (!title || !price || !subcategoryId) {
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('User not found'));
+      }
+      const manufacturer = await Manufacturer.findOne({ where: { userId } });
+      if (!manufacturer) {
+        return next(ApiError.badRequest('Manufacturer not found'));
+      }
+      const manufacturerId = manufacturer.id;
+      const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds } = req.body;
+      if (
+        !manufacturerId ||
+        !code ||
+        !price ||
+        !subCategoryId ||
+        !productMaterialId ||
+        !productSortId ||
+        !!!categorySizesIds.length
+      ) {
         return next(ApiError.badRequest('createProduct - not complete data'));
       }
+
+      const candidate = await Product.findOne({ where: { manufacturerId, code } });
+      if (candidate) {
+        return next(ApiError.badRequest(`Product with code ${code}, already exist`));
+      }
+
       const editionDate = new Date().toISOString();
       const product = await Product.create({
-        title,
+        code,
         price,
+        isSeptic,
         editionDate,
-        subCategoryId: subcategoryId,
+        manufacturerId,
+        subCategoryId,
+        productMaterialId,
+        productSortId,
       });
       for (const categorySizeId of categorySizesIds) {
         const categorySize = await CategorySize.findByPk(categorySizeId);
         await product.addCategorySize(categorySize);
-      }
-      for (const categorySortId of categorySortsIds) {
-        const categorySort = await CategorySort.findByPk(categorySortId);
-        await product.addCategorySort(categorySort);
-      }
-      if (isSeptic) {
-        await ProductSeptic.create({ productId: product.id, value: isSeptic });
       }
       return res.json(product);
     } catch (e) {
@@ -186,59 +207,82 @@ class ProductController {
 
   async getProduct(req, res, next) {
     try {
-      const { productId } = req.params;
-      if (!productId) {
+      const { id } = req.params;
+      if (!id) {
         return next(ApiError.badRequest('getProduct - not complete data'));
       }
-      const product = await Product.findByPk(productId);
-      const title = await product.get('title');
-      const price = await product.get('price');
-      const editionDate = await product.get('editionDate');
-      const publicationDate = await product.get('publicationDate');
-      const subCategoryId = await product.get('subCategoryId');
-      const subCategory = await SubCategory.findByPk(subCategoryId);
-      const categoryId = subCategory.get('categoryId');
-      const category = await Category.findByPk(categoryId);
-      const subCategoryTitle = subCategory.get('title');
-      const categoryTitle = category.get('title');
-      const productSizes = await CategorySize_Product.findAll({ where: { productId } });
-      const sizes = [];
-      for (const productSize of productSizes) {
-        const productSizeId = productSize.get('categorySizeId');
-        const size = await CategorySize.findByPk(productSizeId);
-        const id = size.get('id');
-        const type = size.get('type');
-        const value = size.get('value');
-        sizes.push({ id, type, value });
-      }
-      const productSorts = await CategorySort_Product.findAll({ where: { productId } });
-      const sorts = [];
-      for (const productSort of productSorts) {
-        const productSortId = productSort.get('categorySortId');
-        const sort = await CategorySort.findByPk(productSortId);
-        const id = sort.get('id');
-        const title = sort.get('title');
-        sorts.push({ id, title });
-      }
-      const description = await ProductDescription.findOne({ where: { productId } });
-      const isSeptic = await ProductSeptic.findOne({ where: { productId } });
-      return res.json({
-        productId,
-        title,
-        price,
-        categoryTitle,
-        subCategoryTitle,
-        sizes: sizes
-          ? sizes.map((size) => {
-              return { type: size.type, value: size.value };
-            })
-          : null,
-        sorts: sorts ? sorts.map((sort) => sort.title) : null,
-        editionDate: editionDate ? editionDate : null,
-        publicationDate: publicationDate ? publicationDate : null,
-        description: description ? description.description : null,
-        isSeptic: isSeptic ? isSeptic.value : null,
+      // const product = await Product.findByPk(id);
+      const product = await Product.findOne({
+        where: { id },
+        // include: [SubCategory, Manufacturer, ProductMaterial, ProductSort],
       });
+      if (!product) {
+        return next(ApiError.badRequest(`Product with id=${id} - was not found`));
+      }
+      // const code = product.code;
+      // const price = product.price;
+      // const isSeptic = product.isSeptic;
+      // const editionDate = product.editionDate;
+      // const publicationDate = product.publicationDate;
+      // const manufacturerId = product.manufacturerId;
+      // const subCategoryId = product.subCategoryId;
+      // const productMaterialId = product.productMaterialId;
+      // const productSortId = product.productSortId;
+      const productSizes = await CategorySize_Product.findAll(
+        {include: {
+            CategorySize,
+          // include: Department
+          }
+        }
+        // { where: { productId: id , include: categorySizeId}}
+      );
+      console.log('productSizes =', productSizes);
+      // return res.json({ product, productSizes });
+      return res.json({productSizes});
+      // return res.json(title, price, editionDate, publicationDate, subCategoryId)
+      // const subCategory = await SubCategory.findByPk(subCategoryId);
+      // const categoryId = subCategory.get('categoryId');
+      // const category = await Category.findByPk(categoryId);
+      // const subCategoryTitle = subCategory.get('title');
+      // const categoryTitle = category.get('title');
+      // const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+      // const sizes = [];
+      // for (const productSize of productSizes) {
+      //   const productSizeId = productSize.get('categorySizeId');
+      //   const size = await CategorySize.findByPk(productSizeId);
+      //   const id = size.get('id');
+      //   const type = size.get('type');
+      //   const value = size.get('value');
+      //   sizes.push({ id, type, value });
+      // }
+      // const productSorts = await CategorySort_Product.findAll({ where: { productId } });
+      // const sorts = [];
+      // for (const productSort of productSorts) {
+      //   const productSortId = productSort.get('categorySortId');
+      //   const sort = await CategorySort.findByPk(productSortId);
+      //   const id = sort.get('id');
+      //   const title = sort.get('title');
+      //   sorts.push({ id, title });
+      // }
+      // const description = await ProductDescription.findOne({ where: { productId } });
+      // const isSeptic = await ProductSeptic.findOne({ where: { productId } });
+      // return res.json({
+      //   productId,
+      //   title,
+      //   price,
+      //   categoryTitle,
+      //   subCategoryTitle,
+      //   sizes: sizes
+      //     ? sizes.map((size) => {
+      //         return { type: size.type, value: size.value };
+      //       })
+      //     : null,
+      //   sorts: sorts ? sorts.map((sort) => sort.title) : null,
+      //   editionDate: editionDate ? editionDate : null,
+      //   publicationDate: publicationDate ? publicationDate : null,
+      //   description: description ? description.description : null,
+      //   isSeptic: isSeptic ? isSeptic.value : null,
+      // });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
