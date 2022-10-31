@@ -70,17 +70,12 @@ const ProductMaterial = sequelize.define(
   { timestamps: false }
 );
 
-const ProductMaterial_Product = sequelize.define(
-  'ProductMaterial_Product',
-  {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  },
-  { timestamps: false }
-);
-
 
 SubCategory.hasMany(Product);
 Product.belongsTo(SubCategory);
+
+ProductMaterial.hasMany(Product);
+Product.belongsTo(ProductMaterial);
 
 Product.hasOne(ProductDescription);
 ProductDescription.belongsTo(Product);
@@ -93,8 +88,6 @@ ProductReview.belongsTo(Product);
 
 Product.hasMany(Basket);
 Basket.belongsTo(Product);
-
-ProductMaterial.belongsToMany(Product, { through: ProductMaterial_Product });
 
 ProductSort.belongsToMany(Product, { through: ProductSort_Product });
 
