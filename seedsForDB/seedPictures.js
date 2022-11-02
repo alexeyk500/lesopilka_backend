@@ -13,12 +13,12 @@ const pictures = [
 const seedPictures = async () => {
   await Picture.truncate({ cascade: true, restartIdentity: true });
   for (let picture of pictures) {
-    const result = await Picture.create({
+    await Picture.create({
       fileName: picture.fileName,
       categoryId: picture.categoryId,
       productId: null,
     });
-    console.log(`Создано ${result}`);
+    console.log(`Создано ${picture.fileName}`);
   }
 };
 

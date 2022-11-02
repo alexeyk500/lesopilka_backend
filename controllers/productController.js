@@ -3,18 +3,18 @@ const path = require('path');
 const ApiError = require('../error/apiError');
 const {
   Product,
-  CategorySize_Product,
-  CategorySort_Product,
   ProductDescription,
   ProductReview,
   ProductSeptic,
   ProductMaterial,
   ProductSort,
 } = require('../models/productModels');
-const { CategorySize, SubCategory, Category, CategorySort } = require('../models/categoryModels');
+const { CategorySize, SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
+const { Address, Location, Region } = require('../models/addressModels');
+const uuid = require('uuid');
 
 class ProductController {
   async createProduct(req, res, next) {
@@ -28,7 +28,10 @@ class ProductController {
         return next(ApiError.badRequest('Manufacturer not found'));
       }
       const manufacturerId = manufacturer.id;
-      const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds } = req.body;
+      console.log('manufacturerId =', manufacturerId);
+
+      const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds, description } =
+        req.body;
       if (
         !manufacturerId ||
         !code ||
@@ -61,6 +64,29 @@ class ProductController {
         const categorySize = await CategorySize.findByPk(categorySizeId);
         await product.addCategorySize(categorySize);
       }
+
+      await ProductDescription.create({ productId: product.id, description });
+
+      let images;
+      if (req.files && req.files.images) {
+        images = req.files.images;
+      }
+      const imageFiles = [];
+      if (images) {
+        if (images.length) {
+          images.forEach((img) => {
+            imageFiles.push(img);
+          });
+        } else {
+          imageFiles.push(images);
+        }
+      }
+      for (const img of imageFiles) {
+        const fileName = uuid.v4() + '.jpg';
+        await img.mv(path.resolve(__dirname, '..', 'static', fileName));
+        await Picture.create({ fileName, productId: product.id });
+      }
+
       return res.json(product);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -211,78 +237,58 @@ class ProductController {
       if (!id) {
         return next(ApiError.badRequest('getProduct - not complete data'));
       }
-      // const product = await Product.findByPk(id);
       const product = await Product.findOne({
         where: { id },
-        // include: [SubCategory, Manufacturer, ProductMaterial, ProductSort],
+        attributes: ['id', 'code', 'price', 'isSeptic', 'editionDate', 'publicationDate'],
+        include: [
+          { model: ProductDescription, attributes: ['id', 'description'] },
+          { model: SubCategory, attributes: ['id', 'title'] },
+          { model: CategorySize, attributes: ['id', 'type', 'value'], through: { attributes: [] } },
+          {
+            model: Manufacturer,
+            attributes: ['id', 'inn', 'title', 'phone'],
+            include: [
+              {
+                model: Address,
+                attributes: ['id', 'street', 'building', 'office', 'postIndex'],
+                include: [
+                  {
+                    model: Location,
+                    attributes: ['id', 'title'],
+                    include: [{ model: Region, attributes: ['id', 'title'] }],
+                  },
+                ],
+              },
+            ],
+          },
+          { model: Picture, attributes: ['id', 'fileName'] },
+        ],
       });
       if (!product) {
         return next(ApiError.badRequest(`Product with id=${id} - was not found`));
       }
-      // const code = product.code;
-      // const price = product.price;
-      // const isSeptic = product.isSeptic;
-      // const editionDate = product.editionDate;
-      // const publicationDate = product.publicationDate;
-      // const manufacturerId = product.manufacturerId;
-      // const subCategoryId = product.subCategoryId;
-      // const productMaterialId = product.productMaterialId;
-      // const productSortId = product.productSortId;
-      const productSizes = await CategorySize_Product.findAll(
-        {include: {
-            CategorySize,
-          // include: Department
-          }
-        }
-        // { where: { productId: id , include: categorySizeId}}
+
+      const pictures = product.pictures.map(
+        (picture) => req.protocol + '://' + req.headers.host + '/' + picture.fileName
       );
-      console.log('productSizes =', productSizes);
-      // return res.json({ product, productSizes });
-      return res.json({productSizes});
-      // return res.json(title, price, editionDate, publicationDate, subCategoryId)
-      // const subCategory = await SubCategory.findByPk(subCategoryId);
-      // const categoryId = subCategory.get('categoryId');
-      // const category = await Category.findByPk(categoryId);
-      // const subCategoryTitle = subCategory.get('title');
-      // const categoryTitle = category.get('title');
-      // const productSizes = await CategorySize_Product.findAll({ where: { productId } });
-      // const sizes = [];
-      // for (const productSize of productSizes) {
-      //   const productSizeId = productSize.get('categorySizeId');
-      //   const size = await CategorySize.findByPk(productSizeId);
-      //   const id = size.get('id');
-      //   const type = size.get('type');
-      //   const value = size.get('value');
-      //   sizes.push({ id, type, value });
-      // }
-      // const productSorts = await CategorySort_Product.findAll({ where: { productId } });
-      // const sorts = [];
-      // for (const productSort of productSorts) {
-      //   const productSortId = productSort.get('categorySortId');
-      //   const sort = await CategorySort.findByPk(productSortId);
-      //   const id = sort.get('id');
-      //   const title = sort.get('title');
-      //   sorts.push({ id, title });
-      // }
-      // const description = await ProductDescription.findOne({ where: { productId } });
-      // const isSeptic = await ProductSeptic.findOne({ where: { productId } });
-      // return res.json({
-      //   productId,
-      //   title,
-      //   price,
-      //   categoryTitle,
-      //   subCategoryTitle,
-      //   sizes: sizes
-      //     ? sizes.map((size) => {
-      //         return { type: size.type, value: size.value };
-      //       })
-      //     : null,
-      //   sorts: sorts ? sorts.map((sort) => sort.title) : null,
-      //   editionDate: editionDate ? editionDate : null,
-      //   publicationDate: publicationDate ? publicationDate : null,
-      //   description: description ? description.description : null,
-      //   isSeptic: isSeptic ? isSeptic.value : null,
-      // });
+
+      const response = {
+        product: {
+          id: product.id,
+          code: product.code,
+          price: product.price,
+          isSeptic: product.isSeptic,
+          editionDate: product.editionDate,
+          publicationDate: product.publicationDate,
+          productDescription: product.description,
+          subCategory: product.subCategory,
+          sizes: product.categorySizes,
+          pictures,
+          manufacturer: product.manufacturer,
+        },
+      };
+
+      return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
