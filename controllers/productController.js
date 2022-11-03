@@ -15,6 +15,7 @@ const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
 const uuid = require('uuid');
+const { formatProduct } = require('../utils/functions');
 
 class ProductController {
   async createProduct(req, res, next) {
@@ -239,54 +240,22 @@ class ProductController {
       }
       const product = await Product.findOne({
         where: { id },
-        attributes: ['id', 'code', 'price', 'isSeptic', 'editionDate', 'publicationDate'],
         include: [
-          { model: ProductDescription, attributes: ['id', 'description'] },
-          { model: SubCategory, attributes: ['id', 'title'] },
-          { model: CategorySize, attributes: ['id', 'type', 'value'], through: { attributes: [] } },
+          { model: ProductDescription },
+          { model: SubCategory },
+          { model: CategorySize },
           {
             model: Manufacturer,
-            attributes: ['id', 'inn', 'title', 'phone'],
-            include: [
-              {
-                model: Address,
-                attributes: ['id', 'street', 'building', 'office', 'postIndex'],
-                include: [
-                  {
-                    model: Location,
-                    attributes: ['id', 'title'],
-                    include: [{ model: Region, attributes: ['id', 'title'] }],
-                  },
-                ],
-              },
-            ],
+            include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
           },
-          { model: Picture, attributes: ['id', 'fileName'] },
+          { model: Picture },
         ],
       });
       if (!product) {
         return next(ApiError.badRequest(`Product with id=${id} - was not found`));
       }
 
-      const pictures = product.pictures.map(
-        (picture) => req.protocol + '://' + req.headers.host + '/' + picture.fileName
-      );
-
-      const response = {
-        product: {
-          id: product.id,
-          code: product.code,
-          price: product.price,
-          isSeptic: product.isSeptic,
-          editionDate: product.editionDate,
-          publicationDate: product.publicationDate,
-          productDescription: product.description,
-          subCategory: product.subCategory,
-          sizes: product.categorySizes,
-          pictures,
-          manufacturer: product.manufacturer,
-        },
-      };
+      const response = { product: formatProduct(product, req.protocol, req.headers.host) };
 
       return res.json(response);
     } catch (e) {

@@ -8,6 +8,7 @@ const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationCon
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
 const { Location, Region, Address } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
+const { formatManufacturer } = require('../utils/functions');
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
@@ -19,44 +20,32 @@ const updateModelsField = async (model, field) => {
   }
 };
 
-const getUserResponse = async (user, tokenRaw) => {
+const getUserResponse = async (userId, tokenRaw) => {
   let searchRegion;
   let searchLocation;
-  let manufacturerAddress;
   let token;
-  if (tokenRaw) {
-    token = tokenRaw;
-  } else {
-    token = generateUserToken(user);
-  }
+
+  const user = await User.findOne({
+    where: { id: userId },
+    include: [
+      {
+        model: Manufacturer,
+        include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
+      },
+    ],
+  });
+
   if (user.searchRegionId) {
     searchRegion = await Region.findOne({ where: { id: user.searchRegionId } });
   }
   if (user.searchLocationId) {
     searchLocation = await Location.findOne({ where: { id: user.searchLocationId } });
   }
-  const manufacturer = await Manufacturer.findOne({ where: { userId: user.id } });
-  if (manufacturer) {
-    let manufacturerLocation;
-    let manufacturerRegion;
-    const manufacturerAddressRaw = await Address.findOne({ where: { id: manufacturer.addressId } });
-    if (manufacturerAddressRaw.locationId) {
-      manufacturerLocation = await Location.findOne({ where: { id: manufacturerAddressRaw.locationId } });
-    }
-    if (manufacturerLocation.regionId) {
-      manufacturerRegion = await Region.findOne({ where: { id: manufacturerLocation.regionId } });
-    }
-    if (manufacturerAddressRaw) {
-      manufacturerAddress = {
-        id: manufacturerAddressRaw.id,
-        region: manufacturerRegion,
-        location: manufacturerLocation ? { id: manufacturerLocation.id, title: manufacturerLocation.title } : undefined,
-        street: manufacturerAddressRaw.street ? manufacturerAddressRaw.street : undefined,
-        building: manufacturerAddressRaw.building ? manufacturerAddressRaw.building : undefined,
-        office: manufacturerAddressRaw.office ? manufacturerAddressRaw.office : undefined,
-        postIndex: manufacturerAddressRaw.postIndex ? manufacturerAddressRaw.postIndex : undefined,
-      };
-    }
+
+  if (tokenRaw) {
+    token = tokenRaw;
+  } else {
+    token = generateUserToken(user);
   }
 
   return {
@@ -66,15 +55,7 @@ const getUserResponse = async (user, tokenRaw) => {
       phone: user.phone ? user.phone : undefined,
       searchRegion: searchRegion ? { id: searchRegion.id, title: searchRegion.title } : undefined,
       searchLocation: searchLocation ? { id: searchLocation.id, title: searchLocation.title } : undefined,
-      manufacturer: manufacturer
-        ? {
-            id: manufacturer.id,
-            inn: manufacturer.inn,
-            title: manufacturer.title,
-            phone: manufacturer.phone,
-            address: manufacturerAddress,
-          }
-        : undefined,
+      manufacturer: user.manufacturer ? formatManufacturer(user.manufacturer) : undefined,
     },
     token,
   };
@@ -93,7 +74,7 @@ class UserController {
       }
       const hashPassword = await bcrypt.hash(password, 3);
       const user = await User.create({ email, password: hashPassword, role });
-      const response = await getUserResponse(user);
+      const response = await getUserResponse(user.id);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -111,7 +92,7 @@ class UserController {
       if (!comparePassword) {
         return next(ApiError.internal('Password is not correct'));
       }
-      const response = await getUserResponse(user);
+      const response = await getUserResponse(user.id);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -125,7 +106,7 @@ class UserController {
       if (!user) {
         return next(ApiError.internal('User not found'));
       }
-      const response = await getUserResponse(user);
+      const response = await getUserResponse(user.id);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -149,7 +130,7 @@ class UserController {
         const hashPassword = await bcrypt.hash(password, 3);
         await user.update({ password: hashPassword });
       }
-      const response = await getUserResponse(user, token);
+      const response = await getUserResponse(user.id, token);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
