@@ -1,6 +1,6 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
-const { Address } = require('./addressModels');
+const { Address, Region, Location } = require('./addressModels');
 const { Basket } = require('./basketModels');
 
 const User = sequelize.define(
@@ -11,8 +11,6 @@ const User = sequelize.define(
     name: { type: DataTypes.STRING },
     phone: { type: DataTypes.STRING },
     role: { type: DataTypes.STRING, defaultValue: 'USER' },
-    searchRegionId: { type: DataTypes.STRING },
-    searchLocationId: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
   },
   { timestamps: false }
@@ -47,8 +45,15 @@ User.belongsTo(Address);
 User.hasMany(Basket);
 Basket.belongsTo(User);
 
+const SearchRegionAndLocation = sequelize.define('searchRegionAndLocation', {}, { timestamps: false });
+User.hasOne(SearchRegionAndLocation);
+SearchRegionAndLocation.belongsTo(User);
+SearchRegionAndLocation.belongsTo(Region);
+SearchRegionAndLocation.belongsTo(Location);
+
 module.exports = {
   User,
   UnconfirmedUser,
   PasswordRecoveryCode,
+  SearchRegionAndLocation,
 };
