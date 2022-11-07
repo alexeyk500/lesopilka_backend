@@ -12,6 +12,7 @@ productRouter.delete('/product', checkRoleMiddleware('ADMIN'), productController
 productRouter.put('/description', checkRoleMiddleware('ADMIN'), productController.updateDescription);
 productRouter.put('/review', checkRoleMiddleware('ADMIN'), productController.updateReview);
 productRouter.put('/septic', checkRoleMiddleware('ADMIN'), productController.updateSeptic);
+productRouter.get('/products', productController.getProducts);
 productRouter.get('/sorts', productController.getAllProductSorts);
 productRouter.get('/materials', productController.getAllProductMaterials);
 productRouter.get('/:id', productController.getProduct);

@@ -39,15 +39,19 @@ const formatManufacturer = (manufacturer) => {
 const formatProduct = (product, protocol, host) => {
   return {
     id: product.id,
-    code: product.code,
-    price: product.price,
+    code: product.code ?product.code :undefined,
+    price: product.price ?product.price :undefined,
     isSeptic: product.isSeptic,
-    editionDate: product.editionDate,
-    publicationDate: product.publicationDate,
-    productDescription: product.description,
-    subCategory: { id: product.subCategory.id, title: product.subCategory.title },
-    sizes: product.categorySizes.map((size) => ({ id: size.id, type: size.type, value: size.value })),
-    pictures: product.pictures.map((picture) => protocol + '://' + host + '/' + picture.fileName),
+    editionDate: product.editionDate ?product.editionDate :undefined,
+    publicationDate: product.publicationDate ?product.publicationDate :undefined,
+    description: product.productDescription.description ?product.productDescription.description :undefined,
+    subCategory: product.subCategory ?{ id: product.subCategory.id, title: product.subCategory.title } :undefined,
+    sizes: product.categorySizes
+      ? product.categorySizes.map((size) => ({ id: size.id, type: size.type, value: size.value }))
+      : undefined,
+    images: product.pictures
+      ? product.pictures.map((picture) => protocol + '://' + host + '/' + picture.fileName)
+      : undefined,
     manufacturer: formatManufacturer(product.manufacturer),
   };
 };

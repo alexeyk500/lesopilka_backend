@@ -14,10 +14,84 @@ const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const uuid = require('uuid');
 const { formatProduct } = require('../utils/functions');
 
 class ProductController {
+  // async createProduct(req, res, next) {
+  //   try {
+  //     const userId = req.user.id;
+  //     if (!userId) {
+  //       return next(ApiError.badRequest('User not found'));
+  //     }
+  //     const manufacturer = await Manufacturer.findOne({ where: { userId } });
+  //     if (!manufacturer) {
+  //       return next(ApiError.badRequest('Manufacturer not found'));
+  //     }
+  //     const manufacturerId = manufacturer.id;
+  //
+  //     const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds, description } =
+  //       req.body;
+  //     if (
+  //       !manufacturerId ||
+  //       !code ||
+  //       !price ||
+  //       !subCategoryId ||
+  //       !productMaterialId ||
+  //       !productSortId ||
+  //       !!!categorySizesIds.length
+  //     ) {
+  //       return next(ApiError.badRequest('createProduct - not complete data'));
+  //     }
+  //
+  //     const candidate = await Product.findOne({ where: { manufacturerId, code } });
+  //     if (candidate) {
+  //       return next(ApiError.badRequest(`Product with code ${code}, already exist`));
+  //     }
+  //
+  //     const editionDate = new Date().toISOString();
+  //     const product = await Product.create({
+  //       code,
+  //       price,
+  //       isSeptic,
+  //       editionDate,
+  //       manufacturerId,
+  //       subCategoryId,
+  //       productMaterialId,
+  //       productSortId,
+  //     });
+  //     for (const categorySizeId of categorySizesIds) {
+  //       const categorySize = await CategorySize.findByPk(categorySizeId);
+  //       await product.addCategorySize(categorySize);
+  //     }
+  //
+  //     await ProductDescription.create({ productId: product.id, description });
+  //
+  //     let images;
+  //     if (req.files && req.files.images) {
+  //       images = req.files.images;
+  //     }
+  //     const imageFiles = [];
+  //     if (images) {
+  //       if (images.length) {
+  //         images.forEach((img) => {
+  //           imageFiles.push(img);
+  //         });
+  //       } else {
+  //         imageFiles.push(images);
+  //       }
+  //     }
+  //     for (const img of imageFiles) {
+  //       const fileName = uuid.v4() + '.jpg';
+  //       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
+  //       await Picture.create({ fileName, productId: product.id });
+  //     }
+  //
+  //     return res.json(product);
+  //   } catch (e) {
+  //     return next(ApiError.badRequest(e.original.detail));
+  //   }
+  // }
+
   async createProduct(req, res, next) {
     try {
       const userId = req.user.id;
@@ -29,65 +103,12 @@ class ProductController {
         return next(ApiError.badRequest('Manufacturer not found'));
       }
       const manufacturerId = manufacturer.id;
-      console.log('manufacturerId =', manufacturerId);
-
-      const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds, description } =
-        req.body;
-      if (
-        !manufacturerId ||
-        !code ||
-        !price ||
-        !subCategoryId ||
-        !productMaterialId ||
-        !productSortId ||
-        !!!categorySizesIds.length
-      ) {
-        return next(ApiError.badRequest('createProduct - not complete data'));
-      }
-
-      const candidate = await Product.findOne({ where: { manufacturerId, code } });
-      if (candidate) {
-        return next(ApiError.badRequest(`Product with code ${code}, already exist`));
-      }
-
       const editionDate = new Date().toISOString();
       const product = await Product.create({
-        code,
-        price,
-        isSeptic,
         editionDate,
         manufacturerId,
-        subCategoryId,
-        productMaterialId,
-        productSortId,
       });
-      for (const categorySizeId of categorySizesIds) {
-        const categorySize = await CategorySize.findByPk(categorySizeId);
-        await product.addCategorySize(categorySize);
-      }
-
-      await ProductDescription.create({ productId: product.id, description });
-
-      let images;
-      if (req.files && req.files.images) {
-        images = req.files.images;
-      }
-      const imageFiles = [];
-      if (images) {
-        if (images.length) {
-          images.forEach((img) => {
-            imageFiles.push(img);
-          });
-        } else {
-          imageFiles.push(images);
-        }
-      }
-      for (const img of imageFiles) {
-        const fileName = uuid.v4() + '.jpg';
-        await img.mv(path.resolve(__dirname, '..', 'static', fileName));
-        await Picture.create({ fileName, productId: product.id });
-      }
-
+      await ProductDescription.create({ productId: product.id });
       return res.json(product);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -240,10 +261,7 @@ class ProductController {
       }
       const product = await Product.findOne({
         where: { id },
-        include: [
-          { model: ProductDescription },
-          { model: SubCategory },
-          { model: CategorySize },
+        include: [ ProductDescription, SubCategory, CategorySize,
           {
             model: Manufacturer,
             include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
@@ -259,6 +277,28 @@ class ProductController {
 
       return res.json(response);
     } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async getProducts(req, res, next) {
+    console.log('DO  getProducts =')
+    try {
+      const products = await Product.findAll({
+        include: [ ProductDescription, SubCategory, CategorySize,
+          {
+            model: Manufacturer,
+            include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
+          },
+          { model: Picture },
+        ],
+        order: [
+          ['id', 'ASC'],
+        ],
+      })
+      return res.json(products.map(prod=>formatProduct(prod, req.protocol, req.headers.host)));
+    }
+     catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
   }

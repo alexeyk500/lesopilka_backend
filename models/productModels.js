@@ -1,15 +1,14 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { SubCategory, CategorySize } = require('./categoryModels');
-const { Picture } = require('./pictureModels');
 const { Manufacturer } = require('./manufacturerModels');
 
 const Product = sequelize.define(
   'product',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    code: { type: DataTypes.STRING, allowNull: false },
-    price: { type: DataTypes.FLOAT, allowNull: false },
+    code: { type: DataTypes.STRING },
+    price: { type: DataTypes.FLOAT },
     isSeptic: { type: DataTypes.BOOLEAN, defaultValue: false },
     editionDate: { type: DataTypes.DATE },
     publicationDate: { type: DataTypes.DATE },
@@ -41,7 +40,7 @@ const ProductDescription = sequelize.define(
   'productDescription',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    description: { type: DataTypes.TEXT, allowNull: false },
+    description: { type: DataTypes.TEXT },
   },
   { timestamps: false }
 );
