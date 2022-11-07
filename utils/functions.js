@@ -37,6 +37,7 @@ const formatManufacturer = (manufacturer) => {
 };
 
 const formatProduct = (product, protocol, host) => {
+  console.log('product =', product)
   return {
     id: product.id,
     code: product.code ?product.code :undefined,
@@ -46,6 +47,8 @@ const formatProduct = (product, protocol, host) => {
     publicationDate: product.publicationDate ?product.publicationDate :undefined,
     description: product.productDescription.description ?product.productDescription.description :undefined,
     subCategory: product.subCategory ?{ id: product.subCategory.id, title: product.subCategory.title } :undefined,
+    material: product.productMaterial ?{ id: product.productMaterial.id, title: product.productMaterial.title } :undefined,
+    sort: product.productSort ?{ id: product.productSort.id, title: product.productSort.title } :undefined,
     sizes: product.categorySizes
       ? product.categorySizes.map((size) => ({ id: size.id, type: size.type, value: size.value }))
       : undefined,

@@ -261,7 +261,7 @@ class ProductController {
       }
       const product = await Product.findOne({
         where: { id },
-        include: [ ProductDescription, SubCategory, CategorySize,
+        include: [ ProductDescription, SubCategory, CategorySize, ProductMaterial, ProductSort,
           {
             model: Manufacturer,
             include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
@@ -282,10 +282,9 @@ class ProductController {
   }
 
   async getProducts(req, res, next) {
-    console.log('DO  getProducts =')
     try {
       const products = await Product.findAll({
-        include: [ ProductDescription, SubCategory, CategorySize,
+        include: [ ProductDescription, SubCategory, CategorySize, ProductMaterial, ProductSort,
           {
             model: Manufacturer,
             include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
