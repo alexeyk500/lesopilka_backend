@@ -131,6 +131,8 @@ class ProductController {
       if (productMaterialId === null || productMaterialId) {
         await updateModelsField(product, { productMaterialId: productMaterialId });
       }
+      const editionDate = new Date().toISOString();
+      await updateModelsField(product, { editionDate });
       const response = await getProductResponse(productId, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {
