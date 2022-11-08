@@ -9,12 +9,34 @@ const {
   ProductMaterial,
   ProductSort,
 } = require('../models/productModels');
-const { CategorySize, SubCategory } = require('../models/categoryModels');
+const { CategorySize, SubCategory, Category } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct } = require('../utils/functions');
+const { formatProduct, updateModelsField } = require('../utils/functions');
+
+const getProductResponse = async (productId, protocol, host) => {
+  const product = await Product.findOne({
+    where: { id: productId },
+    include: [
+      ProductDescription,
+      CategorySize,
+      ProductMaterial,
+      ProductSort,
+      {
+        model: SubCategory,
+        include: [{ model: Category }],
+      },
+      {
+        model: Manufacturer,
+        include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
+      },
+      { model: Picture },
+    ],
+  });
+  return formatProduct(product, protocol, host);
+};
 
 class ProductController {
   // async createProduct(req, res, next) {
@@ -91,6 +113,30 @@ class ProductController {
   //     return next(ApiError.badRequest(e.original.detail));
   //   }
   // }
+
+  async updateProduct(req, res, next) {
+    try {
+      const { productId, subCategoryId, productMaterialId } = req.body;
+      if (!productId) {
+        return next(ApiError.badRequest('productId is missed'));
+      }
+      const product = await Product.findOne({ where: { id: productId } });
+
+      if (!product) {
+        return next(ApiError.badRequest(`product with id=${productId} not found`));
+      }
+      if (subCategoryId === null || subCategoryId) {
+        await updateModelsField(product, { subCategoryId: subCategoryId });
+      }
+      if (productMaterialId === null || productMaterialId) {
+        await updateModelsField(product, { productMaterialId: productMaterialId });
+      }
+      const response = await getProductResponse(productId, req.protocol, req.headers.host);
+      return res.json(response);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
 
   async createProduct(req, res, next) {
     try {
@@ -259,22 +305,7 @@ class ProductController {
       if (!id) {
         return next(ApiError.badRequest('getProduct - not complete data'));
       }
-      const product = await Product.findOne({
-        where: { id },
-        include: [ ProductDescription, SubCategory, CategorySize, ProductMaterial, ProductSort,
-          {
-            model: Manufacturer,
-            include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
-          },
-          { model: Picture },
-        ],
-      });
-      if (!product) {
-        return next(ApiError.badRequest(`Product with id=${id} - was not found`));
-      }
-
-      const response = { product: formatProduct(product, req.protocol, req.headers.host) };
-
+      const response = await getProductResponse(id, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -284,20 +315,22 @@ class ProductController {
   async getProducts(req, res, next) {
     try {
       const products = await Product.findAll({
-        include: [ ProductDescription, SubCategory, CategorySize, ProductMaterial, ProductSort,
+        include: [
+          ProductDescription,
+          SubCategory,
+          CategorySize,
+          ProductMaterial,
+          ProductSort,
           {
             model: Manufacturer,
             include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
           },
           { model: Picture },
         ],
-        order: [
-          ['id', 'ASC'],
-        ],
-      })
-      return res.json(products.map(prod=>formatProduct(prod, req.protocol, req.headers.host)));
-    }
-     catch (e) {
+        order: [['id', 'ASC']],
+      });
+      return res.json(products.map((prod) => formatProduct(prod, req.protocol, req.headers.host)));
+    } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
   }

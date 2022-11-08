@@ -37,7 +37,6 @@ const formatManufacturer = (manufacturer) => {
 };
 
 const formatProduct = (product, protocol, host) => {
-  console.log('product =', product)
   return {
     id: product.id,
     code: product.code ?product.code :undefined,
@@ -46,6 +45,7 @@ const formatProduct = (product, protocol, host) => {
     editionDate: product.editionDate ?product.editionDate :undefined,
     publicationDate: product.publicationDate ?product.publicationDate :undefined,
     description: product.productDescription.description ?product.productDescription.description :undefined,
+    category: product.subCategory?.category ?{ id: product.subCategory.category.id, title: product.subCategory.category.title } :undefined,
     subCategory: product.subCategory ?{ id: product.subCategory.id, title: product.subCategory.title } :undefined,
     material: product.productMaterial ?{ id: product.productMaterial.id, title: product.productMaterial.title } :undefined,
     sort: product.productSort ?{ id: product.productSort.id, title: product.productSort.title } :undefined,
@@ -59,4 +59,11 @@ const formatProduct = (product, protocol, host) => {
   };
 };
 
-module.exports = { formatAddress, formatManufacturer, formatProduct };
+const updateModelsField = async (model, field) => {
+  console.log('model, field =', model, field)
+  if (field) {
+    return await model.update(field);
+  }
+};
+
+module.exports = { formatAddress, formatManufacturer, formatProduct, updateModelsField };

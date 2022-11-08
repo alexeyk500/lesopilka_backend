@@ -8,16 +8,10 @@ const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationCon
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
 const { Location, Region, Address } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
-const { formatManufacturer } = require('../utils/functions');
+const { formatManufacturer, updateModelsField } = require('../utils/functions');
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
-};
-
-const updateModelsField = async (model, field) => {
-  if (field) {
-    return await model.update(field);
-  }
 };
 
 const getUserResponse = async (userId, tokenRaw) => {
