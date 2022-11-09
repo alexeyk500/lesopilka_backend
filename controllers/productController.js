@@ -116,7 +116,7 @@ class ProductController {
 
   async updateProduct(req, res, next) {
     try {
-      const { productId, subCategoryId, productMaterialId } = req.body;
+      const { productId, subCategoryId, productMaterialId, categorySizeId } = req.body;
       if (!productId) {
         return next(ApiError.badRequest('productId is missed'));
       }
@@ -131,6 +131,11 @@ class ProductController {
       if (productMaterialId === null || productMaterialId) {
         await updateModelsField(product, { productMaterialId: productMaterialId });
       }
+      if (categorySizeId) {
+        const categorySize = await CategorySize.findOne({where: {id: categorySizeId}})
+        console.log('categorySize =', categorySize)
+      }
+
       const editionDate = new Date().toISOString();
       await updateModelsField(product, { editionDate });
       const response = await getProductResponse(productId, req.protocol, req.headers.host);
