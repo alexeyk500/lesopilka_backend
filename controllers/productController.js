@@ -467,26 +467,6 @@ module.exports = new ProductController();
 //   }
 // }
 
-// async updateSeptic(req, res, next) {
-//   try {
-//     const { productId, isSeptic } = req.body;
-//     if (!productId) {
-//       return next(ApiError.badRequest('updateSeptic - not complete data'));
-//     }
-//     const oldIsSeptic = await ProductSeptic.findOne({ where: { productId } });
-//     let result;
-//     if (isSeptic && !oldIsSeptic) {
-//       result = await ProductSeptic.create({ productId, value: isSeptic });
-//     }
-//     if (!isSeptic && oldIsSeptic) {
-//       result = await ProductSeptic.destroy({ where: { productId } });
-//     }
-//     return res.json(result);
-//   } catch (e) {
-//     return next(ApiError.badRequest(e.original.detail));
-//   }
-// }
-
 // async updateReview(req, res, next) {
 //   try {
 //     const { productId, review } = req.body;
