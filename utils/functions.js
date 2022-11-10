@@ -37,6 +37,25 @@ const formatManufacturer = (manufacturer) => {
 };
 
 const formatProduct = (product, protocol, host) => {
+  const sizes = [];
+  if (product.categorySizes) {
+    product.categorySizes.forEach((size) =>
+      sizes.push({ id: size.id, type: size.type, value: size.value, isCustomSize: size.isCustomSize })
+    );
+  }
+  if (product.customHeight) {
+    sizes.push({ id: -1, type: 'height', value: product.customHeight, isCustomSize: true });
+  }
+  if (product.customWidth) {
+    sizes.push({ id: -2, type: 'width', value: product.customWidth, isCustomSize: true });
+  }
+  if (product.customLength) {
+    sizes.push({ id: -3, type: 'length', value: product.customLength, isCustomSize: true });
+  }
+  if (product.customCaliber) {
+    sizes.push({ id: -4, type: 'caliber', value: product.customCaliber, isCustomSize: true });
+  }
+
   return {
     id: product.id,
     code: product.code ? product.code : undefined,
@@ -55,9 +74,7 @@ const formatProduct = (product, protocol, host) => {
       ? { id: product.productMaterial.id, title: product.productMaterial.title }
       : undefined,
     sort: product.productSort ? { id: product.productSort.id, title: product.productSort.title } : undefined,
-    sizes: product.categorySizes
-      ? product.categorySizes.map((size) => ({ id: size.id, type: size.type, value: size.value }))
-      : undefined,
+    sizes: !!sizes.length ? sizes : undefined,
     images: product.pictures
       ? product.pictures.map((picture) => protocol + '://' + host + '/' + picture.fileName)
       : undefined,
@@ -66,10 +83,24 @@ const formatProduct = (product, protocol, host) => {
 };
 
 const updateModelsField = async (model, field) => {
-  console.log('model, field =', model, field);
   if (field) {
     return await model.update(field);
   }
 };
 
-module.exports = { formatAddress, formatManufacturer, formatProduct, updateModelsField };
+const dropCustomSizeByType = async (product, type) => {
+  if (type === 'height' && product.customHeight) {
+    await product.update({ customHeight: null });
+  }
+  if (type === 'width' && product.customWidth) {
+    await product.update({ customWidth: null });
+  }
+  if (type === 'length' && product.customLength) {
+    await product.update({ customLength: null });
+  }
+  if (type === 'caliber' && product.customCaliber) {
+    await product.update({ customCaliber: null });
+  }
+};
+
+module.exports = { formatAddress, formatManufacturer, formatProduct, updateModelsField, dropCustomSizeByType };

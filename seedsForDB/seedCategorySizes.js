@@ -231,7 +231,9 @@ const seedCategorySizes = async () => {
   await CategorySize.truncate({ cascade: true, restartIdentity: true });
   for (let categorySize of categorySizes) {
     await categoryController.createCategorySize({ body: categorySize }, res, () => {});
-    console.log(`Создано ${categorySize}`);
+    console.log(
+      `Создан CategorySize = id:${categorySize.categoryId}, type:${categorySize.type}, value:${categorySize.value}`
+    );
   }
 };
 

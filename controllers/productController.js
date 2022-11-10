@@ -8,13 +8,14 @@ const {
   ProductSeptic,
   ProductMaterial,
   ProductSort,
+  CategorySize_Product,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct, updateModelsField } = require('../utils/functions');
+const { formatProduct, updateModelsField, dropCustomSizeByType } = require('../utils/functions');
 
 const getProductResponse = async (productId, protocol, host) => {
   const product = await Product.findOne({
@@ -39,89 +40,32 @@ const getProductResponse = async (productId, protocol, host) => {
 };
 
 class ProductController {
-  // async createProduct(req, res, next) {
-  //   try {
-  //     const userId = req.user.id;
-  //     if (!userId) {
-  //       return next(ApiError.badRequest('User not found'));
-  //     }
-  //     const manufacturer = await Manufacturer.findOne({ where: { userId } });
-  //     if (!manufacturer) {
-  //       return next(ApiError.badRequest('Manufacturer not found'));
-  //     }
-  //     const manufacturerId = manufacturer.id;
-  //
-  //     const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds, description } =
-  //       req.body;
-  //     if (
-  //       !manufacturerId ||
-  //       !code ||
-  //       !price ||
-  //       !subCategoryId ||
-  //       !productMaterialId ||
-  //       !productSortId ||
-  //       !!!categorySizesIds.length
-  //     ) {
-  //       return next(ApiError.badRequest('createProduct - not complete data'));
-  //     }
-  //
-  //     const candidate = await Product.findOne({ where: { manufacturerId, code } });
-  //     if (candidate) {
-  //       return next(ApiError.badRequest(`Product with code ${code}, already exist`));
-  //     }
-  //
-  //     const editionDate = new Date().toISOString();
-  //     const product = await Product.create({
-  //       code,
-  //       price,
-  //       isSeptic,
-  //       editionDate,
-  //       manufacturerId,
-  //       subCategoryId,
-  //       productMaterialId,
-  //       productSortId,
-  //     });
-  //     for (const categorySizeId of categorySizesIds) {
-  //       const categorySize = await CategorySize.findByPk(categorySizeId);
-  //       await product.addCategorySize(categorySize);
-  //     }
-  //
-  //     await ProductDescription.create({ productId: product.id, description });
-  //
-  //     let images;
-  //     if (req.files && req.files.images) {
-  //       images = req.files.images;
-  //     }
-  //     const imageFiles = [];
-  //     if (images) {
-  //       if (images.length) {
-  //         images.forEach((img) => {
-  //           imageFiles.push(img);
-  //         });
-  //       } else {
-  //         imageFiles.push(images);
-  //       }
-  //     }
-  //     for (const img of imageFiles) {
-  //       const fileName = uuid.v4() + '.jpg';
-  //       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
-  //       await Picture.create({ fileName, productId: product.id });
-  //     }
-  //
-  //     return res.json(product);
-  //   } catch (e) {
-  //     return next(ApiError.badRequest(e.original.detail));
-  //   }
-  // }
-
   async updateProduct(req, res, next) {
     try {
-      const { productId, subCategoryId, productMaterialId, categorySizeId } = req.body;
+      const {
+        productId,
+        subCategoryId,
+        productMaterialId,
+        categorySizeId,
+        resetCategorySizeType,
+        customSizeType,
+        customSizeValue,
+        code,
+        price,
+        customHeight,
+        customWidth,
+        customLength,
+        customCaliber,
+        isSeptic,
+        publicationDate,
+        productSortId,
+        clearCategorySizes,
+      } = req.body;
+
       if (!productId) {
         return next(ApiError.badRequest('productId is missed'));
       }
       const product = await Product.findOne({ where: { id: productId } });
-
       if (!product) {
         return next(ApiError.badRequest(`product with id=${productId} not found`));
       }
@@ -131,9 +75,85 @@ class ProductController {
       if (productMaterialId === null || productMaterialId) {
         await updateModelsField(product, { productMaterialId: productMaterialId });
       }
+      if (productSortId === null || productSortId) {
+        await updateModelsField(product, { productSortId: productSortId });
+      }
       if (categorySizeId) {
-        const categorySize = await CategorySize.findOne({where: {id: categorySizeId}})
-        console.log('categorySize =', categorySize)
+        const categorySize = await CategorySize.findOne({ where: { id: categorySizeId } });
+        await dropCustomSizeByType(product, categorySize.type);
+        const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+        let productSizeToChange;
+        for (const productSize of productSizes) {
+          const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
+          if (curCategorySize.type === categorySize.type) {
+            productSizeToChange = productSize;
+            break;
+          }
+        }
+        if (productSizeToChange) {
+          await updateModelsField(productSizeToChange, { categorySizeId: categorySizeId });
+        } else {
+          await CategorySize_Product.create({ productId, categorySizeId });
+        }
+      }
+      if (resetCategorySizeType) {
+        const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+        let productSizeToReset;
+        for (const productSize of productSizes) {
+          const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
+          if (curCategorySize.type === resetCategorySizeType) {
+            productSizeToReset = productSize;
+            break;
+          }
+        }
+        if (productSizeToReset) {
+          await CategorySize_Product.destroy({ where: { id: productSizeToReset.id } });
+        }
+        await dropCustomSizeByType(product, resetCategorySizeType);
+      }
+      if (customSizeType) {
+        if (customSizeType === 'height') {
+          await product.update({ customHeight: customSizeValue ? customSizeValue : null });
+        }
+        if (customSizeType === 'width') {
+          await product.update({ customWidth: customSizeValue ? customSizeValue : null });
+        }
+        if (customSizeType === 'length') {
+          await product.update({ customLength: customSizeValue ? customSizeValue : null });
+        }
+        if (customSizeType === 'caliber') {
+          await product.update({ customCaliber: customSizeValue ? customSizeValue : null });
+        }
+      }
+      if (code === null || code) {
+        await updateModelsField(product, { code: code });
+      }
+      if (price === null || price) {
+        await updateModelsField(product, { price: price });
+      }
+      if (customHeight === null || customHeight) {
+        await updateModelsField(product, { customHeight: customHeight });
+      }
+      if (customWidth === null || customWidth) {
+        await updateModelsField(product, { customWidth: customWidth });
+      }
+      if (customLength === null || customLength) {
+        await updateModelsField(product, { customLength: customLength });
+      }
+      if (customCaliber === null || customCaliber) {
+        await updateModelsField(product, { customCaliber: customCaliber });
+      }
+      if (isSeptic === null || isSeptic) {
+        await updateModelsField(product, { isSeptic: isSeptic });
+      }
+      if (publicationDate === null || publicationDate) {
+        await updateModelsField(product, { publicationDate: publicationDate });
+      }
+      if (clearCategorySizes) {
+        const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+        for (const productSize of productSizes) {
+          await CategorySize_Product.destroy({ where: { id: productSize.id } });
+        }
       }
 
       const editionDate = new Date().toISOString();
@@ -181,19 +201,6 @@ class ProductController {
     }
   }
 
-  async updateDescription(req, res, next) {
-    try {
-      const { productId, description } = req.body;
-      if (!productId) {
-        return next(ApiError.badRequest('updateDescription - not complete data'));
-      }
-      const newDescription = await ProductDescription.update({ description }, { where: { productId } });
-      return res.json(newDescription);
-    } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
-    }
-  }
-
   async createReview(req, res, next) {
     try {
       const { productId, user_id, review } = req.body;
@@ -224,39 +231,6 @@ class ProductController {
   async getAllProductMaterials(req, res) {
     const materials = await ProductMaterial.findAll();
     return res.json(materials);
-  }
-
-  async updateReview(req, res, next) {
-    try {
-      const { productId, review } = req.body;
-      if (!productId) {
-        return next(ApiError.badRequest('updateReview - not complete data'));
-      }
-      const newReview = await ProductReview.update({ review }, { where: { productId } });
-      return res.json(newReview);
-    } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
-    }
-  }
-
-  async updateSeptic(req, res, next) {
-    try {
-      const { productId, isSeptic } = req.body;
-      if (!productId) {
-        return next(ApiError.badRequest('updateSeptic - not complete data'));
-      }
-      const oldIsSeptic = await ProductSeptic.findOne({ where: { productId } });
-      let result;
-      if (isSeptic && !oldIsSeptic) {
-        result = await ProductSeptic.create({ productId, value: isSeptic });
-      }
-      if (!isSeptic && oldIsSeptic) {
-        result = await ProductSeptic.destroy({ where: { productId } });
-      }
-      return res.json(result);
-    } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
-    }
   }
 
   async deleteProduct(req, res, next) {
@@ -344,3 +318,197 @@ class ProductController {
 }
 
 module.exports = new ProductController();
+
+// async createProduct(req, res, next) {
+//   try {
+//     const userId = req.user.id;
+//     if (!userId) {
+//       return next(ApiError.badRequest('User not found'));
+//     }
+//     const manufacturer = await Manufacturer.findOne({ where: { userId } });
+//     if (!manufacturer) {
+//       return next(ApiError.badRequest('Manufacturer not found'));
+//     }
+//     const manufacturerId = manufacturer.id;
+//
+//     const { code, price, isSeptic, subCategoryId, productMaterialId, productSortId, categorySizesIds, description } =
+//       req.body;
+//     if (
+//       !manufacturerId ||
+//       !code ||
+//       !price ||
+//       !subCategoryId ||
+//       !productMaterialId ||
+//       !productSortId ||
+//       !!!categorySizesIds.length
+//     ) {
+//       return next(ApiError.badRequest('createProduct - not complete data'));
+//     }
+//
+//     const candidate = await Product.findOne({ where: { manufacturerId, code } });
+//     if (candidate) {
+//       return next(ApiError.badRequest(`Product with code ${code}, already exist`));
+//     }
+//
+//     const editionDate = new Date().toISOString();
+//     const product = await Product.create({
+//       code,
+//       price,
+//       isSeptic,
+//       editionDate,
+//       manufacturerId,
+//       subCategoryId,
+//       productMaterialId,
+//       productSortId,
+//     });
+//     for (const categorySizeId of categorySizesIds) {
+//       const categorySize = await CategorySize.findByPk(categorySizeId);
+//       await product.addCategorySize(categorySize);
+//     }
+//
+//     await ProductDescription.create({ productId: product.id, description });
+//
+//     let images;
+//     if (req.files && req.files.images) {
+//       images = req.files.images;
+//     }
+//     const imageFiles = [];
+//     if (images) {
+//       if (images.length) {
+//         images.forEach((img) => {
+//           imageFiles.push(img);
+//         });
+//       } else {
+//         imageFiles.push(images);
+//       }
+//     }
+//     for (const img of imageFiles) {
+//       const fileName = uuid.v4() + '.jpg';
+//       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
+//       await Picture.create({ fileName, productId: product.id });
+//     }
+//
+//     return res.json(product);
+//   } catch (e) {
+//     return next(ApiError.badRequest(e.original.detail));
+//   }
+// }
+
+//   const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+//   console.log('productSizes =', productSizes)
+//   let customSizeToChange;
+//   for (const productSize of productSizes) {
+//     const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
+//     if (curCategorySize.type === customSizeType) {
+//       customSizeToChange = productSize;
+//       break;
+//     }
+//   }
+//   console.log('customSizeToChange =', customSizeToChange)
+//   let existingCustomSize
+//   if (customSizeValue) {
+//     console.log('customSize params=', customSizeType, customSizeValue)
+//     existingCustomSize = await CategorySize.findOne({
+//       where: {type: customSizeType, value: customSizeValue, isCustomSize: true}
+//     });
+//   }
+//   console.log('existingCustomSize =', existingCustomSize)
+//   if (customSizeToChange) {
+//     if (existingCustomSize) {
+//       await customSizeToChange.update({categorySizeId: existingCustomSize.id})
+//     } else {
+//       const newCustomSize = await CategorySize.create({type: customSizeType, value: customSizeValue, isCustomSize: true });
+//       await customSizeToChange.update({categorySizeId: newCustomSize.id})
+//     }
+//   } else {
+//     if (existingCustomSize) {
+//       await CategorySize_Product.create({productId, categorySizeId: existingCustomSize.id})
+//     } else {
+//       const newCustomSize = await CategorySize.create({type: customSizeType, value: customSizeValue, isCustomSize: true });
+//       await CategorySize_Product.create({productId, categorySizeId: newCustomSize.id})
+//     }
+//   }
+// }
+
+// if (customSizeType) {
+//   const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+//   console.log('productSizes =', productSizes)
+//   let customSizeToChange;
+//   for (const productSize of productSizes) {
+//     const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
+//     if (curCategorySize.type === customSizeType) {
+//       customSizeToChange = productSize;
+//       break;
+//     }
+//   }
+//   console.log('customSizeToChange =', customSizeToChange)
+//   let existingCustomSize
+//   if (customSizeValue) {
+//     console.log('customSize params=', customSizeType, customSizeValue)
+//     existingCustomSize = await CategorySize.findOne({
+//       where: {type: customSizeType, value: customSizeValue, isCustomSize: true}
+//     });
+//   }
+//   console.log('existingCustomSize =', existingCustomSize)
+//   if (customSizeToChange) {
+//     if (existingCustomSize) {
+//       await customSizeToChange.update({categorySizeId: existingCustomSize.id})
+//     } else {
+//       const newCustomSize = await CategorySize.create({type: customSizeType, value: customSizeValue, isCustomSize: true });
+//       await customSizeToChange.update({categorySizeId: newCustomSize.id})
+//     }
+//   } else {
+//     if (existingCustomSize) {
+//       await CategorySize_Product.create({productId, categorySizeId: existingCustomSize.id})
+//     } else {
+//       const newCustomSize = await CategorySize.create({type: customSizeType, value: customSizeValue, isCustomSize: true });
+//       await CategorySize_Product.create({productId, categorySizeId: newCustomSize.id})
+//     }
+//   }
+// }
+
+// async updateSeptic(req, res, next) {
+//   try {
+//     const { productId, isSeptic } = req.body;
+//     if (!productId) {
+//       return next(ApiError.badRequest('updateSeptic - not complete data'));
+//     }
+//     const oldIsSeptic = await ProductSeptic.findOne({ where: { productId } });
+//     let result;
+//     if (isSeptic && !oldIsSeptic) {
+//       result = await ProductSeptic.create({ productId, value: isSeptic });
+//     }
+//     if (!isSeptic && oldIsSeptic) {
+//       result = await ProductSeptic.destroy({ where: { productId } });
+//     }
+//     return res.json(result);
+//   } catch (e) {
+//     return next(ApiError.badRequest(e.original.detail));
+//   }
+// }
+
+// async updateReview(req, res, next) {
+//   try {
+//     const { productId, review } = req.body;
+//     if (!productId) {
+//       return next(ApiError.badRequest('updateReview - not complete data'));
+//     }
+//     const newReview = await ProductReview.update({ review }, { where: { productId } });
+//     return res.json(newReview);
+//   } catch (e) {
+//     return next(ApiError.badRequest(e.original.detail));
+//   }
+// }
+
+// async updateDescription(req, res, next) {
+//   try {
+//     const { productId, description } = req.body;
+//     if (!productId) {
+//       return next(ApiError.badRequest('updateDescription - not complete data'));
+//     }
+//     const newDescription = await ProductDescription.update({ description }, { where: { productId } });
+//     return res.json(newDescription);
+//   } catch (e) {
+//     return next(ApiError.badRequest(e.original.detail));
+//   }
+// }
