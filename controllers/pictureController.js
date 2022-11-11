@@ -13,11 +13,11 @@ class PictureController {
       }
       const fileName = uuid.v4() + '.jpg';
       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
-      const productPictures = await Picture.findAll({where: {productId}})
+      const productPictures = await Picture.findAll({ where: { productId } });
       let order = 1;
       for (const curPicture of productPictures) {
         if (curPicture.order) {
-          order +=1
+          order += 1;
         }
       }
       const picture = await Picture.create({
@@ -32,7 +32,7 @@ class PictureController {
     }
   }
 
-  async deletePicture (req, res, next) {
+  async deletePicture(req, res, next) {
     try {
       const { fileName } = req.body;
       const result = await Picture.destroy({ where: { fileName: fileName } });

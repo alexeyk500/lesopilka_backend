@@ -56,7 +56,7 @@ const formatProduct = (product, protocol, host) => {
     sizes.push({ id: -4, type: 'caliber', value: product.customCaliber, isCustomSize: true });
   }
 
-  console.log('product.pictures =', product.pictures)
+  console.log('product.pictures =', product.pictures);
 
   return {
     id: product.id,

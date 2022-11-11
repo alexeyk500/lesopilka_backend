@@ -79,7 +79,7 @@ class ProductController {
         await updateModelsField(product, { productSortId: productSortId });
       }
       if (isSeptic === null || isSeptic) {
-        await updateModelsField(product, { isSeptic: !!isSeptic});
+        await updateModelsField(product, { isSeptic: !!isSeptic });
       }
       if (categorySizeId) {
         const categorySize = await CategorySize.findOne({ where: { id: categorySizeId } });
