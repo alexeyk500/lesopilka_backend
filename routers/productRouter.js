@@ -3,16 +3,19 @@ const productRouter = new Router();
 const checkRoleMiddleware = require('../middleware/checkRoleMiddleware');
 const productController = require('../controllers/productController');
 
-productRouter.post('/', checkRoleMiddleware('ADMIN'), productController.createProduct);
-productRouter.post('/description', checkRoleMiddleware('ADMIN'), productController.createDescription);
-productRouter.post('/review', checkRoleMiddleware('ADMIN'), productController.createReview);
-productRouter.post('/material', checkRoleMiddleware('ADMIN'), productController.createProductMaterial);
-productRouter.post('/sort', checkRoleMiddleware('ADMIN'), productController.createProductSort);
-productRouter.delete('/product', checkRoleMiddleware('ADMIN'), productController.deleteProduct);
-productRouter.put('/', checkRoleMiddleware('ADMIN'), productController.updateProduct);
+productRouter.post('/', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createProduct);
+productRouter.post('/description', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createDescription);
+productRouter.post('/review', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createReview);
+productRouter.post(
+  '/material',
+  checkRoleMiddleware(['ADMIN', 'MANUFACTURER']),
+  productController.createProductMaterial
+);
+productRouter.post('/sort', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createProductSort);
+productRouter.delete('/product', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.deleteProduct);
+productRouter.put('/', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.updateProduct);
 // productRouter.put('/description', checkRoleMiddleware('ADMIN'), productController.updateDescription);
 // productRouter.put('/review', checkRoleMiddleware('ADMIN'), productController.updateReview);
-// productRouter.put('/septic', checkRoleMiddleware('ADMIN'), productController.updateSeptic);
 productRouter.get('/products', productController.getProducts);
 productRouter.get('/sorts', productController.getAllProductSorts);
 productRouter.get('/materials', productController.getAllProductMaterials);

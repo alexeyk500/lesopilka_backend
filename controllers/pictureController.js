@@ -2,6 +2,7 @@ const uuid = require('uuid');
 const path = require('path');
 const ApiError = require('../error/apiError');
 const { Picture } = require('../models/pictureModels');
+const { checkManufacturerForProduct } = require('../utils/functions');
 
 class PictureController {
   async uploadPicture(req, res, next) {
@@ -35,6 +36,18 @@ class PictureController {
   async deletePicture(req, res, next) {
     try {
       const { fileName } = req.body;
+      const picture = await Picture.findOne({ where: { fileName: fileName } });
+      if (!picture) {
+        return next(ApiError.badRequest(`Image with fileName=${fileName} does not exist`));
+      }
+      const productId = picture.productId;
+      if (!productId) {
+        return next(ApiError.badRequest(`Could not find product for image with fileName=${fileName}`));
+      }
+      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkResult) {
+        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      }
       const result = await Picture.destroy({ where: { fileName: fileName } });
       return res.json({ fileName, result });
     } catch (e) {

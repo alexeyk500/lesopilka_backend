@@ -1,3 +1,7 @@
+const { Manufacturer } = require('../models/manufacturerModels');
+const { User } = require('../models/userModels');
+const { Product } = require('../models/productModels');
+
 const formatAddress = (address) => {
   if (!address) {
     return undefined;
@@ -56,8 +60,6 @@ const formatProduct = (product, protocol, host) => {
     sizes.push({ id: -4, type: 'caliber', value: product.customCaliber, isCustomSize: true });
   }
 
-  console.log('product.pictures =', product.pictures);
-
   return {
     id: product.id,
     code: product.code ? product.code : undefined,
@@ -105,4 +107,23 @@ const dropCustomSizeByType = async (product, type) => {
   }
 };
 
-module.exports = { formatAddress, formatManufacturer, formatProduct, updateModelsField, dropCustomSizeByType };
+const checkManufacturerForProduct = async (userId, productId) => {
+  const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
+  if (!userCandidate.manufacturer) {
+    return false;
+  }
+  const product = await Product.findOne({ where: { id: productId } });
+  if (!product.manufacturerId) {
+    return false;
+  }
+  return userCandidate.manufacturer.id === product.manufacturerId;
+};
+
+module.exports = {
+  formatAddress,
+  formatManufacturer,
+  formatProduct,
+  updateModelsField,
+  dropCustomSizeByType,
+  checkManufacturerForProduct,
+};

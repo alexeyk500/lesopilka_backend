@@ -10,10 +10,6 @@ class ManufacturerController {
       if (!userId || !title || !inn || !phone || !locationId || !street || !building || !postIndex) {
         return next(ApiError.badRequest('createManufacturer - request data is not complete'));
       }
-      // const candidateUserId = await Manufacturer.findOne({where: {userId}});
-      // if (candidateUserId) {
-      //   return next(ApiError.badRequest(`Manufacturer for userId=${userId} already has been registered`));
-      // }
       const candidateWithInn = await Manufacturer.findOne({ where: { inn } });
       if (candidateWithInn) {
         return next(ApiError.badRequest(`Manufacturer with inn=${inn} already has been registered`));

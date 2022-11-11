@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-module.exports = function (role) {
+module.exports = function (roles) {
   return function (req, res, next) {
     if (req.method === 'OPTIONS') {
       next();
@@ -11,7 +11,7 @@ module.exports = function (role) {
         return res.status(401).json({ message: 'user is not authorized' });
       }
       const decoded = jwt.verify(token, process.env.SECRET_KEY);
-      if (decoded.role !== role) {
+      if (!roles.includes(decoded.role)) {
         return res.status(401).json({ message: 'You do not have access rights' });
       }
       req.user = decoded;
