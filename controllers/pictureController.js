@@ -9,6 +9,12 @@ class PictureController {
     try {
       const { categoryId, productId } = req.body;
       const { img } = req.files;
+
+      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkResult) {
+        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      }
+
       if (!img || !(!!categoryId || !!productId)) {
         return next(ApiError.badRequest('Not valid data for uploadPicture'));
       }

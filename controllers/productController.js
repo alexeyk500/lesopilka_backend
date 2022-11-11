@@ -15,7 +15,12 @@ const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct, updateModelsField, dropCustomSizeByType } = require('../utils/functions');
+const {
+  formatProduct,
+  updateModelsField,
+  dropCustomSizeByType,
+  checkManufacturerForProduct,
+} = require('../utils/functions');
 
 const getProductResponse = async (productId, protocol, host) => {
   const product = await Product.findOne({
@@ -65,6 +70,12 @@ class ProductController {
       if (!productId) {
         return next(ApiError.badRequest('productId is missed'));
       }
+
+      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkResult) {
+        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      }
+
       const product = await Product.findOne({ where: { id: productId } });
       if (!product) {
         return next(ApiError.badRequest(`product with id=${productId} not found`));
@@ -239,6 +250,12 @@ class ProductController {
   async deleteProduct(req, res, next) {
     try {
       const { productId } = req.body;
+
+      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkResult) {
+        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      }
+
       if (!productId) {
         return next(ApiError.badRequest('deleteProduct - not complete data'));
       }
