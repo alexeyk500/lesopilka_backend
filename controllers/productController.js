@@ -315,7 +315,10 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
+      const { mid } = req.query;
+      const searchManufacturerParams = mid ? { manufacturerId: mid } : undefined;
       const products = await Product.findAll({
+        where: searchManufacturerParams,
         include: [
           ProductDescription,
           SubCategory,
