@@ -12,12 +12,12 @@ const seedDB = async () => {
     await sequelize.authenticate();
     await sequelize.sync();
     console.log('Начал заполнение БД');
-    await seedCategory();
-    await seedSubCategories();
-    await seedPictures();
-    await seedProductMaterials();
-    await seedCategorySizes();
-    await seedProductSorts();
+    // await seedCategory();
+    // await seedSubCategories();
+    // await seedPictures();
+    // await seedProductMaterials();
+    // await seedCategorySizes();
+    // await seedProductSorts();
     console.log('Окончил заполнение БД');
   } catch (e) {
     console.log(e);

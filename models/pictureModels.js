@@ -8,6 +8,7 @@ const Picture = sequelize.define(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     fileName: { type: DataTypes.STRING },
+    order: { type: DataTypes.INTEGER }
   },
   { timestamps: false }
 );

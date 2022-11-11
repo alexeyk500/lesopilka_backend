@@ -13,12 +13,30 @@ class PictureController {
       }
       const fileName = uuid.v4() + '.jpg';
       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
+      const productPictures = await Picture.findAll({where: {productId}})
+      let order = 1;
+      for (const curPicture of productPictures) {
+        if (curPicture.order) {
+          order +=1
+        }
+      }
       const picture = await Picture.create({
         fileName,
         categoryId,
         productId,
+        order,
       });
       return res.json({ picture });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async deletePicture (req, res, next) {
+    try {
+      const { fileName } = req.body;
+      const result = await Picture.destroy({ where: { fileName: fileName } });
+      return res.json({ fileName, result });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
