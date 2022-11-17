@@ -71,9 +71,9 @@ class ProductController {
         return next(ApiError.badRequest('productId is missed'));
       }
 
-      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
-      if (!checkResult) {
-        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkManufacturer) {
+        return next(ApiError.badRequest('Only manufacturer can edit the product'));
       }
 
       const product = await Product.findOne({ where: { id: productId } });
@@ -251,9 +251,9 @@ class ProductController {
     try {
       const { productId } = req.body;
 
-      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
-      if (!checkResult) {
-        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkManufacturer) {
+        return next(ApiError.badRequest('Only manufacturer can edit the product'));
       }
 
       if (!productId) {
@@ -315,10 +315,23 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid } = req.query;
-      const searchManufacturerParams = mid ? { manufacturerId: mid } : undefined;
+      const { mid, cid, scid } = req.query;
+      let searchParams = {};
+      if (cid && cid > 0 && !scid) {
+        const subCategories = await SubCategory.findAll({ where: { categoryId: cid } });
+        const searchSubCategories = subCategories.map((subCategory) => subCategory.id);
+        if (searchSubCategories) {
+          searchParams.subCategoryId = searchSubCategories;
+        }
+      }
+      if (scid && scid > 0) {
+        searchParams.subCategoryId = scid;
+      }
+      if (mid && mid > 0) {
+        searchParams.manufacturerId = mid;
+      }
       const products = await Product.findAll({
-        where: searchManufacturerParams,
+        where: searchParams,
         include: [
           ProductDescription,
           SubCategory,
@@ -334,6 +347,30 @@ class ProductController {
         order: [['id', 'ASC']],
       });
       return res.json(products.map((prod) => formatProduct(prod, req.protocol, req.headers.host)));
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async updateDescription(req, res, next) {
+    try {
+      const { productId, description } = req.body;
+      if (!productId || (!description && description !== null)) {
+        return next(ApiError.badRequest('updateDescription - not complete data'));
+      }
+      const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
+      if (!checkManufacturer) {
+        return next(ApiError.badRequest('Only manufacturer can edit the product'));
+      }
+      const product = await Product.findOne({ where: { id: productId } });
+      if (!product) {
+        return next(ApiError.badRequest(`Product with id=${productId} not found`));
+      }
+      await ProductDescription.update({ description }, { where: { productId } });
+      const editionDate = new Date().toISOString();
+      await updateModelsField(product, { editionDate });
+      const response = await getProductResponse(productId, req.protocol, req.headers.host);
+      return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
@@ -498,19 +535,6 @@ module.exports = new ProductController();
 //     }
 //     const newReview = await ProductReview.update({ review }, { where: { productId } });
 //     return res.json(newReview);
-//   } catch (e) {
-//     return next(ApiError.badRequest(e.original.detail));
-//   }
-// }
-
-// async updateDescription(req, res, next) {
-//   try {
-//     const { productId, description } = req.body;
-//     if (!productId) {
-//       return next(ApiError.badRequest('updateDescription - not complete data'));
-//     }
-//     const newDescription = await ProductDescription.update({ description }, { where: { productId } });
-//     return res.json(newDescription);
 //   } catch (e) {
 //     return next(ApiError.badRequest(e.original.detail));
 //   }

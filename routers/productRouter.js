@@ -14,7 +14,7 @@ productRouter.post(
 productRouter.post('/sort', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createProductSort);
 productRouter.delete('/product', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.deleteProduct);
 productRouter.put('/', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.updateProduct);
-// productRouter.put('/description', checkRoleMiddleware('ADMIN'), productController.updateDescription);
+productRouter.put('/description', checkRoleMiddleware('ADMIN'), productController.updateDescription);
 // productRouter.put('/review', checkRoleMiddleware('ADMIN'), productController.updateReview);
 productRouter.get('/products', productController.getProducts);
 productRouter.get('/sorts', productController.getAllProductSorts);
