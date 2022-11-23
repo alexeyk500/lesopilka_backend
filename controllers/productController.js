@@ -22,6 +22,20 @@ const {
   checkManufacturerForProduct,
 } = require('../utils/functions');
 
+const filterProductsBySize = async (sizeId, productsIds) => {
+  if (sizeId && Number(sizeId) > 0) {
+    const filteredSizeProducts = await Product.findAll({
+      where: { id: productsIds },
+      include: [{ model: CategorySize, where: { id: sizeId } }],
+    });
+    const searchedProductIds = filteredSizeProducts.map((product) => product.id);
+    console.log('filterProductsBySize sizeId=', sizeId, searchedProductIds);
+    return searchedProductIds;
+  } else {
+    return productsIds;
+  }
+};
+
 const getProductResponse = async (productId, protocol, host) => {
   const product = await Product.findOne({
     where: { id: productId },
@@ -315,23 +329,77 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid, cid, scid } = req.query;
+      const { mid, cid, scid, hsid, wsid, csid, lsid, psid, sep, slid, srid } = req.query;
       let searchParams = {};
-      if (cid && cid > 0 && !scid) {
+      if (scid && Number(scid) > 0) {
+        searchParams.subCategoryId = scid;
+      }
+      if (!scid && cid && Number(cid > 0)) {
         const subCategories = await SubCategory.findAll({ where: { categoryId: cid } });
         const searchSubCategories = subCategories.map((subCategory) => subCategory.id);
         if (searchSubCategories) {
           searchParams.subCategoryId = searchSubCategories;
         }
       }
-      if (scid && scid > 0) {
-        searchParams.subCategoryId = scid;
-      }
-      if (mid && mid > 0) {
+      if (mid && Number(mid) > 0) {
         searchParams.manufacturerId = mid;
       }
+      if (psid && Number(psid) > 0) {
+        searchParams.productSortId = psid;
+      }
+      if (sep && Number(sep) > 0) {
+        if (sep === '1') {
+          searchParams.isSeptic = false;
+        }
+        if (sep === '2') {
+          searchParams.isSeptic = true;
+        }
+      }
+
+      const searchedProducts = await Product.findAll({ where: searchParams });
+      let searchedProductIds = searchedProducts.map((product) => product.id);
+      searchedProductIds = await filterProductsBySize(hsid, searchedProductIds);
+      searchedProductIds = await filterProductsBySize(wsid, searchedProductIds);
+      searchedProductIds = await filterProductsBySize(csid, searchedProductIds);
+      searchedProductIds = await filterProductsBySize(lsid, searchedProductIds);
+
+      if (slid && Number(slid) > 0) {
+        const filteredByLocationProducts = await Product.findAll({
+          where: { id: searchedProductIds },
+          include: {
+            model: Manufacturer,
+            required: true,
+            include: {
+              model: Address,
+              where: { locationId: slid },
+            },
+          },
+        });
+        searchedProductIds = filteredByLocationProducts.map((product) => product.id);
+      }
+      if (!slid && srid && Number(srid) > 0) {
+        const filteredByLocationProducts = await Product.findAll({
+          where: { id: searchedProductIds },
+          include: {
+            model: Manufacturer,
+            required: true,
+            include: {
+              model: Address,
+              required: true,
+              include: [
+                {
+                  model: Location,
+                  where: { regionId: srid },
+                },
+              ],
+            },
+          },
+        });
+        searchedProductIds = filteredByLocationProducts.map((product) => product.id);
+      }
+
       const products = await Product.findAll({
-        where: searchParams,
+        where: { id: searchedProductIds },
         include: [
           ProductDescription,
           SubCategory,
