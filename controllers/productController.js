@@ -4,8 +4,6 @@ const ApiError = require('../error/apiError');
 const {
   Product,
   ProductDescription,
-  ProductReview,
-  ProductSeptic,
   ProductMaterial,
   ProductSort,
   CategorySize_Product,
@@ -229,19 +227,6 @@ class ProductController {
     }
   }
 
-  async createReview(req, res, next) {
-    try {
-      const { productId, user_id, review } = req.body;
-      if (!productId || !user_id || !review) {
-        return next(ApiError.badRequest('createReview - not complete data'));
-      }
-      const newReview = await ProductReview.create({ productId, userId: user_id, review });
-      return res.json(newReview);
-    } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
-    }
-  }
-
   async createProductMaterial(req, res, next) {
     try {
       const { title, isPine } = req.body;
@@ -264,29 +249,29 @@ class ProductController {
   async deleteProduct(req, res, next) {
     try {
       const { productId } = req.body;
-
       const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
       if (!checkManufacturer) {
-        return next(ApiError.badRequest('Only manufacturer can edit the product'));
+        return next(ApiError.badRequest('Only manufacturer can delete the product'));
       }
-
       if (!productId) {
         return next(ApiError.badRequest('deleteProduct - not complete data'));
       }
-      const picture = await Picture.findOne({ where: { productId } });
-      if (picture && picture.fileName) {
-        const fullFileName = path.resolve(__dirname, '..', 'static', picture.fileName);
-        fs.unlink(fullFileName, function (err) {
-          if (err) {
-            console.log(fullFileName, '- does not exist');
-          } else {
-            console.log(fullFileName, '- removed');
+      const pictures = await Picture.findAll({ where: { productId } });
+      if (pictures.length > 0) {
+        for (const picture in pictures) {
+          if (picture && picture.fileName) {
+            const fullFileName = path.resolve(__dirname, '..', 'static', picture.fileName);
+            await fs.unlink(fullFileName, function (err) {
+              if (err) {
+                console.log(fullFileName, '- does not exist');
+              } else {
+                console.log(fullFileName, '- removed');
+              }
+            });
           }
-        });
+        }
       }
-      await ProductSeptic.destroy({ where: { productId } });
       await ProductDescription.destroy({ where: { productId } });
-      await ProductReview.destroy({ where: { productId } });
       await Basket.destroy({ where: { productId } });
       await Picture.destroy({ where: { productId } });
       const result = await Product.destroy({ where: { id: productId } });
@@ -446,6 +431,19 @@ class ProductController {
 }
 
 module.exports = new ProductController();
+
+// async createReview(req, res, next) {
+//   try {
+//     const { productId, user_id, review } = req.body;
+//     if (!productId || !user_id || !review) {
+//       return next(ApiError.badRequest('createReview - not complete data'));
+//     }
+//     const newReview = await ProductReview.create({ productId, userId: user_id, review });
+//     return res.json(newReview);
+//   } catch (e) {
+//     return next(ApiError.badRequest(e.original.detail));
+//   }
+// }
 
 // async createProduct(req, res, next) {
 //   try {
