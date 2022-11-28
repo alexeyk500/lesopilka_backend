@@ -50,9 +50,9 @@ const getProductResponse = async (productId, protocol, host) => {
         model: Manufacturer,
         include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
       },
-      { model: Picture},
+      { model: Picture },
     ],
-    order: [[Picture, 'order', 'ASC']]
+    order: [[Picture, 'order', 'ASC']],
   });
   return formatProduct(product, protocol, host);
 };
@@ -396,9 +396,12 @@ class ProductController {
             model: Manufacturer,
             include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
           },
-          { model: Picture, order: [['order', 'ASC']]},
+          { model: Picture, order: [['order', 'ASC']] },
         ],
-        order: [['id', 'ASC'], [Picture, 'order', 'ASC']],
+        order: [
+          ['id', 'ASC'],
+          [Picture, 'order', 'ASC'],
+        ],
       });
       return res.json(products.map((prod) => formatProduct(prod, req.protocol, req.headers.host)));
     } catch (e) {
