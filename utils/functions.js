@@ -1,6 +1,7 @@
 const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
 const { Product } = require('../models/productModels');
+const { SizeTypeEnum } = require('./constatnts');
 
 const formatAddress = (address) => {
   if (!address) {
@@ -41,28 +42,34 @@ const formatManufacturer = (manufacturer) => {
 };
 
 const formatProduct = (product, protocol, host) => {
-  const sizes = [];
-  if (product.categorySizes) {
-    product.categorySizes.forEach((size) =>
-      sizes.push({ id: size.id, type: size.type, value: size.value, isCustomSize: size.isCustomSize })
-    );
-  }
-  if (product.customHeight) {
-    sizes.push({ id: -1, type: 'height', value: product.customHeight, isCustomSize: true });
-  }
-  if (product.customWidth) {
-    sizes.push({ id: -2, type: 'width', value: product.customWidth, isCustomSize: true });
-  }
-  if (product.customLength) {
-    sizes.push({ id: -3, type: 'length', value: product.customLength, isCustomSize: true });
-  }
-  if (product.customCaliber) {
-    sizes.push({ id: -4, type: 'caliber', value: product.customCaliber, isCustomSize: true });
-  }
+  // const sizes = [];
+  // if (product.categorySizes) {
+  //   product.categorySizes.forEach((size) =>
+  //     sizes.push({ id: size.id, type: size.type, value: size.value, isCustomSize: size.isCustomSize })
+  //   );
+  // }
+  // if (product.customHeight) {
+  //   sizes.push({ id: -1, type: 'height', value: product.customHeight, isCustomSize: true });
+  // }
+  // if (product.customWidth) {
+  //   sizes.push({ id: -2, type: 'width', value: product.customWidth, isCustomSize: true });
+  // }
+  // if (product.customLength) {
+  //   sizes.push({ id: -3, type: 'length', value: product.customLength, isCustomSize: true });
+  // }
+  // if (product.customCaliber) {
+  //   sizes.push({ id: -4, type: 'caliber', value: product.customCaliber, isCustomSize: true });
+  // }
+
+  console.log('product =', product)
 
   return {
     id: product.id,
     code: product.code ? product.code : undefined,
+    height: product.height ?product.height :undefined,
+    width: product.width ?product.width :undefined,
+    length: product.length ?product.length :undefined,
+    caliber: product.caliber ?product.caliber :undefined,
     price: product.price ? product.price : undefined,
     isSeptic: product.isSeptic,
     editionDate: product.editionDate ? product.editionDate : undefined,
@@ -78,7 +85,6 @@ const formatProduct = (product, protocol, host) => {
       ? { id: product.productMaterial.id, title: product.productMaterial.title }
       : undefined,
     sort: product.productSort ? { id: product.productSort.id, title: product.productSort.title } : undefined,
-    sizes: !!sizes.length ? sizes : undefined,
     images: product.pictures
       ? product.pictures.map((picture) => protocol + '://' + host + '/' + picture.fileName)
       : undefined,
@@ -93,16 +99,16 @@ const updateModelsField = async (model, field) => {
 };
 
 const dropCustomSizeByType = async (product, type) => {
-  if (type === 'height' && product.customHeight) {
+  if (type === SizeTypeEnum.height && product.customHeight) {
     await product.update({ customHeight: null });
   }
-  if (type === 'width' && product.customWidth) {
+  if (type === SizeTypeEnum.width && product.customWidth) {
     await product.update({ customWidth: null });
   }
-  if (type === 'length' && product.customLength) {
+  if (type === SizeTypeEnum.length && product.customLength) {
     await product.update({ customLength: null });
   }
-  if (type === 'caliber' && product.customCaliber) {
+  if (type === SizeTypeEnum.length && product.customCaliber) {
     await product.update({ customCaliber: null });
   }
 };

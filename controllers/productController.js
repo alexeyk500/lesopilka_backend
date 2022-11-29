@@ -6,7 +6,6 @@ const {
   ProductDescription,
   ProductMaterial,
   ProductSort,
-  CategorySize_Product,
 } = require('../models/productModels');
 const { CategorySize, SubCategory, Category } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
@@ -16,30 +15,15 @@ const { Address, Location, Region } = require('../models/addressModels');
 const {
   formatProduct,
   updateModelsField,
-  dropCustomSizeByType,
   checkManufacturerForProduct,
 } = require('../utils/functions');
-
-const filterProductsBySize = async (sizeId, productsIds) => {
-  if (sizeId && Number(sizeId) > 0) {
-    const filteredSizeProducts = await Product.findAll({
-      where: { id: productsIds },
-      include: [{ model: CategorySize, where: { id: sizeId } }],
-    });
-    const searchedProductIds = filteredSizeProducts.map((product) => product.id);
-    console.log('filterProductsBySize sizeId=', sizeId, searchedProductIds);
-    return searchedProductIds;
-  } else {
-    return productsIds;
-  }
-};
+const { SizeTypeEnum } = require('../utils/constatnts');
 
 const getProductResponse = async (productId, protocol, host) => {
   const product = await Product.findOne({
     where: { id: productId },
     include: [
       ProductDescription,
-      CategorySize,
       ProductMaterial,
       ProductSort,
       {
@@ -64,20 +48,14 @@ class ProductController {
         productId,
         subCategoryId,
         productMaterialId,
-        categorySizeId,
-        resetCategorySizeType,
-        customSizeType,
-        customSizeValue,
         code,
         price,
-        customHeight,
-        customWidth,
-        customLength,
-        customCaliber,
         isSeptic,
         publicationDate,
         productSortId,
-        clearCategorySizes,
+        productResetAllSizes,
+        sizeType,
+        sizeValue,
       } = req.body;
 
       if (!productId) {
@@ -90,6 +68,7 @@ class ProductController {
       }
 
       const product = await Product.findOne({ where: { id: productId } });
+      console.log('product =', product)
       if (!product) {
         return next(ApiError.badRequest(`product with id=${productId} not found`));
       }
@@ -105,83 +84,72 @@ class ProductController {
       if (isSeptic === null || isSeptic) {
         await updateModelsField(product, { isSeptic: !!isSeptic });
       }
-      if (categorySizeId) {
-        const categorySize = await CategorySize.findOne({ where: { id: categorySizeId } });
-        await dropCustomSizeByType(product, categorySize.type);
-        const productSizes = await CategorySize_Product.findAll({ where: { productId } });
-        let productSizeToChange;
-        for (const productSize of productSizes) {
-          const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
-          if (curCategorySize.type === categorySize.type) {
-            productSizeToChange = productSize;
-            break;
+
+      if (sizeType && (sizeValue || sizeValue === null)) {
+        console.log('sizeType && sizeValue =', sizeType, sizeValue)
+          if (sizeType === SizeTypeEnum.height || sizeType === SizeTypeEnum.width) {
+            await updateModelsField(product, { [sizeType]: sizeValue });
+            if (product[SizeTypeEnum.caliber] !== null){
+              await updateModelsField(product, { [SizeTypeEnum.caliber]: null });
+            }
           }
-        }
-        if (productSizeToChange) {
-          await updateModelsField(productSizeToChange, { categorySizeId: categorySizeId });
-        } else {
-          await CategorySize_Product.create({ productId, categorySizeId });
-        }
-      }
-      if (resetCategorySizeType) {
-        const productSizes = await CategorySize_Product.findAll({ where: { productId } });
-        let productSizeToReset;
-        for (const productSize of productSizes) {
-          const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
-          if (curCategorySize.type === resetCategorySizeType) {
-            productSizeToReset = productSize;
-            break;
+          if (sizeType === SizeTypeEnum.caliber) {
+            await updateModelsField(product, { [sizeType]: sizeValue });
+            if (product[SizeTypeEnum.height] !== null){
+              await updateModelsField(product, { [SizeTypeEnum.height]: null });
+            }
+            if (product[SizeTypeEnum.width] !== null){
+              await updateModelsField(product, { [SizeTypeEnum.width]: null });
+            }
           }
-        }
-        if (productSizeToReset) {
-          await CategorySize_Product.destroy({ where: { id: productSizeToReset.id } });
-        }
-        await dropCustomSizeByType(product, resetCategorySizeType);
+          if (sizeType === SizeTypeEnum.length) {
+            await updateModelsField(product, {[sizeType]: sizeValue});
+          }
       }
-      if (customSizeType) {
-        if (customSizeType === 'height') {
-          await product.update({ customHeight: customSizeValue ? customSizeValue : null });
+
+      if (productResetAllSizes) {
+        if (product[SizeTypeEnum.height] !== null){
+          await updateModelsField(product, { [SizeTypeEnum.height]: null });
         }
-        if (customSizeType === 'width') {
-          await product.update({ customWidth: customSizeValue ? customSizeValue : null });
+        if (product[SizeTypeEnum.width] !== null){
+          await updateModelsField(product, { [SizeTypeEnum.width]: null });
         }
-        if (customSizeType === 'length') {
-          await product.update({ customLength: customSizeValue ? customSizeValue : null });
+        if (product[SizeTypeEnum.caliber] !== null){
+          await updateModelsField(product, { [SizeTypeEnum.caliber]: null });
         }
-        if (customSizeType === 'caliber') {
-          await product.update({ customCaliber: customSizeValue ? customSizeValue : null });
+        if (product[SizeTypeEnum.length] !== null){
+          await updateModelsField(product, { [SizeTypeEnum.length]: null });
         }
       }
+
       if (code === null || code) {
         await updateModelsField(product, { code: code });
       }
       if (price === null || price) {
         await updateModelsField(product, { price: price });
       }
-      if (customHeight === null || customHeight) {
-        await updateModelsField(product, { customHeight: customHeight });
-      }
-      if (customWidth === null || customWidth) {
-        await updateModelsField(product, { customWidth: customWidth });
-      }
-      if (customLength === null || customLength) {
-        await updateModelsField(product, { customLength: customLength });
-      }
-      if (customCaliber === null || customCaliber) {
-        await updateModelsField(product, { customCaliber: customCaliber });
-      }
-      if (isSeptic === null || isSeptic) {
-        await updateModelsField(product, { isSeptic: isSeptic });
-      }
+      // if (customHeight === null || customHeight) {
+      //   await updateModelsField(product, { customHeight: customHeight });
+      // }
+      // if (customWidth === null || customWidth) {
+      //   await updateModelsField(product, { customWidth: customWidth });
+      // }
+      // if (customLength === null || customLength) {
+      //   await updateModelsField(product, { customLength: customLength });
+      // }
+      // if (customCaliber === null || customCaliber) {
+      //   await updateModelsField(product, { customCaliber: customCaliber });
+      // }
       if (publicationDate === null || publicationDate) {
         await updateModelsField(product, { publicationDate: publicationDate });
       }
-      if (clearCategorySizes) {
-        const productSizes = await CategorySize_Product.findAll({ where: { productId } });
-        for (const productSize of productSizes) {
-          await CategorySize_Product.destroy({ where: { id: productSize.id } });
-        }
-      }
+      // if (clearCategorySizes) {
+      //   const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+      //   for (const productSize of productSizes) {
+      //     await CategorySize_Product.destroy({ where: { id: productSize.id } });
+      //   }
+      // }
+
 
       const editionDate = new Date().toISOString();
       await updateModelsField(product, { editionDate });
@@ -344,52 +312,52 @@ class ProductController {
 
       const searchedProducts = await Product.findAll({ where: searchParams });
       let searchedProductIds = searchedProducts.map((product) => product.id);
-      searchedProductIds = await filterProductsBySize(hsid, searchedProductIds);
-      searchedProductIds = await filterProductsBySize(wsid, searchedProductIds);
-      searchedProductIds = await filterProductsBySize(csid, searchedProductIds);
-      searchedProductIds = await filterProductsBySize(lsid, searchedProductIds);
+      console.log('searchedProductIds =', searchedProductIds)
+      // searchedProductIds = await filterProductsBySize(hsid, searchedProductIds);
+      // searchedProductIds = await filterProductsBySize(wsid, searchedProductIds);
+      // searchedProductIds = await filterProductsBySize(csid, searchedProductIds);
+      // searchedProductIds = await filterProductsBySize(lsid, searchedProductIds);
 
-      if (slid && Number(slid) > 0) {
-        const filteredByLocationProducts = await Product.findAll({
-          where: { id: searchedProductIds },
-          include: {
-            model: Manufacturer,
-            required: true,
-            include: {
-              model: Address,
-              where: { locationId: slid },
-            },
-          },
-        });
-        searchedProductIds = filteredByLocationProducts.map((product) => product.id);
-      }
-      if (!slid && srid && Number(srid) > 0) {
-        const filteredByLocationProducts = await Product.findAll({
-          where: { id: searchedProductIds },
-          include: {
-            model: Manufacturer,
-            required: true,
-            include: {
-              model: Address,
-              required: true,
-              include: [
-                {
-                  model: Location,
-                  where: { regionId: srid },
-                },
-              ],
-            },
-          },
-        });
-        searchedProductIds = filteredByLocationProducts.map((product) => product.id);
-      }
+      // if (slid && Number(slid) > 0) {
+      //   const filteredByLocationProducts = await Product.findAll({
+      //     where: { id: searchedProductIds },
+      //     include: {
+      //       model: Manufacturer,
+      //       required: true,
+      //       include: {
+      //         model: Address,
+      //         where: { locationId: slid },
+      //       },
+      //     },
+      //   });
+      //   searchedProductIds = filteredByLocationProducts.map((product) => product.id);
+      // }
+      // if (!slid && srid && Number(srid) > 0) {
+      //   const filteredByLocationProducts = await Product.findAll({
+      //     where: { id: searchedProductIds },
+      //     include: {
+      //       model: Manufacturer,
+      //       required: true,
+      //       include: {
+      //         model: Address,
+      //         required: true,
+      //         include: [
+      //           {
+      //             model: Location,
+      //             where: { regionId: srid },
+      //           },
+      //         ],
+      //       },
+      //     },
+      //   });
+      //   searchedProductIds = filteredByLocationProducts.map((product) => product.id);
+      // }
 
       const products = await Product.findAll({
         where: { id: searchedProductIds },
         include: [
           ProductDescription,
           SubCategory,
-          CategorySize,
           ProductMaterial,
           ProductSort,
           {
@@ -403,6 +371,7 @@ class ProductController {
           [Picture, 'order', 'ASC'],
         ],
       });
+
       return res.json(products.map((prod) => formatProduct(prod, req.protocol, req.headers.host)));
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -609,3 +578,74 @@ module.exports = new ProductController();
 //     return next(ApiError.badRequest(e.original.detail));
 //   }
 // }
+
+// if (categorySizeId) {
+//   const categorySize = await CategorySize.findOne({ where: { id: categorySizeId } });
+//   console.log('categorySize =', categorySize.type, categorySize.value)
+//   if (categorySize) {
+//     if (categorySize.type === SizeTypeEnum.height || categorySize.type === SizeTypeEnum.width) {
+//       await updateModelsField(product, { [categorySize.type]: categorySize.value });
+//       if (product[SizeTypeEnum.caliber] !== null){
+//         await updateModelsField(product, { [SizeTypeEnum.caliber]: null });
+//       }
+//     }
+//     if (categorySize.type === SizeTypeEnum.caliber) {
+//       await updateModelsField(product, { [categorySize.type]: categorySize.value });
+//       if (product[SizeTypeEnum.height] !== null){
+//         await updateModelsField(product, { [SizeTypeEnum.height]: null });
+//       }
+//       if (product[SizeTypeEnum.width] !== null){
+//         await updateModelsField(product, { [SizeTypeEnum.width]: null });
+//       }
+//     }
+//     if (categorySize.type === SizeTypeEnum.length) {
+//       await updateModelsField(product, {[categorySize.type]: categorySize.value});
+//     }
+//   }
+// }
+
+
+// if (resetCategorySizeType) {
+//   const productSizes = await CategorySize_Product.findAll({ where: { productId } });
+//   let productSizeToReset;
+//   for (const productSize of productSizes) {
+//     const curCategorySize = await CategorySize.findOne({ where: { id: productSize.categorySizeId } });
+//     if (curCategorySize.type === resetCategorySizeType) {
+//       productSizeToReset = productSize;
+//       break;
+//     }
+//   }
+//   if (productSizeToReset) {
+//     await CategorySize_Product.destroy({ where: { id: productSizeToReset.id } });
+//   }
+//   await dropCustomSizeByType(product, resetCategorySizeType);
+// }
+
+// if (customSizeType) {
+//   if (customSizeType === 'height') {
+//     await product.update({ customHeight: customSizeValue ? customSizeValue : null });
+//   }
+//   if (customSizeType === 'width') {
+//     await product.update({ customWidth: customSizeValue ? customSizeValue : null });
+//   }
+//   if (customSizeType === 'length') {
+//     await product.update({ customLength: customSizeValue ? customSizeValue : null });
+//   }
+//   if (customSizeType === 'caliber') {
+//     await product.update({ customCaliber: customSizeValue ? customSizeValue : null });
+//   }
+// }
+
+// const filterProductsBySize = async (sizeId, productsIds) => {
+//   if (sizeId && Number(sizeId) > 0) {
+//     const filteredSizeProducts = await Product.findAll({
+//       where: { id: productsIds },
+//       include: [{ model: CategorySize, where: { id: sizeId } }],
+//     });
+//     const searchedProductIds = filteredSizeProducts.map((product) => product.id);
+//     console.log('filterProductsBySize sizeId=', sizeId, searchedProductIds);
+//     return searchedProductIds;
+//   } else {
+//     return productsIds;
+//   }
+// };
