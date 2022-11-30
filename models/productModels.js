@@ -2,7 +2,7 @@ const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { SubCategory } = require('./categoryModels');
 const { Manufacturer } = require('./manufacturerModels');
-const { SizeTypeEnum } = require('../utils/constatnts');
+const { SizeTypeEnum } = require('../utils/constants');
 
 const Product = sequelize.define(
   'product',
