@@ -366,6 +366,12 @@ class ProductController {
 
 module.exports = new ProductController();
 
+
+
+
+
+
+
 // async createReview(req, res, next) {
 //   try {
 //     const { productId, user_id, review } = req.body;
