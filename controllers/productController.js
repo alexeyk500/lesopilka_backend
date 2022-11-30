@@ -9,6 +9,7 @@ const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
 const { formatProduct, updateModelsField, checkManufacturerForProduct } = require('../utils/functions');
 const { SizeTypeEnum } = require('../utils/constants');
+const { Op } = require('sequelize');
 
 const getProductResponse = async (productId, protocol, host) => {
   const product = await Product.findOne({
@@ -253,7 +254,7 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid } = req.query;
+      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt } = req.query;
       let searchParams = {};
       if (scid && Number(scid) > 0) {
         searchParams.subCategoryId = scid;
@@ -299,6 +300,12 @@ class ProductController {
       let searchParamsRegion = {};
       if (!slid && srid && Number(srid) > 0) {
         searchParamsRegion.regionId = srid;
+      }
+
+      if (pf || pt) {
+        const priceFrom = pf && Number(pf) > 0 ? pf : 0;
+        const priceTo = pt && Number(pt) > 0 ? pt : Infinity;
+        searchParams.price = { [Op.between]: [priceFrom, priceTo] };
       }
 
       const products = await Product.findAll({
@@ -365,12 +372,6 @@ class ProductController {
 }
 
 module.exports = new ProductController();
-
-
-
-
-
-
 
 // async createReview(req, res, next) {
 //   try {
