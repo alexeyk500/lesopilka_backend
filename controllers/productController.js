@@ -8,7 +8,7 @@ const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
 const { formatProduct, updateModelsField, checkManufacturerForProduct } = require('../utils/functions');
-const { SizeTypeEnum } = require('../utils/constants');
+const { SizeTypeEnum, PRODUCTS_PAGE_SIZE } = require('../utils/constants');
 const { Op } = require('sequelize');
 
 const getProductResponse = async (productId, protocol, host) => {
@@ -254,7 +254,7 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt, sd } = req.query;
+      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt, sd, page, size } = req.query;
       let searchParams = {};
       if (scid && Number(scid) > 0) {
         searchParams.subCategoryId = scid;
@@ -318,13 +318,25 @@ class ProductController {
         }
       }
 
-      const products = await Product.findAll({
+      let limit = PRODUCTS_PAGE_SIZE;
+      const sizeNumber = Number.parseInt(size);
+      if (!Number.isNaN(sizeNumber) && sizeNumber > 0 && sizeNumber < 64) {
+        limit = sizeNumber;
+      }
+      let pageParam = 0;
+      const pageNumber = Number.parseInt(page);
+      if (!Number.isNaN(pageNumber) && pageNumber > 0 && pageNumber < 1000) {
+        pageParam = pageNumber;
+      }
+
+      const { count, rows } = await Product.findAndCountAll({
         where: searchParams,
         include: [
           ProductDescription,
           SubCategory,
           ProductMaterial,
           ProductSort,
+          Picture,
           {
             model: Manufacturer,
             required: true,
@@ -342,12 +354,14 @@ class ProductController {
               },
             },
           },
-          { model: Picture, order: [['order', 'ASC']] },
         ],
         order: [productSortParams, [Picture, 'order', 'ASC']],
+        distinct: true,
+        limit,
+        offset: pageParam * limit,
       });
-
-      return res.json(products.map((prod) => formatProduct(prod, req.protocol, req.headers.host)));
+      const products = rows.map((prod) => formatProduct(prod, req.protocol, req.headers.host));
+      return res.json({ products, pageSize: limit, totalPages: Math.ceil(count / limit), currentPage: pageParam });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
