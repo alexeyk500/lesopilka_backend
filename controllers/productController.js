@@ -254,7 +254,7 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt } = req.query;
+      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt, sd } = req.query;
       let searchParams = {};
       if (scid && Number(scid) > 0) {
         searchParams.subCategoryId = scid;
@@ -308,6 +308,16 @@ class ProductController {
         searchParams.price = { [Op.between]: [priceFrom, priceTo] };
       }
 
+      let productSortParams = ['id', 'ASC'];
+      if (sd) {
+        if (sd === 'pa') {
+          productSortParams = ['price', 'ASC'];
+        }
+        if (sd === 'pd') {
+          productSortParams = ['price', 'DESC'];
+        }
+      }
+
       const products = await Product.findAll({
         where: searchParams,
         include: [
@@ -334,10 +344,7 @@ class ProductController {
           },
           { model: Picture, order: [['order', 'ASC']] },
         ],
-        order: [
-          ['id', 'ASC'],
-          [Picture, 'order', 'ASC'],
-        ],
+        order: [productSortParams, [Picture, 'order', 'ASC']],
       });
 
       return res.json(products.map((prod) => formatProduct(prod, req.protocol, req.headers.host)));
