@@ -119,7 +119,8 @@ class ProductController {
         await updateModelsField(product, { price: price });
       }
       if (publicationDate === null || publicationDate) {
-        await updateModelsField(product, { publicationDate: publicationDate });
+        const newPublicationDate = publicationDate ? new Date().toISOString() : null;
+        await updateModelsField(product, { publicationDate: newPublicationDate });
       }
 
       const editionDate = new Date().toISOString();
