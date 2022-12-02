@@ -361,7 +361,13 @@ class ProductController {
         offset: pageParam * limit,
       });
       const products = rows.map((prod) => formatProduct(prod, req.protocol, req.headers.host));
-      return res.json({ products, pageSize: limit, totalPages: Math.ceil(count / limit), currentPage: pageParam });
+      return res.json({
+        products,
+        totalProducts: count,
+        pageSize: limit,
+        totalPages: Math.ceil(count / limit),
+        currentPage: pageParam,
+      });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
