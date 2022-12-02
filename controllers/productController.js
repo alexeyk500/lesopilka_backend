@@ -254,7 +254,7 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt, sd, page, size } = req.query;
+      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt, sd, page, size, top } = req.query;
       let searchParams = {};
       if (scid && Number(scid) > 0) {
         searchParams.subCategoryId = scid;
@@ -327,6 +327,10 @@ class ProductController {
       const pageNumber = Number.parseInt(page);
       if (!Number.isNaN(pageNumber) && pageNumber > 0 && pageNumber < 1000) {
         pageParam = pageNumber;
+      }
+
+      if (!top || (top && top !== 'mp')) {
+        searchParams.publicationDate = { [Op.not]: null };
       }
 
       const { count, rows } = await Product.findAndCountAll({
