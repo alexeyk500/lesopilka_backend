@@ -51,6 +51,7 @@ const formatProduct = (product, protocol, host) => {
     caliber: product.caliber ? product.caliber : undefined,
     price: product.price ? product.price : undefined,
     isSeptic: product.isSeptic,
+    isDried: product.isDried,
     editionDate: product.editionDate ? product.editionDate : undefined,
     publicationDate: product.publicationDate ? product.publicationDate : undefined,
     description: product.productDescription.description ? product.productDescription.description : undefined,

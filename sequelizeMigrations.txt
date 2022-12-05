@@ -1,0 +1,48 @@
+1) Если не установлено то установить sequelize CLI
+  - $npm install sequelize-cli --global
+
+2) Проверить версию sequelize
+  - $npx sequelize-cli --version
+
+4) Инициализировать sequelize
+  - $sequelize init
+
+5) Внести информацию о БД в конфигурационный файл ./config/config.json
+   "development": {
+       "username": "a500",
+       "password": "secret",
+       "database": "postgres",
+       "url": "postgresql://127.0.0.1:5432/postgres",
+       "dialect": "postgresql"
+     },
+
+6) Создать таблицу миграций
+  - $sequelize-cli db:migrate
+
+7) Создать файл миграции
+  - $sequelize migration:create --name productAddDriedField
+
+8) В созданный файл миграции "./migrations/20221205081635-productAddDriedField.js" внести содержание миграции
+  'use strict';
+  module.exports = {
+    async up (queryInterface, Sequelize) {
+      await queryInterface.addColumn(
+        'products',
+        'isDried',
+        {type: Sequelize.BOOLEAN, defaultValue: false}
+      );
+    },
+    async down (queryInterface, Sequelize) {
+      await queryInterface.removeColumn(
+        'products',
+        'isDried'
+      );
+    }
+  };
+
+9) Выполнить миграцию
+ - $sequelize db:migrate
+
+10) Отменить миграцию
+ - $sequelize db:migrate:undo
+

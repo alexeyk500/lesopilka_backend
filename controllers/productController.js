@@ -43,6 +43,7 @@ class ProductController {
         code,
         price,
         isSeptic,
+        isDried,
         publicationDate,
         productSortId,
         productResetAllSizes,
@@ -74,6 +75,9 @@ class ProductController {
       }
       if (isSeptic === null || isSeptic) {
         await updateModelsField(product, { isSeptic: !!isSeptic });
+      }
+      if (isDried === null || isDried) {
+        await updateModelsField(product, { isDried: !!isDried });
       }
 
       if (sizeType && (sizeValue || sizeValue === null)) {
@@ -125,6 +129,7 @@ class ProductController {
 
       const editionDate = new Date().toISOString();
       await updateModelsField(product, { editionDate });
+      console.log({ product });
       const response = await getProductResponse(productId, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {

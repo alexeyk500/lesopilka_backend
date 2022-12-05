@@ -15,6 +15,7 @@ const Product = sequelize.define(
     [SizeTypeEnum.length]: { type: DataTypes.FLOAT },
     [[SizeTypeEnum.caliber]]: { type: DataTypes.FLOAT },
     isSeptic: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isDried: { type: DataTypes.BOOLEAN, defaultValue: false },
     editionDate: { type: DataTypes.DATE },
     publicationDate: { type: DataTypes.DATE },
   },
@@ -68,7 +69,6 @@ ProductDescription.belongsTo(Product);
 module.exports = {
   Product,
   ProductDescription,
-  // CategorySize_Product,
   ProductMaterial,
   ProductSort,
 };
