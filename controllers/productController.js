@@ -260,7 +260,7 @@ class ProductController {
 
   async getProducts(req, res, next) {
     try {
-      const { mid, cid, scid, sh, sw, sc, sl, psid, sep, slid, srid, pf, pt, sd, page, size, top } = req.query;
+      const { mid, cid, scid, sh, sw, sc, sl, psid, dri, sep, slid, srid, pf, pt, sd, page, size, top } = req.query;
       let searchParams = {};
       if (scid && Number(scid) > 0) {
         searchParams.subCategoryId = scid;
@@ -289,6 +289,14 @@ class ProductController {
       }
       if (psid && Number(psid) > 0) {
         searchParams.productSortId = psid;
+      }
+      if (dri && Number(dri) > 0) {
+        if (dri === '1') {
+          searchParams.isDried = false;
+        }
+        if (dri === '2') {
+          searchParams.isDried = true;
+        }
       }
       if (sep && Number(sep) > 0) {
         if (sep === '1') {

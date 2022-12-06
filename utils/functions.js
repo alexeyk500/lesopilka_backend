@@ -1,7 +1,6 @@
 const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
 const { Product } = require('../models/productModels');
-// const { SizeTypeEnum } = require('./constatnts');
 
 const formatAddress = (address) => {
   if (!address) {
@@ -78,21 +77,6 @@ const updateModelsField = async (model, field) => {
   }
 };
 
-// const dropCustomSizeByType = async (product, type) => {
-//   if (type === SizeTypeEnum.height && product.customHeight) {
-//     await product.update({ customHeight: null });
-//   }
-//   if (type === SizeTypeEnum.width && product.customWidth) {
-//     await product.update({ customWidth: null });
-//   }
-//   if (type === SizeTypeEnum.length && product.customLength) {
-//     await product.update({ customLength: null });
-//   }
-//   if (type === SizeTypeEnum.length && product.customCaliber) {
-//     await product.update({ customCaliber: null });
-//   }
-// };
-
 const checkManufacturerForProduct = async (userId, productId) => {
   const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
   if (!userCandidate.manufacturer) {
@@ -110,6 +94,5 @@ module.exports = {
   formatManufacturer,
   formatProduct,
   updateModelsField,
-  // dropCustomSizeByType,
   checkManufacturerForProduct,
 };
