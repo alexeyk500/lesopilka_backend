@@ -347,6 +347,12 @@ class ProductController {
         searchParams.publicationDate = { [Op.not]: null };
       }
 
+      if (top === 'price') {
+        searchParams = {};
+        searchParams.manufacturerId = mid;
+        limit = 1000;
+      }
+
       const { count, rows } = await Product.findAndCountAll({
         where: searchParams,
         include: [
