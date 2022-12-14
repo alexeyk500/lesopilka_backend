@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="">
+ <head>
+  <meta charset="utf-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:300,400,500,600" rel="stylesheet" type='text/css'>
+  <style>
+    html {
+     line-height: 1.15;
+     -webkit-text-size-adjust: 100%;
+    }
+    body {
+     margin: 0;
+     font-family: 'Montserrat', sans-serif;
+     -webkit-font-smoothing: antialiased;
+     color: #4A4A4A;
+    }
+    .contentContainer {
+     padding: 20px 30px;
+    }
+    .title {
+     display: flex;
+     margin-top: 12px;
+     margin-bottom: 8px;
+     text-align: center;
+     font-weight: 600;
+     font-size: 14px;
+     color: #000000;
+    }
+    .twoColumnContainer {
+     display: flex;
+     width: 100%;
+     margin-bottom: 8px;
+    }
+    .manufacturerInfo {
+     display: inline-block;
+     width: calc(100% - 60px);
+    }
+    .manufacturerInfoRow {
+     font-size: 12px;
+     line-height: 13px;
+     font-weight: 400;
+     margin-bottom: 1px;
+    }
+    .logoContainer {
+     display: inline-block;
+     vertical-align: top;
+     margin-top: -10px;
+    }
+  </style>
+  <title>Price</title>
+
+ </head>
+ <body style="{margin: 20px 40px}">
+ <div class="contentContainer">
+  <div class="title">Прайс лист на пиломатериалы</div>
+  <div class="twoColumnContainer">
+   <div class="manufacturerInfo">
+    <div class="manufacturerInfoRow">
+     {{manufacturerTitle}}
+    </div>
+    <div class="manufacturerInfoRow">
+     {{manufacturerAddress}}
+    </div>
+    <div class="manufacturerInfoRow">
+     {{manufacturerEmail}}
+    </div>
+    <div class="manufacturerInfoRow">
+     {{manufacturerPhone}}
+    </div>
+   </div>
+   <div class="logoContainer">
+    <img src={{{image}}} height="54" width="54"  alt=""/>
+   </div>
+  </div>
+  <div>{{ manufacturerTitle }}</div>
+ </div>
+
+ </body>
+</html>

@@ -89,10 +89,23 @@ const checkManufacturerForProduct = async (userId, productId) => {
   return userCandidate.manufacturer.id === product.manufacturerId;
 };
 
+const getManufacturerAddress = (manufacturer) => {
+  let address = 'адрес: ';
+  address += manufacturer.address.location.region.title + ', ';
+  address += manufacturer.address.location.title + ', ';
+  address += manufacturer.address.street + ', д.';
+  address += manufacturer.address.building;
+  if (manufacturer.address.office) {
+    address += ', оф.' + manufacturer.address.office;
+  }
+  return address;
+};
+
 module.exports = {
   formatAddress,
   formatManufacturer,
   formatProduct,
   updateModelsField,
   checkManufacturerForProduct,
+  getManufacturerAddress,
 };
