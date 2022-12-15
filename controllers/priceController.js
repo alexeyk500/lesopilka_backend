@@ -67,8 +67,6 @@ class PriceController {
         include: [SubCategory, ProductMaterial, ProductSort],
       });
 
-      console.log(products.length);
-
       const priceProducts = products.map((product) => formatProduct(product));
 
       const subCategories = await SubCategory.findAll();
@@ -101,8 +99,6 @@ class PriceController {
         return { title, products };
       });
 
-      console.log({ priceSections });
-
       const priceData = {
         nowDate: formatUTCtoDDMonthYear(nowDate),
         manufacturerTitle: `${user.manufacturer.title}, ИНН: ${user.manufacturer.inn}`,
@@ -113,20 +109,17 @@ class PriceController {
         priceSections,
       };
 
-      // console.log('priceData =', priceData);
-
       const priceTemplatePath = path.resolve(__dirname, '..', 'templates', 'priceTemplate.html');
       const priceTemplate = fs.readFileSync(priceTemplatePath, { encoding: 'utf8' });
 
       const filledPriceTemplate = mustache.render(priceTemplate, priceData);
-      // console.log('filledPriceTemplate =', filledPriceTemplate);
 
       const options = { format: 'A4' };
       pdf.create(filledPriceTemplate, options).toStream(function (err, stream) {
         if (err) {
           res.send(err);
         } else {
-          res.setHeader('Content-disposition', 'inline; filename="price"');
+          res.setHeader('Content-disposition', 'inline; filename="price.pdf"');
           res.setHeader('Content-type', 'application/pdf');
           stream.pipe(res);
         }
