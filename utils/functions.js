@@ -53,7 +53,11 @@ const formatProduct = (product, protocol, host) => {
     isDried: product.isDried,
     editionDate: product.editionDate ? product.editionDate : undefined,
     publicationDate: product.publicationDate ? product.publicationDate : undefined,
-    description: product.productDescription.description ? product.productDescription.description : undefined,
+    description: product.productDescription
+      ? product.productDescription.description
+        ? product.productDescription.description
+        : undefined
+      : undefined,
     category: product.subCategory
       ? product.subCategory.category
         ? { id: product.subCategory.category.id, title: product.subCategory.category.title }
@@ -67,7 +71,7 @@ const formatProduct = (product, protocol, host) => {
     images: product.pictures
       ? product.pictures.map((picture) => protocol + '://' + host + '/' + picture.fileName)
       : undefined,
-    manufacturer: formatManufacturer(product.manufacturer),
+    manufacturer: product.manufacturer ? formatManufacturer(product.manufacturer) : undefined,
   };
 };
 
@@ -89,23 +93,10 @@ const checkManufacturerForProduct = async (userId, productId) => {
   return userCandidate.manufacturer.id === product.manufacturerId;
 };
 
-const getManufacturerAddress = (manufacturer) => {
-  let address = 'адрес: ';
-  address += manufacturer.address.location.region.title + ', ';
-  address += manufacturer.address.location.title + ', ';
-  address += manufacturer.address.street + ', д.';
-  address += manufacturer.address.building;
-  if (manufacturer.address.office) {
-    address += ', оф.' + manufacturer.address.office;
-  }
-  return address;
-};
-
 module.exports = {
   formatAddress,
   formatManufacturer,
   formatProduct,
   updateModelsField,
   checkManufacturerForProduct,
-  getManufacturerAddress,
 };

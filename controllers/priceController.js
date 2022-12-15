@@ -6,7 +6,16 @@ const mustache = require('mustache');
 const { User } = require('../models/userModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { getManufacturerAddress } = require('../utils/functions');
+const { formatProduct } = require('../utils/functions');
+const { Product, ProductMaterial, ProductSort } = require('../models/productModels');
+const { SubCategory } = require('../models/categoryModels');
+const { Op } = require('sequelize');
+const {
+  groupProducts,
+  formatUTCtoDDMonthYear,
+  getManufacturerAddress,
+  getProductSizesStr,
+} = require('../utils/priceListFunctions');
 
 class PriceController {
   async getPrice(req, res, next) {
@@ -47,21 +56,70 @@ class PriceController {
         return next(ApiError.badRequest('getPrice - could not find user with id=${userId}'));
       }
 
+      const nowDate = new Date().toISOString();
+
+      const searchParams = {};
+      searchParams.publicationDate = { [Op.not]: null };
+      searchParams.manufacturerId = mid;
+
+      const products = await Product.findAll({
+        where: searchParams,
+        include: [SubCategory, ProductMaterial, ProductSort],
+      });
+
+      console.log(products.length);
+
+      const priceProducts = products.map((product) => formatProduct(product));
+
+      const subCategories = await SubCategory.findAll();
+
+      const groupedProducts = groupProducts(priceProducts, subCategories);
+
+      const priceSections = groupedProducts.map((section) => {
+        const subCategory = section[0].subCategory.title;
+        const isDried = section[0].isDried || false;
+        const isSeptic = section[0].isSeptic || false;
+        let title = subCategory ? `${subCategory} (` : 'Пиломатериал без выбранной категории (';
+        if (isDried) {
+          title += 'камерная сушка';
+        } else {
+          title += 'естественная влажность';
+        }
+        if (isSeptic) {
+          title += ' ,септирован';
+        }
+        title += ' )';
+        const products = section.map((product) => {
+          return {
+            size: getProductSizesStr(product),
+            material: product.material ? product.material.title : '',
+            sort: product.sort ? product.sort.title : '',
+            code: product.code ? product.code : '',
+            price: product.price ? product.price : '',
+          };
+        });
+        return { title, products };
+      });
+
+      console.log({ priceSections });
+
       const priceData = {
+        nowDate: formatUTCtoDDMonthYear(nowDate),
         manufacturerTitle: `${user.manufacturer.title}, ИНН: ${user.manufacturer.inn}`,
         manufacturerAddress: getManufacturerAddress(user.manufacturer),
-        manufacturerEmail: `эл.почта: ${user.manufacturer.email}`,
-        manufacturerPhone: `тел. ${user.manufacturer.phone}`,
+        manufacturerEmail: `${user.manufacturer.email}`,
+        manufacturerPhone: `${user.manufacturer.phone}`,
         image: 'http://localhost:5001/logo.png',
+        priceSections,
       };
 
-      console.log('priceData =', priceData);
+      // console.log('priceData =', priceData);
 
       const priceTemplatePath = path.resolve(__dirname, '..', 'templates', 'priceTemplate.html');
       const priceTemplate = fs.readFileSync(priceTemplatePath, { encoding: 'utf8' });
 
       const filledPriceTemplate = mustache.render(priceTemplate, priceData);
-      console.log('filledPriceTemplate =', filledPriceTemplate);
+      // console.log('filledPriceTemplate =', filledPriceTemplate);
 
       const options = { format: 'A4' };
       pdf.create(filledPriceTemplate, options).toStream(function (err, stream) {

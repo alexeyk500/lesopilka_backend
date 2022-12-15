@@ -50,8 +50,8 @@ class CategoryController {
   }
 
   async getAllSubCategories(req, res) {
-    const categories = await SubCategory.findAll();
-    return res.json(categories);
+    const subCategories = await SubCategory.findAll();
+    return res.json(subCategories);
   }
 
   async createCategorySize(req, res, next) {
