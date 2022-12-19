@@ -84,9 +84,9 @@ class PriceController {
           title += 'естественная влажность';
         }
         if (isSeptic) {
-          title += ' ,септирован';
+          title += ', септирован';
         }
-        title += ' )';
+        title += ')';
         const products = section.map((product) => {
           return {
             size: getProductSizesStr(product),

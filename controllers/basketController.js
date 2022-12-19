@@ -1,5 +1,5 @@
 const ApiError = require('../error/apiError');
-const { Basket } = require('../models/basketModels');
+const { Basket, BasketProduct } = require('../models/basketModels');
 
 class BasketController {
   async putToBasket(req, res, next) {
@@ -8,8 +8,12 @@ class BasketController {
       if (!userId || !productId) {
         return next(ApiError.badRequest('putToBasket - not complete data'));
       }
-      const basketItem = await Basket.create({ userId, productId });
-      return res.json(basketItem);
+      const basket = await Basket.findOne({ where: { userId } });
+      if (!basket.id) {
+        return next(ApiError.badRequest(`could not find Basket for user with id=${userId}`));
+      }
+      const basketProductItem = await BasketProduct.create({ basketId: basket.id, productId });
+      return res.json(basketProductItem);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }

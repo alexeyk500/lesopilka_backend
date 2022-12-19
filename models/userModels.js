@@ -1,7 +1,6 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Address, Region, Location } = require('./addressModels');
-const { Basket } = require('./basketModels');
 
 const User = sequelize.define(
   'user',
@@ -41,9 +40,6 @@ const PasswordRecoveryCode = sequelize.define(
 
 Address.hasOne(User);
 User.belongsTo(Address);
-
-User.hasMany(Basket);
-Basket.belongsTo(User);
 
 const SearchRegionAndLocation = sequelize.define('searchRegionAndLocation', {}, { timestamps: false });
 User.hasOne(SearchRegionAndLocation);

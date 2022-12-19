@@ -9,6 +9,7 @@ const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCod
 const { Location, Region, Address } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { formatManufacturer, updateModelsField } = require('../utils/functions');
+const { Basket } = require('../models/basketModels');
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
@@ -66,6 +67,7 @@ class UserController {
       }
       const hashPassword = await bcrypt.hash(password, 3);
       const user = await User.create({ email, password: hashPassword, role });
+      await Basket.create({ userId: user.id });
       await SearchRegionAndLocation.create({ userId: user.id });
       const response = await getUserResponse(user.id);
       return res.json(response);
