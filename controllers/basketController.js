@@ -1,5 +1,11 @@
 const ApiError = require('../error/apiError');
 const { Basket, BasketProduct } = require('../models/basketModels');
+const {Manufacturer} = require("../models/manufacturerModels");
+const {Product, ProductDescription, ProductMaterial, ProductSort} = require("../models/productModels");
+const {SubCategory} = require("../models/categoryModels");
+const {Picture} = require("../models/pictureModels");
+const {Address, Location, Region} = require("../models/addressModels");
+const {formatProduct} = require("../utils/functions");
 
 class BasketController {
   async putToBasket(req, res, next) {
@@ -30,7 +36,43 @@ class BasketController {
       if (!userId) {
         return next(ApiError.badRequest('getBasketProducts - not complete data, userId'));
       }
-      return res.json(userId);
+      const basket = await Basket.findOne({ where: { userId } });
+      if (!basket.id) {
+        return next(ApiError.badRequest(`getBasketProducts - could not find Basket for user with id=${userId}`));
+      }
+      const basketProductsRaw = await BasketProduct.findAll({
+        where: {basketId: basket.id},
+        attributes: {
+          exclude: ['id', 'basketId']
+        },
+        include: {
+          model: Product,
+          include: [
+            ProductDescription,
+            SubCategory,
+            ProductMaterial,
+            ProductSort,
+            Picture,
+            {
+              model: Manufacturer,
+              required: true,
+              include: {
+                model: Address,
+                required: true,
+                include: {
+                  model: Location,
+                  required: true,
+                  include: {
+                    model: Region,
+                  },
+                },
+              },
+            },
+          ],
+        }
+      });
+      const basketProducts = basketProductsRaw.map((productRaw) => formatProduct(productRaw.product, req.protocol, req.headers.host));
+      return res.json(basketProducts);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
