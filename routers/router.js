@@ -15,7 +15,7 @@ router.use('/address', addressRouter);
 router.use('/category', categoryRouter);
 router.use('/product', productRouter);
 router.use('/picture', pictureRouter);
-router.use('/basket', basketRouter);
+router.use('/baskets', basketRouter);
 router.use('/manufacturer', manufacturerRouter);
 router.use('/price', priceRouter);
 
