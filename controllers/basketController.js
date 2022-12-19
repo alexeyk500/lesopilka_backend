@@ -23,6 +23,18 @@ class BasketController {
       return next(ApiError.badRequest(e.original.detail));
     }
   }
+
+  async getBasketProducts(req, res, next) {
+    try {
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('getBasketProducts - not complete data, userId'));
+      }
+      return res.json(userId);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
 }
 
 module.exports = new BasketController();
