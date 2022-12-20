@@ -23,7 +23,7 @@ const start = async () => {
     await sequelize.authenticate();
     await sequelize.sync();
     app.listen(PORT, () => {
-      console.log(`appVersion: 1.0.0, Server started on PORT ${PORT}`);
+      console.log(`server version: 1.0.0, Server started on PORT ${PORT}`);
     });
   } catch (e) {
     console.log(e);
