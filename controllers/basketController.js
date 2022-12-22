@@ -5,7 +5,7 @@ const { Product, ProductDescription, ProductMaterial, ProductSort } = require('.
 const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct } = require('../utils/functions');
+const { formatProduct, updateModelsField } = require('../utils/functions');
 
 const getProductsInBasket = async (basketId, BasketProduct, protocol, host) => {
   const basketProductsRaw = await BasketProduct.findAll({
@@ -39,7 +39,11 @@ const getProductsInBasket = async (basketId, BasketProduct, protocol, host) => {
       ],
     },
   });
-  return basketProductsRaw.map((productRaw) => formatProduct(productRaw.product, protocol, host));
+  return basketProductsRaw.map((basketProduct) => {
+    const productRaw = formatProduct(basketProduct.product, protocol, host);
+    productRaw.amountInBasket = basketProduct.amount;
+    return productRaw;
+  });
 };
 
 class BasketController {
@@ -77,6 +81,29 @@ class BasketController {
       if (!basket.id) {
         return next(ApiError.badRequest(`getBasketProducts - could not find Basket for user with id=${userId}`));
       }
+      const basketProducts = await getProductsInBasket(basket.id, BasketProduct, req.protocol, req.headers.host);
+      return res.json(basketProducts);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async setBasketProductsAmount(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { productId, amount } = req.body;
+      if (!userId || !productId) {
+        return next(ApiError.badRequest('setBasketProductsAmount - not complete data, userId or productId'));
+      }
+      const basket = await Basket.findOne({ where: { userId } });
+      if (!basket.id) {
+        return next(ApiError.badRequest(`setBasketProductsAmount - could not find Basket for user with id=${userId}`));
+      }
+      const basketProduct = await BasketProduct.findOne({ where: { basketId: basket.id, productId } });
+      if (!basketProduct) {
+        return next(ApiError.badRequest(`setBasketProductsAmount - could not find basketProducts`));
+      }
+      await updateModelsField(basketProduct, { amount });
       const basketProducts = await getProductsInBasket(basket.id, BasketProduct, req.protocol, req.headers.host);
       return res.json(basketProducts);
     } catch (e) {
