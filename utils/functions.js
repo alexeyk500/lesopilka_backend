@@ -35,6 +35,7 @@ const formatManufacturer = (manufacturer) => {
     id: manufacturer.id,
     inn: manufacturer.inn ? manufacturer.inn : undefined,
     title: manufacturer.title ? manufacturer.title : undefined,
+    email: manufacturer.email ? manufacturer.email : undefined,
     phone: manufacturer.phone ? manufacturer.phone : undefined,
     address: formatAddress(manufacturer.address),
   };
