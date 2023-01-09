@@ -31,14 +31,30 @@ const Address = sequelize.define(
   { timestamps: false }
 );
 
+const ManufacturerPickUpAddress = sequelize.define(
+  'pickUpAddress',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    street: { type: DataTypes.STRING, allowNull: false },
+    building: { type: DataTypes.STRING, allowNull: false },
+    office: { type: DataTypes.STRING },
+    postIndex: { type: DataTypes.STRING },
+  },
+  { timestamps: false }
+);
+
 Region.hasMany(Location);
 Location.belongsTo(Region);
 
 Location.hasMany(Address);
 Address.belongsTo(Location);
 
+Location.hasMany(ManufacturerPickUpAddress);
+ManufacturerPickUpAddress.belongsTo(Location);
+
 module.exports = {
   Region,
   Location,
   Address,
+  ManufacturerPickUpAddress,
 };

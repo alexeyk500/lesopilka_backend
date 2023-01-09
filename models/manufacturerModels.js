@@ -1,6 +1,6 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
-const { Address } = require('./addressModels');
+const { Address, ManufacturerPickUpAddress } = require('./addressModels');
 const { User } = require('./userModels');
 
 const Manufacturer = sequelize.define(
@@ -16,11 +16,17 @@ const Manufacturer = sequelize.define(
   { timestamps: false }
 );
 
+User.hasOne(Manufacturer);
+Manufacturer.belongsTo(User);
+
 Address.hasOne(Manufacturer);
 Manufacturer.belongsTo(Address);
 
-User.hasOne(Manufacturer);
-Manufacturer.belongsTo(User);
+Manufacturer.hasOne(ManufacturerPickUpAddress);
+ManufacturerPickUpAddress.belongsTo(Manufacturer);
+
+// ManufacturerPickUpAddress.hasOne(Manufacturer);
+// Manufacturer.belongsTo(ManufacturerPickUpAddress);
 
 module.exports = {
   Manufacturer,
