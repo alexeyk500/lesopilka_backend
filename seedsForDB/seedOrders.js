@@ -1,6 +1,6 @@
 const { PaymentMethod, DeliveryMethod } = require('../models/orderModels');
 
-const paymentMethods = ['Банковский перевод', 'Перевод на карту', 'Картой на месте', 'Наличными на месте'];
+const paymentMethods = ['Банковский перевод', 'Перевод на карту', 'Картой', 'Наличными'];
 const seedPaymentMethods = async () => {
   await PaymentMethod.truncate({ cascade: true, restartIdentity: true });
   for (let paymentMethod of paymentMethods) {
