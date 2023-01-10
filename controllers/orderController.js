@@ -6,7 +6,7 @@ const { formatAddress } = require('../utils/functions');
 class OrderController {
   async getPaymentMethods(req, res, next) {
     try {
-      const paymentMethods = await PaymentMethod.findAll();
+      const paymentMethods = await PaymentMethod.findAll({ order: [['id']] });
       return res.json(paymentMethods);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
@@ -15,7 +15,7 @@ class OrderController {
 
   async getDeliveryMethods(req, res, next) {
     try {
-      const deliveryMethod = await DeliveryMethod.findAll();
+      const deliveryMethod = await DeliveryMethod.findAll({ order: [['id']] });
       return res.json(deliveryMethod);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
