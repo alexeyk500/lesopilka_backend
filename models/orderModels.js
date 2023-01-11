@@ -2,6 +2,7 @@ const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
 const { Location } = require('../models/addressModels');
 const { User } = require('./userModels');
+const { Product } = require('./productModels');
 
 const PaymentMethod = sequelize.define(
   'paymentMethod',
@@ -26,10 +27,22 @@ const Order = sequelize.define(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     date: { type: DataTypes.DATE },
-    status: { type: DataTypes.STRING },
+    status: {
+      type: DataTypes.ENUM('onConfirming', 'onPaymentWaiting', 'onAssembling', 'onDelivering', 'completed'),
+      defaultValue: 'onConfirming',
+    },
     contactPersonName: { type: DataTypes.STRING },
     contactPersonPhone: { type: DataTypes.STRING },
-    address: { type: DataTypes.STRING },
+    deliveryAddress: { type: DataTypes.STRING },
+  },
+  { timestamps: false }
+);
+
+const OrderProduct = sequelize.define(
+  'order_product',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    amount: { type: DataTypes.INTEGER, defaultValue: 1 },
   },
   { timestamps: false }
 );
@@ -46,7 +59,15 @@ Order.belongsTo(PaymentMethod);
 DeliveryMethod.hasMany(Order);
 Order.belongsTo(DeliveryMethod);
 
+Order.hasMany(OrderProduct);
+OrderProduct.belongsTo(Order);
+
+Product.hasOne(OrderProduct);
+OrderProduct.belongsTo(Product);
+
 module.exports = {
   PaymentMethod,
   DeliveryMethod,
+  Order,
+  OrderProduct,
 };

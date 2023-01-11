@@ -60,7 +60,7 @@ class BasketController {
       }
       const candidate = await BasketProduct.findOne({ where: { basketId: basket.id, productId } });
       if (candidate) {
-        await BasketProduct.destroy({ where: { productId } });
+        await BasketProduct.destroy({ where: { basketId: basket.id, productId } });
       } else {
         await BasketProduct.create({ basketId: basket.id, productId });
       }

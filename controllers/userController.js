@@ -42,12 +42,14 @@ const getUserResponse = async (userId, tokenRaw) => {
       email: user.email,
       name: user.name ? user.name : user.email,
       phone: user.phone ? user.phone : undefined,
-      searchRegion: user.searchRegionAndLocation.region
-        ? { id: user.searchRegionAndLocation.region.id, title: user.searchRegionAndLocation.region.title }
-        : undefined,
-      searchLocation: user.searchRegionAndLocation.location
-        ? { id: user.searchRegionAndLocation.location.id, title: user.searchRegionAndLocation.location.title }
-        : undefined,
+      searchRegion:
+        user.searchRegionAndLocation && user.searchRegionAndLocation.region
+          ? { id: user.searchRegionAndLocation.region.id, title: user.searchRegionAndLocation.region.title }
+          : undefined,
+      searchLocation:
+        user.searchRegionAndLocation && user.searchRegionAndLocation.location
+          ? { id: user.searchRegionAndLocation.location.id, title: user.searchRegionAndLocation.location.title }
+          : undefined,
       manufacturer: user.manufacturer ? formatManufacturer(user.manufacturer) : undefined,
     },
     token,
