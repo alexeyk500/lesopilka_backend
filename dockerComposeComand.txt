@@ -56,4 +56,8 @@ docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/a
       -$cat My_Files_iMac/Learning/lesopilka/dump_2022-11-28_11_47_26.sql | docker exec -i server-db-1 psql -U a500 -d postgres
     6) Запустить заново сервер с Sequelize
 
+    cat MyProjects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i server-db-1 psql -U a500 -d postgres
+
+    /Users/alexeyk500/MyProjects/lesopilka/dump_2023-01-12_16_01_56.sql
+
 

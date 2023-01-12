@@ -105,7 +105,7 @@ class PriceController {
         manufacturerAddress: getManufacturerAddress(user.manufacturer),
         manufacturerEmail: `${user.manufacturer.email}`,
         manufacturerPhone: `${user.manufacturer.phone}`,
-        image: 'http://localhost:5001/logo.png',
+        image: `${process.env.SERVER_HOST}:${process.env.SERVER_PORT}/logo.png`,
         priceSections,
       };
 
