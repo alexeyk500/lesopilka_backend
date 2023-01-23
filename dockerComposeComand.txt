@@ -1,7 +1,7 @@
 // Пересобрать и запустить контенеры в docker-compose.yml
 docker-compose up --build
 
-// Запуск только PostgresSql в Docker локально - для разработы сервера
+// Запуск только PostgresSql в Docker локально - для разработки сервера
 docker-compose -f docker-compose.only.docker.db.yml up --build
 
 //Отановить все контейнеры
@@ -58,6 +58,7 @@ docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/a
 
     cat MyProjects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i server-db-1 psql -U a500 -d postgres
 
-    /Users/alexeyk500/MyProjects/lesopilka/dump_2023-01-12_16_01_56.sql
+    Проверить назавние котейнера с БД - "lesopilka_server-db-1" (может не совпадать)
+    cat /Users/alexeyk500/Progects/Lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
 
 
