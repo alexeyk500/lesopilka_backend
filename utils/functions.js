@@ -98,8 +98,8 @@ const normalizeData = (data) => {
   const newData = new Date(data);
   const newDataStr = newData.toISOString();
   const onlyDataStr = newDataStr.split('T')[0];
-  return new Date(onlyDataStr)
-}
+  return new Date(onlyDataStr);
+};
 
 module.exports = {
   formatAddress,

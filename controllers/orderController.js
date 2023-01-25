@@ -7,6 +7,7 @@ const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
+const { Op } = require('sequelize');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
@@ -218,17 +219,31 @@ class OrderController {
       if (!userId) {
         return next(ApiError.badRequest('getOrdersListByParams - userId does not exist in request'));
       }
-      const {dateFrom, dateTo, ordersStatus} = req.body;
+      const { dateFrom, dateTo, ordersStatus } = req.body;
       const normDateFrom = normalizeData(dateFrom);
       const normDateTo = normalizeData(dateTo);
       if (!normDateFrom || !normDateTo || !ordersStatus) {
         return next(ApiError.badRequest('getOrdersListByParams - request data is not complete'));
       }
-      console.log(normDateFrom, normDateTo, ordersStatus);
       const orders = [];
-      const ordersList = await Order.findAll({
-        where: { userId },
-      });
+      let searchParams = {};
+      searchParams.userId = userId;
+      searchParams.date = {
+        [Op.and]: {
+          [Op.gte]: normDateFrom,
+          [Op.lte]: normDateTo,
+        },
+      };
+      if (
+        ordersStatus === 'onConfirming' ||
+        ordersStatus === 'onPaymentWaiting' ||
+        ordersStatus === 'onAssembling' ||
+        ordersStatus === 'onDelivering' ||
+        ordersStatus === 'completed'
+      ) {
+        searchParams.status = ordersStatus;
+      }
+      const ordersList = await Order.findAll({ where: searchParams });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
           const orderHeader = await getOrderById(order.id);
