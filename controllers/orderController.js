@@ -1,7 +1,7 @@
 const ApiError = require('../error/apiError');
 const { PaymentMethod, DeliveryMethod, Order, OrderProduct } = require('../models/orderModels');
 const { ManufacturerPickUpAddress, Location, Region, Address } = require('../models/addressModels');
-const { formatAddress, formatProduct } = require('../utils/functions');
+const { formatAddress, formatProduct, normalizeData } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
@@ -110,7 +110,8 @@ class OrderController {
         paymentMethodId,
         deliveryMethodId,
       } = req.body;
-      if (!mid || !date || !contactPersonName || !contactPersonPhone || !paymentMethodId || !deliveryMethodId) {
+      const normDate = normalizeData(date);
+      if (!mid || !normDate || !contactPersonName || !contactPersonPhone || !paymentMethodId || !deliveryMethodId) {
         return next(ApiError.internal('Create new order - request data is not complete'));
       }
       const userId = req.user.id;
@@ -134,7 +135,7 @@ class OrderController {
       }
 
       const newOrder = await Order.create({
-        date,
+        date: normDate,
         contactPersonName,
         contactPersonPhone,
         deliveryAddress,
@@ -211,13 +212,20 @@ class OrderController {
     }
   }
 
-  async getAllUserOrders(req, res, next) {
+  async getOrdersListByParams(req, res, next) {
     try {
-      const orders = [];
       const userId = req.user.id;
       if (!userId) {
-        return next(ApiError.badRequest('getAllUserOrders - userId does not exist in request'));
+        return next(ApiError.badRequest('getOrdersListByParams - userId does not exist in request'));
       }
+      const {dateFrom, dateTo, ordersStatus} = req.body;
+      const normDateFrom = normalizeData(dateFrom);
+      const normDateTo = normalizeData(dateTo);
+      if (!normDateFrom || !normDateTo || !ordersStatus) {
+        return next(ApiError.badRequest('getOrdersListByParams - request data is not complete'));
+      }
+      console.log(normDateFrom, normDateTo, ordersStatus);
+      const orders = [];
       const ordersList = await Order.findAll({
         where: { userId },
       });

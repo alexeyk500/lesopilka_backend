@@ -94,10 +94,18 @@ const checkManufacturerForProduct = async (userId, productId) => {
   return userCandidate.manufacturer.id === product.manufacturerId;
 };
 
+const normalizeData = (data) => {
+  const newData = new Date(data);
+  const newDataStr = newData.toISOString();
+  const onlyDataStr = newDataStr.split('T')[0];
+  return new Date(onlyDataStr)
+}
+
 module.exports = {
   formatAddress,
   formatManufacturer,
   formatProduct,
   updateModelsField,
   checkManufacturerForProduct,
+  normalizeData,
 };
