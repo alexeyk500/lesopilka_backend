@@ -243,7 +243,7 @@ class OrderController {
       ) {
         searchParams.status = ordersStatus;
       }
-      const ordersList = await Order.findAll({ where: searchParams });
+      const ordersList = await Order.findAll({ where: searchParams, order: ['date'] });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
           const orderHeader = await getOrderById(order.id);
