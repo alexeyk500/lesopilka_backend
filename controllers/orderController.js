@@ -172,6 +172,47 @@ class OrderController {
     }
   }
 
+  async cancelOrder(req, res, next) {
+    try {
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('cancelOrder - userId does not exist in request'));
+      }
+      const { orderId } = req.body;
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`cancelOrder - could not find Order with id=${orderId}`));
+      }
+      const orderProducts = await OrderProduct.findAll({
+        where: { orderId },
+      });
+      if (orderProducts.length === 0) {
+        return next(ApiError.badRequest(`cancelOrder - no products in Order with id=${orderId}`));
+      }
+      const basket = await Basket.findOne({ where: { userId } });
+      if (!basket.id) {
+        return next(ApiError.badRequest(`cancelOrder - could not find Basket for user with id=${userId}`));
+      }
+      for (const orderProduct of orderProducts) {
+        await BasketProduct.create({
+          basketId: basket.id,
+          amount: orderProduct.amount,
+          productId: orderProduct.productId,
+        });
+        const candidate = await OrderProduct.findOne({
+          where: { id: orderProduct.id },
+        });
+        if (candidate) {
+          await OrderProduct.destroy({ where: { id: orderProduct.id } });
+        }
+      }
+      await Order.destroy({ where: { id: orderId } });
+      return res.json({ message: `Order with id=${orderId} - canceled` });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
   async getOrderInfo(req, res, next) {
     try {
       const { id } = req.params;
