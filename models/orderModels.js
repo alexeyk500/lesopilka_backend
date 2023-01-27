@@ -34,6 +34,7 @@ const Order = sequelize.define(
     contactPersonName: { type: DataTypes.STRING },
     contactPersonPhone: { type: DataTypes.STRING },
     deliveryAddress: { type: DataTypes.STRING },
+    deliveryPrice: { type: DataTypes.FLOAT },
   },
   { timestamps: false }
 );
