@@ -10,5 +10,6 @@ orderRouter.get('/:id', authMiddleware, orderController.getOrderInfo);
 orderRouter.post('/new_order', authMiddleware, orderController.createNewOrder);
 orderRouter.post('/cancel_order', authMiddleware, orderController.cancelOrder);
 orderRouter.post('/', authMiddleware, orderController.getOrdersListByParams);
+orderRouter.post('/confirm', authMiddleware, orderController.confirmOrderFromManufacturer);
 
 module.exports = orderRouter;

@@ -1,13 +1,14 @@
 const ApiError = require('../error/apiError');
 const { PaymentMethod, DeliveryMethod, Order, OrderProduct } = require('../models/orderModels');
 const { ManufacturerPickUpAddress, Location, Region, Address } = require('../models/addressModels');
-const { formatAddress, formatProduct, normalizeData } = require('../utils/functions');
+const { formatAddress, formatProduct, normalizeData, checkManufacturerForOrder } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Op } = require('sequelize');
+const { ConfirmedProduct } = require('../models/confirmedProducts');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
@@ -296,6 +297,69 @@ class OrderController {
         }
       }
       return res.json(orders);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async confirmOrderFromManufacturer(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { orderId, productsAmount } = req.body;
+      if (!orderId || !productsAmount) {
+        return next(ApiError.badRequest('confirmOrderFromManufacturer - request data is not complete'));
+      }
+      const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+      if (!isManufacturer) {
+        return next(
+          ApiError.badRequest(
+            `confirmOrderFromManufacturer - only manufacturer could confirm the order with id=${orderId}`
+          )
+        );
+      }
+      const isOrderConfirmed = await ConfirmedProduct.findOne({ where: { orderId: orderId } });
+      if (isOrderConfirmed) {
+        return next(ApiError.badRequest(`confirmOrderFromManufacturer - order with id=${orderId} already confirmed`));
+      }
+      const orderProducts = await getProductsInOrder(orderId, OrderProduct, req.protocol, req.headers.host);
+      for (const orderProduct of orderProducts) {
+        const confirmedAmountFromManufacturer = productsAmount.find((product) => product.productId === orderProduct.id)[
+          'amount'
+        ];
+
+        if (
+          confirmedAmountFromManufacturer &&
+          confirmedAmountFromManufacturer > 0 &&
+          confirmedAmountFromManufacturer <= orderProduct.amountInOrder
+        ) {
+          let imageFile = null;
+          const image = orderProduct.images[0];
+          if (image) {
+            const split = image.split('/')[3];
+            if (split) {
+              imageFile = split;
+            }
+          }
+          await ConfirmedProduct.create({
+            code: orderProduct.code,
+            height: orderProduct.height,
+            width: orderProduct.width,
+            length: orderProduct.length,
+            caliber: orderProduct.caliber,
+            isSeptic: orderProduct.isSeptic,
+            isDried: orderProduct.isDried,
+            amount: confirmedAmountFromManufacturer,
+            price: orderProduct.price,
+            orderId: orderId,
+            productId: orderProduct.id,
+            subCategoryId: orderProduct.subCategory.id,
+            productMaterialId: orderProduct.material.id,
+            productSortId: orderProduct.sort.id,
+            image: imageFile,
+          });
+        }
+      }
+      return res.json(orderProducts);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }

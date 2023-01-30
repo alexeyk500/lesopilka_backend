@@ -24,4 +24,4 @@ cat progects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_s
 
 cat /progects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
 
-cat /Users/alexey.styupan/progects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
+cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-01-30_19_08_11.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres

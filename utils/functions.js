@@ -1,6 +1,7 @@
 const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
 const { Product } = require('../models/productModels');
+const { OrderProduct } = require('../models/orderModels');
 
 const formatAddress = (address) => {
   if (!address) {
@@ -94,6 +95,24 @@ const checkManufacturerForProduct = async (userId, productId) => {
   return userCandidate.manufacturer.id === product.manufacturerId;
 };
 
+const checkManufacturerForOrder = async (userId, orderId) => {
+  const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
+  if (!userCandidate.manufacturer) {
+    return false;
+  }
+  const oneOrderProduct = await OrderProduct.findOne({
+    where: { orderId },
+    include: {
+      model: Product,
+      required: true,
+    },
+  });
+  if (!oneOrderProduct) {
+    return false;
+  }
+  return userCandidate.manufacturer.id === oneOrderProduct.product.manufacturerId;
+};
+
 const normalizeData = (data) => {
   const newData = new Date(data);
   const newDataStr = newData.toISOString();
@@ -107,5 +126,6 @@ module.exports = {
   formatProduct,
   updateModelsField,
   checkManufacturerForProduct,
+  checkManufacturerForOrder,
   normalizeData,
 };

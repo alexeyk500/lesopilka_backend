@@ -40,15 +40,15 @@ docker exec -it server-db-1 bash
 Резервное копирование дампом SQL
 
 1) Дамп БД с установкой env переменной пароля PGPASSWORD=secret
-docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/alexeyk500/My_Files_iMac/Learning/lesopilka/dump_$(date +%Y-%m-%d_%H_%M_%S).sql
+docker exec -e PGPASSWORD=secret -t lesopilka_server-db-1 pg_dumpall -c -U a500 > /Users/alexeyk500/Projects/Lesopilka//dump_$(date +%Y-%m-%d_%H_%M_%S).sql
 
 
 2) Восстановление дампа БД
     1) Остановить сервер с Sequelize
     2) Остановить докер контейнер с БД
-       - $docker-compose -f docker-compose.only.docker.db.yml down
+       - $ docker-compose -f docker-compose.only.docker.db.yml down
     3) Удалить docker volume с БД
-       - $docker volume rm server_db
+       - $ docker volume rm server_db
     4) Поднять заново контейнер с БД
       // Запуск только PostgresSql в Docker локально - для разработы сервера
       - $docker-compose -f docker-compose.only.docker.db.yml up --build
@@ -60,5 +60,4 @@ docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/a
 
     Проверить назавние котейнера с БД - "lesopilka_server-db-1" (может не совпадать)
     cat /Users/alexeyk500/Progects/Lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
-
 
