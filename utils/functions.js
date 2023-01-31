@@ -120,6 +120,11 @@ const normalizeData = (data) => {
   return new Date(onlyDataStr);
 };
 
+const isPositiveNumbersAndZero = (value) => {
+  const valueNumber = Number(value);
+  return !(isNaN(valueNumber) || valueNumber < 0);
+};
+
 module.exports = {
   formatAddress,
   formatManufacturer,
@@ -128,4 +133,5 @@ module.exports = {
   checkManufacturerForProduct,
   checkManufacturerForOrder,
   normalizeData,
+  isPositiveNumbersAndZero,
 };

@@ -1,7 +1,13 @@
 const ApiError = require('../error/apiError');
 const { PaymentMethod, DeliveryMethod, Order, OrderProduct } = require('../models/orderModels');
 const { ManufacturerPickUpAddress, Location, Region, Address } = require('../models/addressModels');
-const { formatAddress, formatProduct, normalizeData, checkManufacturerForOrder } = require('../utils/functions');
+const {
+  formatAddress,
+  formatProduct,
+  normalizeData,
+  checkManufacturerForOrder,
+  isPositiveNumbersAndZero,
+} = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
@@ -49,10 +55,25 @@ const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   });
 };
 
-const formatOrderInfo = (order, orderProducts) => {
+const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host) => {
+  const confirmedProductsRaw = await ConfirmedProduct.findAll({
+    where: { orderId },
+    include: [SubCategory, ProductMaterial, ProductSort],
+  });
+  const confirmedProductsWithPicture = confirmedProductsRaw.map((confirmedProduct) => {
+    confirmedProduct.pictures = [{ fileName: confirmedProduct.image }];
+    return confirmedProduct;
+  });
+  return confirmedProductsWithPicture.map((product) => {
+    return formatProduct(product, protocol, host);
+  });
+};
+
+const formatOrderInfo = (order, products, confirmedProducts) => {
   return {
-    order: order,
-    products: orderProducts,
+    order,
+    products,
+    confirmedProducts,
   };
 };
 
@@ -290,7 +311,16 @@ class OrderController {
         for (const order of ordersList) {
           const orderHeader = await getOrderById(order.id);
           const orderProducts = await getProductsInOrder(order.id, OrderProduct, req.protocol, req.headers.host);
-          const orderResponse = formatOrderInfo(orderHeader, orderProducts);
+          let confirmedProducts;
+          if (order.confirmedManufacturer) {
+            confirmedProducts = await getConfirmedProductsByOrderId(
+              order.id,
+              ConfirmedProduct,
+              req.protocol,
+              req.headers.host
+            );
+          }
+          const orderResponse = formatOrderInfo(orderHeader, orderProducts, confirmedProducts);
           if (orderResponse) {
             orders.push(orderResponse);
           }
@@ -305,61 +335,67 @@ class OrderController {
   async confirmOrderFromManufacturer(req, res, next) {
     try {
       const userId = req.user.id;
-      const { orderId, productsAmount } = req.body;
-      if (!orderId || !productsAmount) {
-        return next(ApiError.badRequest('confirmOrderFromManufacturer - request data is not complete'));
+      const { orderId, requestProducts } = req.body;
+      if (!orderId || !requestProducts) {
+        return next(ApiError.badRequest('confirmOrder - request data is not complete'));
       }
       const isManufacturer = await checkManufacturerForOrder(userId, orderId);
       if (!isManufacturer) {
-        return next(
-          ApiError.badRequest(
-            `confirmOrderFromManufacturer - only manufacturer could confirm the order with id=${orderId}`
-          )
-        );
+        return next(ApiError.badRequest(`confirmOrder - only manufacturer could confirm the order`));
       }
       const isOrderConfirmed = await ConfirmedProduct.findOne({ where: { orderId: orderId } });
       if (isOrderConfirmed) {
-        return next(ApiError.badRequest(`confirmOrderFromManufacturer - order with id=${orderId} already confirmed`));
+        return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} already confirmed`));
       }
-      const orderProducts = await getProductsInOrder(orderId, OrderProduct, req.protocol, req.headers.host);
-      for (const orderProduct of orderProducts) {
-        const confirmedAmountFromManufacturer = productsAmount.find((product) => product.productId === orderProduct.id)[
-          'amount'
-        ];
-
-        if (
-          confirmedAmountFromManufacturer &&
-          confirmedAmountFromManufacturer > 0 &&
-          confirmedAmountFromManufacturer <= orderProduct.amountInOrder
-        ) {
-          let imageFile = null;
-          const image = orderProduct.images[0];
-          if (image) {
-            const split = image.split('/')[3];
-            if (split) {
-              imageFile = split;
-            }
-          }
-          await ConfirmedProduct.create({
-            code: orderProduct.code,
-            height: orderProduct.height,
-            width: orderProduct.width,
-            length: orderProduct.length,
-            caliber: orderProduct.caliber,
-            isSeptic: orderProduct.isSeptic,
-            isDried: orderProduct.isDried,
-            amount: confirmedAmountFromManufacturer,
-            price: orderProduct.price,
-            orderId: orderId,
-            productId: orderProduct.id,
-            subCategoryId: orderProduct.subCategory.id,
-            productMaterialId: orderProduct.material.id,
-            productSortId: orderProduct.sort.id,
-            image: imageFile,
-          });
+      const orderProductsDB = await getProductsInOrder(orderId, OrderProduct, req.protocol, req.headers.host);
+      if (!orderProductsDB || orderProductsDB.length === 0) {
+        return next(ApiError.badRequest(`confirmOrder - no products in DB for Order with id=${orderId}`));
+      }
+      if (orderProductsDB.length !== requestProducts.length) {
+        return next(ApiError.badRequest(`confirmOrder - error with length for Order with id=${orderId}`));
+      }
+      for (const requestProduct of requestProducts) {
+        if (!isPositiveNumbersAndZero(requestProduct.amount)) {
+          return next(
+            ApiError.badRequest(`confirmOrder - product with id=${requestProduct.productId} incorrect value in amount`)
+          );
+        }
+        const orderProduct = orderProductsDB.find((product) => product.id === requestProduct.productId);
+        if (!orderProduct) {
+          return next(
+            ApiError.badRequest(`confirmOrder - product with id=${requestProduct.productId} does not present in Order`)
+          );
         }
       }
-      return res.json(orderProducts);
+      for (const orderProduct of orderProductsDB) {
+        const requestAmount = requestProducts.find((product) => product.productId === orderProduct.id)['amount'];
+        let imageFile = null;
+        const image = orderProduct.images[0];
+        if (image) {
+          const split = image.split('/')[3];
+          if (split) {
+            imageFile = split;
+          }
+        }
+        await ConfirmedProduct.create({
+          code: orderProduct.code,
+          height: orderProduct.height,
+          width: orderProduct.width,
+          length: orderProduct.length,
+          caliber: orderProduct.caliber,
+          isSeptic: orderProduct.isSeptic,
+          isDried: orderProduct.isDried,
+          amount: requestAmount,
+          price: orderProduct.price,
+          orderId: orderId,
+          productId: orderProduct.id,
+          subCategoryId: orderProduct.subCategory.id,
+          productMaterialId: orderProduct.material.id,
+          productSortId: orderProduct.sort.id,
+          image: imageFile,
+        });
+      }
+      return res.json(orderProductsDB);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
