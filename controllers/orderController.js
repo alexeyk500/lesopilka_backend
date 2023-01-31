@@ -55,17 +55,21 @@ const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   });
 };
 
-const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host) => {
+const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host, confirmedDate) => {
   const confirmedProductsRaw = await ConfirmedProduct.findAll({
     where: { orderId },
     include: [SubCategory, ProductMaterial, ProductSort],
   });
   const confirmedProductsWithPicture = confirmedProductsRaw.map((confirmedProduct) => {
     confirmedProduct.pictures = [{ fileName: confirmedProduct.image }];
+    confirmedProduct.publicationDate = confirmedDate;
     return confirmedProduct;
   });
   return confirmedProductsWithPicture.map((product) => {
-    return formatProduct(product, protocol, host);
+    const formattedProduct = formatProduct(product, protocol, host);
+    formattedProduct.amountInConfirmation = product.amount;
+    formattedProduct.confirmedProductId = product.productId;
+    return formattedProduct
   });
 };
 
@@ -317,7 +321,8 @@ class OrderController {
               order.id,
               ConfirmedProduct,
               req.protocol,
-              req.headers.host
+              req.headers.host,
+              order.confirmedManufacturer
             );
           }
           const orderResponse = formatOrderInfo(orderHeader, orderProducts, confirmedProducts);
