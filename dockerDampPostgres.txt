@@ -1,7 +1,7 @@
 Резервное копирование дампом SQL
 
 1) Дамп БД с установкой env переменной пароля PGPASSWORD=secret
-docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/alexeyk500/My_Files_iMac/Learning/lesopilka/dump_$(date +%Y-%m-%d_%H_%M_%S).sql
+$ docker exec -e PGPASSWORD=secret -t lesopilka_server-db-1 pg_dumpall -c -U a500 > /Users/alexeyk500/Projects/Lesopilka/dump_$(date +%Y-%m-%d_%H_%M_%S).sql
 
 
 2) Восстановление дампа БД
@@ -17,4 +17,4 @@ docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/a
       -$ cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-02-02_10_06_02.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
     6) Запустить заново сервер с Sequelize
 
-cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-02-02_10_06_02.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
+$ cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-02-02_10_06_02.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
