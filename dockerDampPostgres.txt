@@ -7,21 +7,14 @@ docker exec -e PGPASSWORD=secret -t server-db-1 pg_dumpall -c -U a500 > /Users/a
 2) Восстановление дампа БД
     1) Остановить сервер с Sequelize
     2) Остановить докер контейнер с БД
-       - $docker-compose -f docker-compose.only.docker.db.yml down
+       - $ docker-compose -f docker-compose.only.docker.db.yml down
     3) Удалить docker volume с БД
-       - $docker volume rm server_db
+       - $ docker volume rm lesopilka_server_db
     4) Поднять заново контейнер с БД
       // Запуск только PostgresSql в Docker локально - для разработы сервера
       - $docker-compose -f docker-compose.only.docker.db.yml up --build
     5) Запустить восстановление с дампа БД
-      -$cat My_Files_iMac/Learning/lesopilka/dump_2022-11-28_11_47_26.sql | docker exec -i server-db-1 psql -U a500 -d postgres
+      -$ cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-02-02_10_06_02.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
     6) Запустить заново сервер с Sequelize
 
-    /Users/alexey.styupan/progects/lesopilka/dump_2023-01-12_16_01_56.sql
-
-progects/lesopilka/dump_2023-01-12_16_01_56.sql
-cat progects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
-
-cat /progects/lesopilka/dump_2023-01-12_16_01_56.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
-
-cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-01-30_19_08_11.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres
+cat /Users/alexeyk500/Projects/Lesopilka/dump_2023-02-02_10_06_02.sql | docker exec -i lesopilka_server-db-1 psql -U a500 -d postgres

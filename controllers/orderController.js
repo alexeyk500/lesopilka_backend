@@ -286,19 +286,19 @@ class OrderController {
       if (!userId) {
         return next(ApiError.badRequest('getOrdersListByParams - userId does not exist in request'));
       }
-      const { dateFrom, dateTo, ordersStatus } = req.body;
-      const normDateFrom = normalizeData(dateFrom);
-      const normDateTo = normalizeData(dateTo);
-      if (!normDateFrom || !normDateTo || !ordersStatus) {
+      const { orderDateFrom, orderDateTo, ordersStatus } = req.body;
+      if (!orderDateFrom || !orderDateTo || !ordersStatus) {
         return next(ApiError.badRequest('getOrdersListByParams - request data is not complete'));
       }
+      const normOrderDateFrom = normalizeData(orderDateFrom);
+      const normOrderDateTo = normalizeData(orderDateTo);
       const orders = [];
       let searchParams = {};
       searchParams.userId = userId;
-      searchParams.date = {
+      searchParams.orderDate = {
         [Op.and]: {
-          [Op.gte]: normDateFrom,
-          [Op.lte]: normDateTo,
+          [Op.gte]: normOrderDateFrom,
+          [Op.lte]: normOrderDateTo,
         },
       };
       if (
@@ -310,7 +310,7 @@ class OrderController {
       ) {
         searchParams.status = ordersStatus;
       }
-      const ordersList = await Order.findAll({ where: searchParams, order: ['date'] });
+      const ordersList = await Order.findAll({ where: searchParams, order: ['orderDate'] });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
           const orderHeader = await getOrderById(order.id);
