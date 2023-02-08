@@ -29,7 +29,14 @@ const Order = sequelize.define(
     orderDate: { type: DataTypes.DATE },
     deliveryDate: { type: DataTypes.DATE },
     status: {
-      type: DataTypes.ENUM('onConfirming', 'onPaymentWaiting', 'clientPaid', 'onAssembling', 'onDelivering', 'completed'),
+      type: DataTypes.ENUM(
+        'onConfirming',
+        'onPaymentWaiting',
+        'clientPaid',
+        'onAssembling',
+        'onDelivering',
+        'completed'
+      ),
       defaultValue: 'onConfirming',
     },
     contactPersonName: { type: DataTypes.STRING },

@@ -69,7 +69,7 @@ const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol
     const formattedProduct = formatProduct(product, protocol, host);
     formattedProduct.amountInConfirmation = product.amount;
     formattedProduct.confirmedProductId = product.productId;
-    return formattedProduct
+    return formattedProduct;
   });
 };
 
