@@ -36,7 +36,7 @@ const Order = sequelize.define(
     contactPersonPhone: { type: DataTypes.STRING },
     deliveryAddress: { type: DataTypes.STRING },
     deliveryPrice: { type: DataTypes.FLOAT },
-    confirmedManufacturer: { type: DataTypes.DATE },
+    manufacturerConfirmedDate: { type: DataTypes.DATE },
   },
   { timestamps: false }
 );

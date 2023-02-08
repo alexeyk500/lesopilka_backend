@@ -55,14 +55,14 @@ const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   });
 };
 
-const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host, confirmedDate) => {
+const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host, manufacturerConfirmedDate) => {
   const confirmedProductsRaw = await ConfirmedProduct.findAll({
     where: { orderId },
     include: [SubCategory, ProductMaterial, ProductSort],
   });
   const confirmedProductsWithPicture = confirmedProductsRaw.map((confirmedProduct) => {
     confirmedProduct.pictures = [{ fileName: confirmedProduct.image }];
-    confirmedProduct.publicationDate = confirmedDate;
+    confirmedProduct.publicationDate = manufacturerConfirmedDate;
     return confirmedProduct;
   });
   return confirmedProductsWithPicture.map((product) => {
@@ -316,13 +316,13 @@ class OrderController {
           const orderHeader = await getOrderById(order.id);
           const orderProducts = await getProductsInOrder(order.id, OrderProduct, req.protocol, req.headers.host);
           let confirmedProducts;
-          if (order.confirmedManufacturer) {
+          if (order.manufacturerConfirmedDate) {
             confirmedProducts = await getConfirmedProductsByOrderId(
               order.id,
               ConfirmedProduct,
               req.protocol,
               req.headers.host,
-              order.confirmedManufacturer
+              order.manufacturerConfirmedDate
             );
           }
           const orderResponse = formatOrderInfo(orderHeader, orderProducts, confirmedProducts);
