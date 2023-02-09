@@ -337,7 +337,7 @@ class OrderController {
       ) {
         searchParams.status = ordersStatus;
       }
-      const ordersList = await Order.findAll({ where: searchParams, order: ['orderDate'] });
+      const ordersList = await Order.findAll({ where: searchParams, order: ['deliveryDate'] });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
           const orderResponse = await getOrderResponse(
