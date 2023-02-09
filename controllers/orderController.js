@@ -7,6 +7,7 @@ const {
   normalizeData,
   checkManufacturerForOrder,
   isPositiveNumbersAndZero,
+  dateDayShift,
 } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
@@ -15,6 +16,7 @@ const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
+const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS, ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
@@ -56,6 +58,9 @@ const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
 };
 
 const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host, manufacturerConfirmedDate) => {
+  if (!manufacturerConfirmedDate) {
+    return undefined;
+  }
   const confirmedProductsRaw = await ConfirmedProduct.findAll({
     where: { orderId },
     include: [SubCategory, ProductMaterial, ProductSort],
@@ -81,12 +86,35 @@ const formatOrderInfo = (order, products, confirmedProducts) => {
   };
 };
 
-const getOrderById = async (id) => {
+const getOrderById = async (id, Order) => {
   return await Order.findOne({
     where: { id },
     attributes: { exclude: ['paymentMethodId', 'deliveryMethodId', 'locationId'] },
     include: [PaymentMethod, DeliveryMethod, { model: Location, include: [{ model: Region }] }],
   });
+};
+
+const getOrderHeaderByOrderId = async (id, Order) => {
+  const orderHeader = await getOrderById(id, Order);
+  const nowDate = normalizeData(new Date());
+  const shiftedOrderDate = dateDayShift(orderHeader.deliveryDate, AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS);
+  if (nowDate > shiftedOrderDate) {
+    orderHeader.status = ARCHIVED_ORDERS_STATUS;
+  }
+  return orderHeader;
+};
+
+const getOrderResponse = async (order, protocol, host, Order, OrderProduct, ConfirmedProduct) => {
+  const orderHeader = await getOrderHeaderByOrderId(order.id, Order);
+  const orderProducts = await getProductsInOrder(order.id, OrderProduct, protocol, host);
+  const confirmedProducts = await getConfirmedProductsByOrderId(
+    order.id,
+    ConfirmedProduct,
+    protocol,
+    host,
+    order.manufacturerConfirmedDate
+  );
+  return formatOrderInfo(orderHeader, orderProducts, confirmedProducts);
 };
 
 class OrderController {
@@ -303,31 +331,33 @@ class OrderController {
       };
       if (
         ordersStatus === 'onConfirming' ||
-        ordersStatus === 'onPaymentWaiting' ||
-        ordersStatus === 'onAssembling' ||
-        ordersStatus === 'onDelivering' ||
-        ordersStatus === 'completed'
+        ordersStatus === 'confirmedOrder' ||
+        ordersStatus === 'canceledByUser' ||
+        ordersStatus === 'canceledByManufacturer'
       ) {
         searchParams.status = ordersStatus;
       }
       const ordersList = await Order.findAll({ where: searchParams, order: ['orderDate'] });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
-          const orderHeader = await getOrderById(order.id);
-          const orderProducts = await getProductsInOrder(order.id, OrderProduct, req.protocol, req.headers.host);
-          let confirmedProducts;
-          if (order.manufacturerConfirmedDate) {
-            confirmedProducts = await getConfirmedProductsByOrderId(
-              order.id,
-              ConfirmedProduct,
-              req.protocol,
-              req.headers.host,
-              order.manufacturerConfirmedDate
-            );
-          }
-          const orderResponse = formatOrderInfo(orderHeader, orderProducts, confirmedProducts);
-          if (orderResponse) {
+          const orderResponse = await getOrderResponse(
+            order,
+            req.protocol,
+            req.headers.host,
+            Order,
+            OrderProduct,
+            ConfirmedProduct
+          );
+          if (ordersStatus === 'all') {
             orders.push(orderResponse);
+          } else if (ordersStatus === ARCHIVED_ORDERS_STATUS) {
+            if (orderResponse.order.status === ARCHIVED_ORDERS_STATUS) {
+              orders.push(orderResponse);
+            }
+          } else if (ordersStatus !== ARCHIVED_ORDERS_STATUS) {
+            if (orderResponse.order.status !== ARCHIVED_ORDERS_STATUS) {
+              orders.push(orderResponse);
+            }
           }
         }
       }

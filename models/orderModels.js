@@ -29,14 +29,7 @@ const Order = sequelize.define(
     orderDate: { type: DataTypes.DATE },
     deliveryDate: { type: DataTypes.DATE },
     status: {
-      type: DataTypes.ENUM(
-        'onConfirming',
-        'onPaymentWaiting',
-        'clientPaid',
-        'onAssembling',
-        'onDelivering',
-        'completed'
-      ),
+      type: DataTypes.ENUM('onConfirming', 'confirmedOrder', 'canceledByUser', 'canceledByManufacturer'),
       defaultValue: 'onConfirming',
     },
     contactPersonName: { type: DataTypes.STRING },
@@ -44,6 +37,8 @@ const Order = sequelize.define(
     deliveryAddress: { type: DataTypes.STRING },
     deliveryPrice: { type: DataTypes.FLOAT },
     manufacturerConfirmedDate: { type: DataTypes.DATE },
+    deleteByUser: { type: DataTypes.BOOLEAN, defaultValue: false },
+    deleteByManufacturer: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   { timestamps: false }
 );

@@ -113,16 +113,22 @@ const checkManufacturerForOrder = async (userId, orderId) => {
   return userCandidate.manufacturer.id === oneOrderProduct.product.manufacturerId;
 };
 
-const normalizeData = (data) => {
-  const newData = new Date(data);
-  const newDataStr = newData.toISOString();
-  const onlyDataStr = newDataStr.split('T')[0];
-  return new Date(onlyDataStr);
+const normalizeDate = (date) => {
+  const newDate = new Date(date);
+  const newDateStr = newDate.toISOString();
+  const onlyDateStr = newDateStr.split('T')[0];
+  return new Date(onlyDateStr);
 };
 
 const isPositiveNumbersAndZero = (value) => {
   const valueNumber = Number(value);
   return !(isNaN(valueNumber) || valueNumber < 0);
+};
+
+const dateDayShift = (date, days) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
 };
 
 module.exports = {
@@ -132,6 +138,7 @@ module.exports = {
   updateModelsField,
   checkManufacturerForProduct,
   checkManufacturerForOrder,
-  normalizeData,
+  normalizeData: normalizeDate,
   isPositiveNumbersAndZero,
+  dateDayShift,
 };
