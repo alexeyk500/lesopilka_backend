@@ -226,7 +226,7 @@ class OrderController {
     }
   }
 
-  async cancelOrder(req, res, next) {
+  async cancelOrderAndReturnToBasket(req, res, next) {
     try {
       const userId = req.user.id;
       if (!userId) {
