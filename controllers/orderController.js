@@ -367,6 +367,68 @@ class OrderController {
     }
   }
 
+  async getManOrdersListByParams(req, res, next) {
+    try {
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('getOrdersListByParams - userId does not exist in request'));
+      }
+      const { orderDateFrom, orderDateTo, ordersStatus, isOrdersForManufacturer } = req.body;
+      if (!orderDateFrom || !orderDateTo || !ordersStatus) {
+        return next(ApiError.badRequest('getOrdersListByParams - request data is not complete'));
+      }
+      if (isOrdersForManufacturer) {
+        console.log({isOrdersForManufacturer});
+      }
+      const normOrderDateFrom = normalizeData(orderDateFrom);
+      const normOrderDateTo = normalizeData(orderDateTo);
+      const orders = [];
+      let searchParams = {};
+      searchParams.userId = userId;
+      searchParams.orderDate = {
+        [Op.and]: {
+          [Op.gte]: normOrderDateFrom,
+          [Op.lte]: normOrderDateTo,
+        },
+      };
+      if (
+        ordersStatus === 'onConfirming' ||
+        ordersStatus === 'confirmedOrder' ||
+        ordersStatus === 'canceledByUser' ||
+        ordersStatus === 'canceledByManufacturer'
+      ) {
+        searchParams.status = ordersStatus;
+      }
+      const ordersList = await Order.findAll({ where: searchParams, order: ['deliveryDate'] });
+      if (ordersList && ordersList.length > 0) {
+        for (const order of ordersList) {
+          const orderResponse = await getOrderResponse(
+            order,
+            req.protocol,
+            req.headers.host,
+            Order,
+            OrderProduct,
+            ConfirmedProduct
+          );
+          if (ordersStatus === 'all') {
+            orders.push(orderResponse);
+          } else if (ordersStatus === ARCHIVED_ORDERS_STATUS) {
+            if (orderResponse.order.status === ARCHIVED_ORDERS_STATUS) {
+              orders.push(orderResponse);
+            }
+          } else if (ordersStatus !== ARCHIVED_ORDERS_STATUS) {
+            if (orderResponse.order.status !== ARCHIVED_ORDERS_STATUS) {
+              orders.push(orderResponse);
+            }
+          }
+        }
+      }
+      return res.json(orders);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
   async confirmOrderFromManufacturer(req, res, next) {
     try {
       const userId = req.user.id;

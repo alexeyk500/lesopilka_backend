@@ -95,6 +95,14 @@ const checkManufacturerForProduct = async (userId, productId) => {
   return userCandidate.manufacturer.id === product.manufacturerId;
 };
 
+const getManufacturerIdForUser = async (userId) => {
+  const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
+  if (!userCandidate.manufacturer.id) {
+    return false;
+  }
+  return userCandidate.manufacturer.id;
+};
+
 const checkManufacturerForOrder = async (userId, orderId) => {
   const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
   if (!userCandidate.manufacturer) {

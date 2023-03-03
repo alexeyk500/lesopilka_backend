@@ -3,6 +3,7 @@ const { DataTypes } = require('sequelize');
 const { Location } = require('../models/addressModels');
 const { User } = require('./userModels');
 const { Product } = require('./productModels');
+const { Manufacturer } = require("./manufacturerModels");
 
 const PaymentMethod = sequelize.define(
   'paymentMethod',
@@ -57,6 +58,9 @@ Order.belongsTo(Location);
 
 User.hasMany(Order);
 Order.belongsTo(User);
+
+Manufacturer.hasMany(Order);
+Order.belongsTo(Manufacturer);
 
 PaymentMethod.hasMany(Order);
 Order.belongsTo(PaymentMethod);
