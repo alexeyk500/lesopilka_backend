@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 const { Location } = require('../models/addressModels');
 const { User } = require('./userModels');
 const { Product } = require('./productModels');
-const { Manufacturer } = require("./manufacturerModels");
+const { Manufacturer } = require('./manufacturerModels');
 
 const PaymentMethod = sequelize.define(
   'paymentMethod',

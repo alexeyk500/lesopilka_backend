@@ -8,6 +8,7 @@ const {
   checkManufacturerForOrder,
   isPositiveNumbersAndZero,
   dateDayShift,
+  getManufacturerIdForUser,
 } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
@@ -17,6 +18,7 @@ const { Picture } = require('../models/pictureModels');
 const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
 const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS, ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
+const { User } = require('../models/userModels');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
@@ -94,18 +96,39 @@ const getOrderById = async (id, Order) => {
   });
 };
 
-const getOrderHeaderByOrderId = async (id, Order) => {
+const getOrderHeaderByOrderId = async (id, Order, isOrderForManufacturer) => {
   const orderHeader = await getOrderById(id, Order);
   const nowDate = normalizeData(new Date());
   const shiftedOrderDate = dateDayShift(orderHeader.deliveryDate, AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS);
   if (nowDate > shiftedOrderDate) {
     orderHeader.status = ARCHIVED_ORDERS_STATUS;
   }
+  if (isOrderForManufacturer && orderHeader.userId) {
+    const userCandidate = await User.findOne({ where: { id: orderHeader.userId } });
+    if (userCandidate) {
+      const headerObject = await orderHeader.get();
+      headerObject.userInfo = {
+        id: orderHeader.userId,
+        name: userCandidate.name,
+        email: userCandidate.email,
+        phone: userCandidate.phone,
+      };
+      return headerObject;
+    }
+  }
   return orderHeader;
 };
 
-const getOrderResponse = async (order, protocol, host, Order, OrderProduct, ConfirmedProduct) => {
-  const orderHeader = await getOrderHeaderByOrderId(order.id, Order);
+const getOrderResponse = async (
+  order,
+  protocol,
+  host,
+  Order,
+  OrderProduct,
+  ConfirmedProduct,
+  isOrderForManufacturer
+) => {
+  const orderHeader = await getOrderHeaderByOrderId(order.id, Order, isOrderForManufacturer);
   const orderProducts = await getProductsInOrder(order.id, OrderProduct, protocol, host);
   const confirmedProducts = await getConfirmedProductsByOrderId(
     order.id,
@@ -314,78 +337,28 @@ class OrderController {
       if (!userId) {
         return next(ApiError.badRequest('getOrdersListByParams - userId does not exist in request'));
       }
-      const { orderDateFrom, orderDateTo, ordersStatus } = req.body;
-      if (!orderDateFrom || !orderDateTo || !ordersStatus) {
-        return next(ApiError.badRequest('getOrdersListByParams - request data is not complete'));
-      }
-      const normOrderDateFrom = normalizeData(orderDateFrom);
-      const normOrderDateTo = normalizeData(orderDateTo);
-      const orders = [];
-      let searchParams = {};
-      searchParams.userId = userId;
-      searchParams.orderDate = {
-        [Op.and]: {
-          [Op.gte]: normOrderDateFrom,
-          [Op.lte]: normOrderDateTo,
-        },
-      };
-      if (
-        ordersStatus === 'onConfirming' ||
-        ordersStatus === 'confirmedOrder' ||
-        ordersStatus === 'canceledByUser' ||
-        ordersStatus === 'canceledByManufacturer'
-      ) {
-        searchParams.status = ordersStatus;
-      }
-      const ordersList = await Order.findAll({ where: searchParams, order: ['deliveryDate'] });
-      if (ordersList && ordersList.length > 0) {
-        for (const order of ordersList) {
-          const orderResponse = await getOrderResponse(
-            order,
-            req.protocol,
-            req.headers.host,
-            Order,
-            OrderProduct,
-            ConfirmedProduct
-          );
-          if (ordersStatus === 'all') {
-            orders.push(orderResponse);
-          } else if (ordersStatus === ARCHIVED_ORDERS_STATUS) {
-            if (orderResponse.order.status === ARCHIVED_ORDERS_STATUS) {
-              orders.push(orderResponse);
-            }
-          } else if (ordersStatus !== ARCHIVED_ORDERS_STATUS) {
-            if (orderResponse.order.status !== ARCHIVED_ORDERS_STATUS) {
-              orders.push(orderResponse);
-            }
-          }
-        }
-      }
-      return res.json(orders);
-    } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
-    }
-  }
-
-  async getManOrdersListByParams(req, res, next) {
-    try {
-      const userId = req.user.id;
-      if (!userId) {
-        return next(ApiError.badRequest('getOrdersListByParams - userId does not exist in request'));
-      }
       const { orderDateFrom, orderDateTo, ordersStatus, isOrdersForManufacturer } = req.body;
       if (!orderDateFrom || !orderDateTo || !ordersStatus) {
         return next(ApiError.badRequest('getOrdersListByParams - request data is not complete'));
       }
+      let manufacturerId = undefined;
       if (isOrdersForManufacturer) {
-        console.log({isOrdersForManufacturer});
+        manufacturerId = await getManufacturerIdForUser(userId);
+        if (!manufacturerId) {
+          return next(ApiError.badRequest('user is not manufacturer'));
+        }
       }
       const normOrderDateFrom = normalizeData(orderDateFrom);
       const normOrderDateTo = normalizeData(orderDateTo);
       const orders = [];
+
       let searchParams = {};
-      searchParams.userId = userId;
-      searchParams.orderDate = {
+      if (manufacturerId) {
+        searchParams.manufacturerId = manufacturerId;
+      } else {
+        searchParams.userId = userId;
+      }
+      searchParams.deliveryDate = {
         [Op.and]: {
           [Op.gte]: normOrderDateFrom,
           [Op.lte]: normOrderDateTo,
@@ -399,6 +372,7 @@ class OrderController {
       ) {
         searchParams.status = ordersStatus;
       }
+
       const ordersList = await Order.findAll({ where: searchParams, order: ['deliveryDate'] });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
@@ -408,7 +382,8 @@ class OrderController {
             req.headers.host,
             Order,
             OrderProduct,
-            ConfirmedProduct
+            ConfirmedProduct,
+            isOrdersForManufacturer
           );
           if (ordersStatus === 'all') {
             orders.push(orderResponse);

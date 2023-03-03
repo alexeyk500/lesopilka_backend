@@ -98,7 +98,7 @@ const checkManufacturerForProduct = async (userId, productId) => {
 const getManufacturerIdForUser = async (userId) => {
   const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
   if (!userCandidate.manufacturer.id) {
-    return false;
+    return undefined;
   }
   return userCandidate.manufacturer.id;
 };
@@ -146,6 +146,7 @@ module.exports = {
   updateModelsField,
   checkManufacturerForProduct,
   checkManufacturerForOrder,
+  getManufacturerIdForUser,
   normalizeData: normalizeDate,
   isPositiveNumbersAndZero,
   dateDayShift,
