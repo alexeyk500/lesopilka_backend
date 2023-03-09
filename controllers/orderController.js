@@ -8,7 +8,8 @@ const {
   checkManufacturerForOrder,
   isPositiveNumbersAndZero,
   dateDayShift,
-  getManufacturerIdForUser, updateModelsField,
+  getManufacturerIdForUser,
+  updateModelsField,
 } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
