@@ -8,7 +8,7 @@ const {
   checkManufacturerForOrder,
   isPositiveNumbersAndZero,
   dateDayShift,
-  getManufacturerIdForUser,
+  getManufacturerIdForUser, updateModelsField,
 } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
@@ -415,9 +415,24 @@ class OrderController {
       if (!isManufacturer) {
         return next(ApiError.badRequest(`confirmOrder - only manufacturer could confirm the order`));
       }
-      const isOrderConfirmed = await ConfirmedProduct.findOne({ where: { orderId: orderId } });
-      if (isOrderConfirmed) {
-        return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} already confirmed`));
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} does not exist`));
+      }
+      if (order.status !== 'onConfirming') {
+        return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} not in status "onConfirming"`));
+      }
+      if (order.manufacturerConfirmedDate !== null) {
+        return next(
+          ApiError.badRequest(
+            `confirmOrder - order with id=${orderId} has confirmedDate=${order.manufacturerConfirmedDate}`
+          )
+        );
+      }
+
+      const hasConfirmedProductsInOrder = await ConfirmedProduct.findOne({ where: { orderId: orderId } });
+      if (hasConfirmedProductsInOrder) {
+        return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} already has confirmed products`));
       }
       const orderProductsDB = await getProductsInOrder(orderId, OrderProduct, req.protocol, req.headers.host);
       if (!orderProductsDB || orderProductsDB.length === 0) {
@@ -439,6 +454,7 @@ class OrderController {
           );
         }
       }
+
       for (const orderProduct of orderProductsDB) {
         const requestAmount = requestProducts.find((product) => product.productId === orderProduct.id)['amount'];
         let imageFile = null;
@@ -467,6 +483,12 @@ class OrderController {
           image: imageFile,
         });
       }
+
+      await updateModelsField(order, { status: 'confirmedOrder' });
+      const newDate = new Date();
+      const manufacturerConfirmedDate = newDate.toISOString();
+      await updateModelsField(order, { manufacturerConfirmedDate });
+
       return res.json(orderProductsDB);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));

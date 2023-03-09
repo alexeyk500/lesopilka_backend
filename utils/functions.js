@@ -121,7 +121,7 @@ const checkManufacturerForOrder = async (userId, orderId) => {
   return userCandidate.manufacturer.id === oneOrderProduct.product.manufacturerId;
 };
 
-const normalizeDate = (date) => {
+const normalizeData = (date) => {
   const newDate = new Date(date);
   const newDateStr = newDate.toISOString();
   const onlyDateStr = newDateStr.split('T')[0];
@@ -147,7 +147,7 @@ module.exports = {
   checkManufacturerForProduct,
   checkManufacturerForOrder,
   getManufacturerIdForUser,
-  normalizeData: normalizeDate,
+  normalizeData,
   isPositiveNumbersAndZero,
   dateDayShift,
 };
