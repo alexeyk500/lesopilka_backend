@@ -402,16 +402,34 @@ class OrderController {
           if (ordersStatus === 'all') {
             orders.push(orderResponse);
           } else if (ordersStatus === 'active') {
-            if (!orderResponse.order.inArchiveForUser && !orderResponse.order.inArchiveForManufacturer) {
-              orders.push(orderResponse);
+            if (isOrdersForManufacturer) {
+              if (!orderResponse.order.inArchiveForManufacturer) {
+                orders.push(orderResponse);
+              }
+            } else {
+              if (!orderResponse.order.inArchiveForUser) {
+                orders.push(orderResponse);
+              }
             }
           } else if (ordersStatus === ARCHIVED_ORDERS_STATUS) {
-            if (orderResponse.order.inArchiveForUser || orderResponse.order.inArchiveForManufacturer) {
-              orders.push(orderResponse);
+            if (isOrdersForManufacturer) {
+              if (orderResponse.order.inArchiveForManufacturer) {
+                orders.push(orderResponse);
+              }
+            } else {
+              if (orderResponse.order.inArchiveForUser) {
+                orders.push(orderResponse);
+              }
             }
           } else {
-            if (!orderResponse.order.inArchiveForUser && !orderResponse.order.inArchiveForManufacturer) {
-              orders.push(orderResponse);
+            if (isOrdersForManufacturer) {
+              if (!orderResponse.order.inArchiveForManufacturer) {
+                orders.push(orderResponse);
+              }
+            } else {
+              if (!orderResponse.order.inArchiveForUser) {
+                orders.push(orderResponse);
+              }
             }
           }
         }
@@ -508,6 +526,35 @@ class OrderController {
       await updateModelsField(order, { manufacturerConfirmedDate });
 
       return res.json(orderProductsDB);
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async sendOrderToArchive(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { orderId, isOrdersForManufacturer } = req.body;
+      if (!orderId) {
+        return next(ApiError.badRequest('sendOrderToArchive - request data is not complete'));
+      }
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`sendOrderToArchive - order with id=${orderId} does not exist`));
+      }
+      if (isOrdersForManufacturer) {
+        const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+        if (!isManufacturer) {
+          return next(ApiError.badRequest(`sendOrderToArchive - only manufacturer could archive the order`));
+        }
+        await updateModelsField(order, { inArchiveForManufacturer: true });
+      } else {
+        if (order.userId !== userId) {
+          return next(ApiError.badRequest(`sendOrderToArchive - user with id=${userId} is not owner for order with id=${orderId}`));
+        }
+        await updateModelsField(order, { inArchiveForUser: true });
+      }
+      return res.json({message: `Order with orderId=${orderId} for ${isOrdersForManufacturer ? 'manufacturer' : 'user'} archived`});
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
