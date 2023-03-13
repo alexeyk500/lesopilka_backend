@@ -38,8 +38,8 @@ const Order = sequelize.define(
     deliveryAddress: { type: DataTypes.STRING },
     deliveryPrice: { type: DataTypes.FLOAT },
     manufacturerConfirmedDate: { type: DataTypes.DATE },
-    deleteByUser: { type: DataTypes.BOOLEAN, defaultValue: false },
-    deleteByManufacturer: { type: DataTypes.BOOLEAN, defaultValue: false },
+    inArchiveForUser: { type: DataTypes.BOOLEAN, defaultValue: false },
+    inArchiveForManufacturer: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   { timestamps: false }
 );

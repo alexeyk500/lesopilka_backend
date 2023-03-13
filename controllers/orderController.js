@@ -7,9 +7,9 @@ const {
   normalizeData,
   checkManufacturerForOrder,
   isPositiveNumbersAndZero,
-  dateDayShift,
   getManufacturerIdForUser,
   updateModelsField,
+  isOrderShouldBeInArchive,
 } = require('../utils/functions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
@@ -18,7 +18,7 @@ const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
-const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS, ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
+const { ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
 const { User } = require('../models/userModels');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
@@ -99,11 +99,24 @@ const getOrderById = async (id, Order) => {
 
 const getOrderHeaderByOrderId = async (id, Order, isOrderForManufacturer) => {
   const orderHeader = await getOrderById(id, Order);
-  const nowDate = normalizeData(new Date());
-  const shiftedOrderDate = dateDayShift(orderHeader.deliveryDate, AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS);
-  if (nowDate > shiftedOrderDate) {
-    orderHeader.status = ARCHIVED_ORDERS_STATUS;
+  if (!isOrderForManufacturer && !orderHeader.inArchiveForUser) {
+    const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
+    if (orderShouldBeInArchive) {
+      orderHeader.inArchiveForUser = true;
+    }
   }
+  if (isOrderForManufacturer && !orderHeader.inArchiveForManufacturer) {
+    const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
+    if (orderShouldBeInArchive) {
+      orderHeader.inArchiveForManufacturer = true;
+    }
+  }
+
+  // const nowDate = normalizeData(new Date());
+  // const shiftedOrderDate = dateDayShift(orderHeader.deliveryDate, AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS);
+  // if (nowDate > shiftedOrderDate) {
+  //   orderHeader.status = ARCHIVED_ORDERS_STATUS;
+  // }
   if (isOrderForManufacturer && orderHeader.userId) {
     const userCandidate = await User.findOne({ where: { id: orderHeader.userId } });
     if (userCandidate) {
@@ -388,12 +401,16 @@ class OrderController {
           );
           if (ordersStatus === 'all') {
             orders.push(orderResponse);
-          } else if (ordersStatus === ARCHIVED_ORDERS_STATUS) {
-            if (orderResponse.order.status === ARCHIVED_ORDERS_STATUS) {
+          } else if (ordersStatus === 'active') {
+            if (!orderResponse.order.inArchiveForUser && !orderResponse.order.inArchiveForManufacturer) {
               orders.push(orderResponse);
             }
-          } else if (ordersStatus !== ARCHIVED_ORDERS_STATUS) {
-            if (orderResponse.order.status !== ARCHIVED_ORDERS_STATUS) {
+          } else if (ordersStatus === ARCHIVED_ORDERS_STATUS) {
+            if (orderResponse.order.inArchiveForUser || orderResponse.order.inArchiveForManufacturer) {
+              orders.push(orderResponse);
+            }
+          } else {
+            if (!orderResponse.order.inArchiveForUser && !orderResponse.order.inArchiveForManufacturer) {
               orders.push(orderResponse);
             }
           }

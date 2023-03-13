@@ -2,6 +2,7 @@ const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
 const { Product } = require('../models/productModels');
 const { OrderProduct } = require('../models/orderModels');
+const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS } = require('./constants');
 
 const formatAddress = (address) => {
   if (!address) {
@@ -139,6 +140,12 @@ const dateDayShift = (date, days) => {
   return result;
 };
 
+const isOrderShouldBeInArchive = (orderDeliveryDate) => {
+  const nowDate = normalizeData(new Date());
+  const shiftedOrderDate = dateDayShift(orderDeliveryDate, AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS);
+  return nowDate > shiftedOrderDate;
+};
+
 module.exports = {
   formatAddress,
   formatManufacturer,
@@ -150,4 +157,5 @@ module.exports = {
   normalizeData,
   isPositiveNumbersAndZero,
   dateDayShift,
+  isOrderShouldBeInArchive,
 };
