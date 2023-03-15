@@ -40,7 +40,7 @@ docker exec -it server-db-1 bash
 Резервное копирование дампом SQL
 
 1) Дамп БД с установкой env переменной пароля PGPASSWORD=secret
-docker exec -e PGPASSWORD=secret -t lesopilka_server-db-1 pg_dumpall -c -U a500 > /Users/alexeyk500/Projects/Lesopilka//dump_$(date +%Y-%m-%d_%H_%M_%S).sql
+docker exec -e PGPASSWORD=secret -t lesopilka_server-db-1 pg_dumpall -c -U a500 > /Users/alexeyk500/Projects/Lesopilka/dump_$(date +%Y-%m-%d_%H_%M_%S).sql
 
 
 2) Восстановление дампа БД

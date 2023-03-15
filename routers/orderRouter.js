@@ -12,5 +12,6 @@ orderRouter.post('/cancel_order_return_to_basket', authMiddleware, orderControll
 orderRouter.post('/', authMiddleware, orderController.getOrdersListByParams);
 orderRouter.post('/confirm', authMiddleware, orderController.confirmOrderFromManufacturer);
 orderRouter.post('/archive', authMiddleware, orderController.sendOrderToArchive);
+orderRouter.post('/cancel', authMiddleware, orderController.cancelOrder);
 
 module.exports = orderRouter;

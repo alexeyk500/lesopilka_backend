@@ -443,8 +443,8 @@ class OrderController {
   async confirmOrderFromManufacturer(req, res, next) {
     try {
       const userId = req.user.id;
-      const { orderId, requestProducts } = req.body;
-      if (!orderId || !requestProducts) {
+      const { orderId, deliveryPrice, requestProducts } = req.body;
+      if (!orderId || !(Number(deliveryPrice) >= 0) || !requestProducts) {
         return next(ApiError.badRequest('confirmOrder - request data is not complete'));
       }
       const isManufacturer = await checkManufacturerForOrder(userId, orderId);
@@ -520,10 +520,9 @@ class OrderController {
         });
       }
 
-      await updateModelsField(order, { status: 'confirmedOrder' });
       const newDate = new Date();
       const manufacturerConfirmedDate = newDate.toISOString();
-      await updateModelsField(order, { manufacturerConfirmedDate });
+      await updateModelsField(order, { status: 'confirmedOrder', deliveryPrice, manufacturerConfirmedDate });
 
       return res.json(orderProductsDB);
     } catch (e) {
@@ -534,7 +533,7 @@ class OrderController {
   async sendOrderToArchive(req, res, next) {
     try {
       const userId = req.user.id;
-      const { orderId, isOrdersForManufacturer } = req.body;
+      const { orderId, isOrderForManufacturer } = req.body;
       if (!orderId) {
         return next(ApiError.badRequest('sendOrderToArchive - request data is not complete'));
       }
@@ -542,7 +541,7 @@ class OrderController {
       if (!order) {
         return next(ApiError.badRequest(`sendOrderToArchive - order with id=${orderId} does not exist`));
       }
-      if (isOrdersForManufacturer) {
+      if (isOrderForManufacturer) {
         const isManufacturer = await checkManufacturerForOrder(userId, orderId);
         if (!isManufacturer) {
           return next(ApiError.badRequest(`sendOrderToArchive - only manufacturer could archive the order`));
@@ -550,11 +549,48 @@ class OrderController {
         await updateModelsField(order, { inArchiveForManufacturer: true });
       } else {
         if (order.userId !== userId) {
-          return next(ApiError.badRequest(`sendOrderToArchive - user with id=${userId} is not owner for order with id=${orderId}`));
+          return next(
+            ApiError.badRequest(`sendOrderToArchive - user with id=${userId} is not owner for Order with id=${orderId}`)
+          );
         }
         await updateModelsField(order, { inArchiveForUser: true });
       }
-      return res.json({message: `Order with orderId=${orderId} for ${isOrdersForManufacturer ? 'manufacturer' : 'user'} archived`});
+      return res.json({
+        message: `Order with orderId=${orderId} for ${isOrderForManufacturer ? 'manufacturer' : 'user'} archived`,
+      });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
+
+  async cancelOrder(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { orderId, isOrderForManufacturer } = req.body;
+      if (!orderId) {
+        return next(ApiError.badRequest('cancelOrder - request data is not complete'));
+      }
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`cancelOrder - order with id=${orderId} does not exist`));
+      }
+      if (isOrderForManufacturer) {
+        const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+        if (!isManufacturer) {
+          return next(ApiError.badRequest(`cancelOrder - only manufacturer could cancel the order`));
+        }
+        await updateModelsField(order, { status: 'canceledByManufacturer' });
+      } else {
+        if (order.userId !== userId) {
+          return next(
+            ApiError.badRequest(`cancelOrder - user with id=${userId} is not owner for Order with id=${orderId}`)
+          );
+        }
+        await updateModelsField(order, { status: 'canceledByUser' });
+      }
+      return res.json({
+        message: `Order with orderId=${orderId} canceled by ${isOrderForManufacturer ? 'Manufacturer' : 'User'}`,
+      });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
