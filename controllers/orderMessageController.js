@@ -44,6 +44,23 @@ class OrderMessageController {
       return next(ApiError.badRequest(e.original.detail));
     }
   }
+
+  async getOrderMessages(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { orderId } = req.params;
+      if (!orderId) {
+        return next(ApiError.badRequest('getOrderMessages - request data is not complete'));
+      }
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`getOrderMessages - order with id=${orderId} does not exist`));
+      }
+      return res.json({ userId, orderId });
+    } catch (e) {
+      return next(ApiError.badRequest(e.original.detail));
+    }
+  }
 }
 
 module.exports = new OrderMessageController();
