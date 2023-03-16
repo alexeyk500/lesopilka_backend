@@ -111,12 +111,6 @@ const getOrderHeaderByOrderId = async (id, Order, isOrderForManufacturer) => {
       orderHeader.inArchiveForManufacturer = true;
     }
   }
-
-  // const nowDate = normalizeData(new Date());
-  // const shiftedOrderDate = dateDayShift(orderHeader.deliveryDate, AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS);
-  // if (nowDate > shiftedOrderDate) {
-  //   orderHeader.status = ARCHIVED_ORDERS_STATUS;
-  // }
   if (isOrderForManufacturer && orderHeader.userId) {
     const userCandidate = await User.findOne({ where: { id: orderHeader.userId } });
     if (userCandidate) {
@@ -235,6 +229,7 @@ class OrderController {
         locationId,
         paymentMethodId,
         deliveryMethodId,
+        // todo проверить почему не устанавливаем manufacturerId
       });
       if (!newOrder) {
         return next(ApiError.badRequest('Create new order - error in newOrder creating'));
@@ -541,7 +536,7 @@ class OrderController {
       if (!order) {
         return next(ApiError.badRequest(`sendOrderToArchive - order with id=${orderId} does not exist`));
       }
-      if (isOrderForManufacturer) {
+      if (!!isOrderForManufacturer) {
         const isManufacturer = await checkManufacturerForOrder(userId, orderId);
         if (!isManufacturer) {
           return next(ApiError.badRequest(`sendOrderToArchive - only manufacturer could archive the order`));
@@ -574,7 +569,7 @@ class OrderController {
       if (!order) {
         return next(ApiError.badRequest(`cancelOrder - order with id=${orderId} does not exist`));
       }
-      if (isOrderForManufacturer) {
+      if (!!isOrderForManufacturer) {
         const isManufacturer = await checkManufacturerForOrder(userId, orderId);
         if (!isManufacturer) {
           return next(ApiError.badRequest(`cancelOrder - only manufacturer could cancel the order`));

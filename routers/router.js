@@ -8,6 +8,7 @@ const basketRouter = require('./basketRouter');
 const manufacturerRouter = require('./munufacturerRouter');
 const priceRouter = require('./priceRouter');
 const orderRouter = require('./orderRouter');
+const orderMessageRouter = require('./orderMessageRouter');
 
 const router = new Router();
 
@@ -20,6 +21,7 @@ router.use('/baskets', basketRouter);
 router.use('/manufacturer', manufacturerRouter);
 router.use('/price', priceRouter);
 router.use('/orders', orderRouter);
+router.use('/order_message', orderMessageRouter);
 
 router.use('/ping', (req, res) => {
   res.json({ message: 'pong' });
