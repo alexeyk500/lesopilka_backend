@@ -1,7 +1,5 @@
 const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
-const { Product } = require('../models/productModels');
-const { OrderProduct } = require('../models/orderModels');
 const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS } = require('./constants');
 
 const formatAddress = (address) => {
@@ -84,17 +82,17 @@ const updateModelsField = async (model, field) => {
   }
 };
 
-const checkManufacturerForProduct = async (userId, productId) => {
-  const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
-  if (!userCandidate.manufacturer) {
-    return false;
-  }
-  const product = await Product.findOne({ where: { id: productId } });
-  if (!product.manufacturerId) {
-    return false;
-  }
-  return userCandidate.manufacturer.id === product.manufacturerId;
-};
+// const checkManufacturerForProduct = async (userId, productId) => {
+//   const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
+//   if (!userCandidate.manufacturer) {
+//     return false;
+//   }
+//   const product = await Product.findOne({ where: { id: productId } });
+//   if (!product.manufacturerId) {
+//     return false;
+//   }
+//   return userCandidate.manufacturer.id === product.manufacturerId;
+// };
 
 const getManufacturerIdForUser = async (userId) => {
   const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
@@ -104,34 +102,11 @@ const getManufacturerIdForUser = async (userId) => {
   return userCandidate.manufacturer.id;
 };
 
-const checkManufacturerForOrder = async (userId, orderId) => {
-  const userCandidate = await User.findOne({ where: { id: userId }, include: [Manufacturer] });
-  if (!userCandidate.manufacturer) {
-    return false;
-  }
-  const oneOrderProduct = await OrderProduct.findOne({
-    where: { orderId },
-    include: {
-      model: Product,
-      required: true,
-    },
-  });
-  if (!oneOrderProduct) {
-    return false;
-  }
-  return userCandidate.manufacturer.id === oneOrderProduct.product.manufacturerId;
-};
-
 const normalizeData = (date) => {
   const newDate = new Date(date);
   const newDateStr = newDate.toISOString();
   const onlyDateStr = newDateStr.split('T')[0];
   return new Date(onlyDateStr);
-};
-
-const isPositiveNumbersAndZero = (value) => {
-  const valueNumber = Number(value);
-  return !(isNaN(valueNumber) || valueNumber < 0);
 };
 
 const dateDayShift = (date, days) => {
@@ -151,11 +126,8 @@ module.exports = {
   formatManufacturer,
   formatProduct,
   updateModelsField,
-  checkManufacturerForProduct,
-  checkManufacturerForOrder,
   getManufacturerIdForUser,
   normalizeData,
-  isPositiveNumbersAndZero,
   dateDayShift,
   isOrderShouldBeInArchive,
 };

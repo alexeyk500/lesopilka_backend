@@ -5,8 +5,6 @@ const {
   formatAddress,
   formatProduct,
   normalizeData,
-  checkManufacturerForOrder,
-  isPositiveNumbersAndZero,
   getManufacturerIdForUser,
   updateModelsField,
   isOrderShouldBeInArchive,
@@ -20,6 +18,7 @@ const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
 const { ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
 const { User } = require('../models/userModels');
+const { isValueZeroAndPositiveNumber, checkIsUserManufacturerForOrder } = require('../utils/checkFunctions');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
@@ -442,7 +441,7 @@ class OrderController {
       if (!orderId || !(Number(deliveryPrice) >= 0) || !requestProducts) {
         return next(ApiError.badRequest('confirmOrder - request data is not complete'));
       }
-      const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+      const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
       if (!isManufacturer) {
         return next(ApiError.badRequest(`confirmOrder - only manufacturer could confirm the order`));
       }
@@ -473,7 +472,7 @@ class OrderController {
         return next(ApiError.badRequest(`confirmOrder - error with length for Order with id=${orderId}`));
       }
       for (const requestProduct of requestProducts) {
-        if (!isPositiveNumbersAndZero(requestProduct.amount)) {
+        if (!isValueZeroAndPositiveNumber(requestProduct.amount)) {
           return next(
             ApiError.badRequest(`confirmOrder - product with id=${requestProduct.productId} incorrect value in amount`)
           );
@@ -537,7 +536,7 @@ class OrderController {
         return next(ApiError.badRequest(`sendOrderToArchive - order with id=${orderId} does not exist`));
       }
       if (!!isOrderForManufacturer) {
-        const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+        const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
         if (!isManufacturer) {
           return next(ApiError.badRequest(`sendOrderToArchive - only manufacturer could archive the order`));
         }
@@ -570,7 +569,7 @@ class OrderController {
         return next(ApiError.badRequest(`cancelOrder - order with id=${orderId} does not exist`));
       }
       if (!!isOrderForManufacturer) {
-        const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+        const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
         if (!isManufacturer) {
           return next(ApiError.badRequest(`cancelOrder - only manufacturer could cancel the order`));
         }

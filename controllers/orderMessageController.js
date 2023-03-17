@@ -1,42 +1,50 @@
 const ApiError = require('../error/apiError');
 const { OrderMessage } = require('../models/orderMessageModels');
-const { Order } = require("../models/orderModels");
-const { checkManufacturerForOrder, getManufacturerIdForUser } = require("../utils/functions");
+const { Order } = require('../models/orderModels');
+const { getManufacturerIdForUser } = require('../utils/functions');
+const {
+  checkIsValueBoolean,
+  checkIsValuePositiveNumber,
+  checkIsUserOwnerForOrder,
+  checkIsUserManufacturerForOrder,
+} = require('../utils/checkFunctions');
 
 class OrderMessageController {
   async createNewOrderMessage(req, res, next) {
     try {
       const userId = req.user.id;
       const { orderId, isManufacturerMessage, messageText } = req.body;
-      if (!orderId || !messageText) {
-        return next(ApiError.badRequest('createNewOrderMessage - request data is not complete'));
+      if (!orderId || !messageText || !checkIsValueBoolean(isManufacturerMessage)) {
+        return next(ApiError.badRequest('createNewOrderMessage - request denied 1'));
+      }
+      if (!checkIsValuePositiveNumber(orderId)) {
+        return next(ApiError.badRequest('createNewOrderMessage - request denied 2'));
       }
       const order = await Order.findOne({ where: { id: orderId } });
       if (!order) {
-        return next(ApiError.badRequest(`createNewOrderMessage - order with id=${orderId} does not exist`));
+        return next(ApiError.badRequest(`createNewOrderMessage - request denied 3`));
       }
       let newOrderMessage;
       const newDate = new Date();
       const messageDate = newDate.toISOString();
-      if (!!isManufacturerMessage) {
-        const isManufacturer = await checkManufacturerForOrder(userId, orderId);
+      if (isManufacturerMessage) {
+        const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
         if (!isManufacturer) {
-          return next(ApiError.badRequest(`createNewOrderMessage - only manufacturer could create message as manufacturer`));
+          return next(ApiError.badRequest(`createNewOrderMessage - request denied 4`));
         }
         const manufacturerId = await getManufacturerIdForUser(userId);
-        newOrderMessage = await OrderMessage.create({messageDate, manufacturerId, orderId, messageText})
+        newOrderMessage = await OrderMessage.create({ messageDate, manufacturerId, orderId, messageText });
         if (!newOrderMessage) {
-          return next(ApiError.badRequest(`createNewOrderMessage - dataBase creating error 1`));
+          return next(ApiError.badRequest(`createNewOrderMessage - request denied 5`));
         }
       } else {
-        if (order.userId !== userId) {
-          return next(
-            ApiError.badRequest(`createNewOrderMessage - user with id=${userId} is not owner for Order with id=${orderId}`)
-          );
+        const isUserOwnerForOrder = checkIsUserOwnerForOrder(userId, order);
+        if (!isUserOwnerForOrder) {
+          return next(ApiError.badRequest(`createNewOrderMessage - request denied 6`));
         }
-        newOrderMessage = await OrderMessage.create({messageDate, userId, orderId, messageText})
+        newOrderMessage = await OrderMessage.create({ messageDate, userId, orderId, messageText });
         if (!newOrderMessage) {
-          return next(ApiError.badRequest(`createNewOrderMessage - dataBase creating error 2`));
+          return next(ApiError.badRequest(`createNewOrderMessage - request denied 7`));
         }
       }
       return res.json({ message: newOrderMessage });
@@ -49,14 +57,22 @@ class OrderMessageController {
     try {
       const userId = req.user.id;
       const { orderId } = req.params;
-      if (!orderId) {
-        return next(ApiError.badRequest('getOrderMessages - request data is not complete'));
+      if (!checkIsValuePositiveNumber(orderId)) {
+        return next(ApiError.badRequest('getOrderMessages - request denied 1'));
       }
       const order = await Order.findOne({ where: { id: orderId } });
       if (!order) {
-        return next(ApiError.badRequest(`getOrderMessages - order with id=${orderId} does not exist`));
+        return next(ApiError.badRequest(`getOrderMessages - request denied 2`));
       }
-      return res.json({ userId, orderId });
+      const isUserOwnerForOrder = checkIsUserOwnerForOrder(userId, order);
+      if (!isUserOwnerForOrder) {
+        const isUserManufacturerForOrder = await checkIsUserManufacturerForOrder(userId, orderId);
+        if (!isUserManufacturerForOrder) {
+          return next(ApiError.badRequest(`getOrderMessages - request denied 3`));
+        }
+      }
+      const messages = await OrderMessage.findAll({ where: { orderId }, order: ['messageDate'] });
+      return res.json({ messages });
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
