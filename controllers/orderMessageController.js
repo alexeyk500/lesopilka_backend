@@ -72,7 +72,7 @@ class OrderMessageController {
         }
       }
       const messages = await OrderMessage.findAll({ where: { orderId }, order: ['messageDate'] });
-      return res.json({ messages });
+      return res.json(messages);
     } catch (e) {
       return next(ApiError.badRequest(e.original.detail));
     }
