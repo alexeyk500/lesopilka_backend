@@ -8,6 +8,9 @@ const {
   checkIsUserOwnerForOrder,
   checkIsUserManufacturerForOrder,
 } = require('../utils/checkFunctions');
+const { getNewOrderMessage } = require('../nodemailer/getNewOrderMessage');
+const { makeMailData, transporter } = require('../nodemailer/nodemailer');
+const { getManufacturerForOrder, getUserForOrder } = require('../utils/ordersFunctions');
 
 class OrderMessageController {
   async createNewOrderMessage(req, res, next) {
@@ -46,6 +49,26 @@ class OrderMessageController {
         if (!newOrderMessage) {
           return next(ApiError.badRequest(`createNewOrderMessage - request denied 7`));
         }
+      }
+
+      let messageReceiver;
+      if (isManufacturerMessage) {
+        messageReceiver = await getUserForOrder(orderId);
+      } else {
+        messageReceiver = await getManufacturerForOrder(orderId);
+      }
+      if (messageReceiver.email) {
+        const subject = `Новое сообщение по заказу № ${orderId} на ${process.env.SITE_NAME}`;
+        const html = getNewOrderMessage(orderId, isManufacturerMessage, messageText);
+        const mailData = makeMailData({ to: messageReceiver.email, subject, html });
+        console.log({ mailData });
+        await transporter.sendMail(mailData, async function (err, info) {
+          if (err) {
+            return next(ApiError.internal(`Error with sending new order message letter, ${err}`));
+          } else {
+            console.log(`sendMail-${info}`);
+          }
+        });
       }
       return res.json({ message: newOrderMessage });
     } catch (e) {

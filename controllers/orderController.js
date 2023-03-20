@@ -8,7 +8,7 @@ const {
   getManufacturerIdForUser,
   updateModelsField,
   isOrderShouldBeInArchive,
-} = require('../utils/functions');
+} = require('../utils/ordersFunctions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
