@@ -74,7 +74,7 @@ class UserController {
       const response = await getUserResponse(user.id);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -92,7 +92,7 @@ class UserController {
       const response = await getUserResponse(user.id);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -106,7 +106,7 @@ class UserController {
       const response = await getUserResponse(user.id);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -135,7 +135,7 @@ class UserController {
       const response = await getUserResponse(user.id, token);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -165,7 +165,7 @@ class UserController {
         return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}` });
       });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -185,7 +185,7 @@ class UserController {
       await UnconfirmedUser.destroy({ where: { code } });
       return res.redirect(process.env.SUCCESS_REGISTRATION_SITE_PAGE);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -215,7 +215,7 @@ class UserController {
         return res.json({ message: `Letter with password recovery code has been sent to ${email} in ${time}` });
       });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -235,7 +235,7 @@ class UserController {
       await PasswordRecoveryCode.destroy({ where: { code } });
       return res.json({ message: `Пароль для пользователя ${email}\n был успешно сменен` });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

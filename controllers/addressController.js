@@ -11,7 +11,7 @@ class AddressController {
       const region = await Region.create({ title });
       return res.json(region);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -24,7 +24,7 @@ class AddressController {
       const location = await Location.create({ title, regionId });
       return res.json(location);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -37,7 +37,7 @@ class AddressController {
       const address = await Address.create({ locationId, street, building, office, postIndex });
       return res.json(address);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -57,7 +57,7 @@ class AddressController {
       const locations = await Location.findAll({ where: { regionId } });
       return res.json(locations);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

@@ -18,7 +18,7 @@ class ManufacturerController {
       const manufacturer = await Manufacturer.create({ title, inn, phone, userId, addressId: address.id });
       return res.json(manufacturer);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

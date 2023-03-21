@@ -13,7 +13,7 @@ class CategoryController {
       const category = await Category.create({ title, order });
       return res.json(category);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -27,7 +27,7 @@ class CategoryController {
       const subCategory = await SubCategory.create({ title, categoryId, order });
       return res.json(subCategory);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -64,7 +64,7 @@ class CategoryController {
       const categorySize = await CategorySize.create({ type, value, categoryId, order });
       return res.json(categorySize);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 

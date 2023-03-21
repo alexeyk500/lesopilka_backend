@@ -67,7 +67,7 @@ class BasketController {
       const basketProducts = await getProductsInBasket(basket.id, BasketProduct, req.protocol, req.headers.host);
       return res.json(basketProducts);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -84,7 +84,7 @@ class BasketController {
       const basketProducts = await getProductsInBasket(basket.id, BasketProduct, req.protocol, req.headers.host);
       return res.json(basketProducts);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -107,7 +107,7 @@ class BasketController {
       const basketProducts = await getProductsInBasket(basket.id, BasketProduct, req.protocol, req.headers.host);
       return res.json(basketProducts);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

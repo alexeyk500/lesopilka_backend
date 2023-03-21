@@ -1,14 +1,6 @@
 const ApiError = require('../error/apiError');
 const { PaymentMethod, DeliveryMethod, Order, OrderProduct } = require('../models/orderModels');
 const { ManufacturerPickUpAddress, Location, Region, Address } = require('../models/addressModels');
-const {
-  formatAddress,
-  formatProduct,
-  normalizeData,
-  getManufacturerIdForUser,
-  updateModelsField,
-  isOrderShouldBeInArchive,
-} = require('../utils/ordersFunctions');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
@@ -18,7 +10,15 @@ const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
 const { ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
 const { User } = require('../models/userModels');
-const { isValueZeroAndPositiveNumber, checkIsUserManufacturerForOrder } = require('../utils/checkFunctions');
+const { isOrderShouldBeInArchive } = require('../utils/ordersFunctions');
+const { checkIsUserManufacturerForOrder } = require('../utils/checkFunctions');
+const {
+  normalizeData,
+  formatProduct,
+  formatAddress,
+  getManufacturerIdForUser,
+  updateModelsField,
+} = require('../utils/functions');
 
 const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
@@ -153,7 +153,7 @@ class OrderController {
       const paymentMethods = await PaymentMethod.findAll({ order: [['id']] });
       return res.json(paymentMethods);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -162,7 +162,7 @@ class OrderController {
       const deliveryMethod = await DeliveryMethod.findAll({ order: [['id']] });
       return res.json(deliveryMethod);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -179,7 +179,7 @@ class OrderController {
       const address = formatAddress(manufacturerPickUpAddress);
       return res.json({ address });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -253,7 +253,7 @@ class OrderController {
       const orderInfo = formatOrderInfo(newOrder, orderProducts);
       return res.json(orderInfo);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -294,7 +294,7 @@ class OrderController {
       await Order.destroy({ where: { id: orderId } });
       return res.json({ message: `Order with id=${orderId} - canceled` });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -335,7 +335,7 @@ class OrderController {
       const orderInfo = formatOrderInfo(candidateOrder, orderProducts);
       return res.json(orderInfo);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -430,7 +430,7 @@ class OrderController {
       }
       return res.json(orders);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -520,7 +520,7 @@ class OrderController {
 
       return res.json(orderProductsDB);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -553,7 +553,7 @@ class OrderController {
         message: `Order with orderId=${orderId} for ${isOrderForManufacturer ? 'manufacturer' : 'user'} archived`,
       });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -586,7 +586,7 @@ class OrderController {
         message: `Order with orderId=${orderId} canceled by ${isOrderForManufacturer ? 'Manufacturer' : 'User'}`,
       });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

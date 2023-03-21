@@ -61,7 +61,6 @@ class OrderMessageController {
         const subject = `Новое сообщение по заказу № ${orderId} на ${process.env.SITE_NAME}`;
         const html = getNewOrderMessage(orderId, isManufacturerMessage, messageText);
         const mailData = makeMailData({ to: messageReceiver.email, subject, html });
-        console.log({ mailData });
         await transporter.sendMail(mailData, async function (err, info) {
           if (err) {
             return next(ApiError.internal(`Error with sending new order message letter, ${err}`));
@@ -72,7 +71,7 @@ class OrderMessageController {
       }
       return res.json({ message: newOrderMessage });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -97,7 +96,7 @@ class OrderMessageController {
       const messages = await OrderMessage.findAll({ where: { orderId }, order: ['messageDate'] });
       return res.json(messages);
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

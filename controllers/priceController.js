@@ -124,20 +124,8 @@ class PriceController {
           stream.pipe(res);
         }
       });
-
-      // pdf.create(priceTemplate, options).toFile("report.pdf", function (err, data) {
-      //   if (err) {
-      //     res.send(err);
-      //   } else {
-      //     console.log('data', data)
-      //     res.sendFile(data.filename)
-      //     // const priceFilePath = path.resolve(__dirname, 'report.pdf')
-      //     // console.log('priceFilePath =', priceFilePath)
-      //     // res.send("File created successfully");
-      //   }
-      // });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }

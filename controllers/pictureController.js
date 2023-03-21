@@ -35,7 +35,7 @@ class PictureController {
       });
       return res.json({ picture });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
@@ -57,7 +57,7 @@ class PictureController {
       const result = await Picture.destroy({ where: { fileName: fileName } });
       return res.json({ fileName, result });
     } catch (e) {
-      return next(ApiError.badRequest(e.original.detail));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 }
