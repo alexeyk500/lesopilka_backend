@@ -8,9 +8,9 @@ const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
-const { ARCHIVED_ORDERS_STATUS } = require('../utils/constants');
+const { ARCHIVED_ORDERS_STATUS, MessageFromToOptions } = require('../utils/constants');
 const { User } = require('../models/userModels');
-const { isOrderShouldBeInArchive } = require('../utils/ordersFunctions');
+const { isOrderShouldBeInArchive, sendNewMessageForOrder } = require('../utils/ordersFunctions');
 const { checkIsUserManufacturerForOrder } = require('../utils/checkFunctions');
 const {
   normalizeData,
@@ -187,7 +187,7 @@ class OrderController {
     try {
       const {
         mid,
-        date,
+        deliveryDate,
         contactPersonName,
         contactPersonPhone,
         deliveryAddress,
@@ -195,8 +195,15 @@ class OrderController {
         paymentMethodId,
         deliveryMethodId,
       } = req.body;
-      const normDate = normalizeData(date);
-      if (!mid || !normDate || !contactPersonName || !contactPersonPhone || !paymentMethodId || !deliveryMethodId) {
+      const normDeliveryDate = normalizeData(deliveryDate);
+      if (
+        !mid ||
+        !normDeliveryDate ||
+        !contactPersonName ||
+        !contactPersonPhone ||
+        !paymentMethodId ||
+        !deliveryMethodId
+      ) {
         return next(ApiError.internal('Create new order - request data is not complete'));
       }
       const userId = req.user.id;
@@ -219,17 +226,21 @@ class OrderController {
         return next(ApiError.badRequest(`Create new order - no product in Basket for manufacturer with id=${mid}`));
       }
 
+      const nowDate = new Date();
+      const orderDate = nowDate.toISOString();
       const newOrder = await Order.create({
-        date: normDate,
+        orderDate,
+        deliveryDate: normDeliveryDate,
         contactPersonName,
         contactPersonPhone,
         deliveryAddress,
         userId,
+        manufacturerId: mid,
         locationId,
         paymentMethodId,
         deliveryMethodId,
-        // todo проверить почему не устанавливаем manufacturerId
       });
+
       if (!newOrder) {
         return next(ApiError.badRequest('Create new order - error in newOrder creating'));
       }
@@ -249,10 +260,24 @@ class OrderController {
       }
 
       const orderProducts = await getProductsInOrder(newOrder.id, OrderProduct, req.protocol, req.headers.host);
-
       const orderInfo = formatOrderInfo(newOrder, orderProducts);
+
+      await sendNewMessageForOrder({
+        orderId: newOrder.id,
+        messageFromTo: MessageFromToOptions.RobotToManufacturer,
+        messageText: 'Вам новый заказ от покупателя',
+        next,
+      });
+      await sendNewMessageForOrder({
+        orderId: newOrder.id,
+        messageFromTo: MessageFromToOptions.RobotToUser,
+        messageText: 'Ваш заказ отправлен поставщику',
+        next,
+      });
+
       return res.json(orderInfo);
     } catch (e) {
+      console.log('Found Error', e);
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }

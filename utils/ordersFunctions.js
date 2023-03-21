@@ -45,24 +45,30 @@ const getManufacturerForOrder = async (orderId) => {
 
 const sendNewMessageForOrder = async ({ orderId, messageFromTo, messageText, next }) => {
   let messageReceiver;
-  if (messageFromTo === MessageFromToOptions.ManufacturerToUser) {
+  if (messageFromTo === MessageFromToOptions.ManufacturerToUser || messageFromTo === MessageFromToOptions.RobotToUser) {
     messageReceiver = await getUserForOrder(orderId);
-  } else if (messageFromTo === MessageFromToOptions.UserToManufacturer) {
+  } else if (
+    messageFromTo === MessageFromToOptions.UserToManufacturer ||
+    messageFromTo === MessageFromToOptions.RobotToManufacturer
+  ) {
     messageReceiver = await getManufacturerForOrder(orderId);
   } else {
     return next(ApiError.internal(`Error with message receiver`));
   }
+
   if (messageReceiver.email && messageText) {
     const subject = `Новое сообщение по заказу № ${orderId} на ${process.env.SITE_NAME}`;
     const html = getOrderMessageHTML(orderId, messageFromTo, messageText);
-    const mailData = makeMailData({ to: messageReceiver.email, subject, html });
-    await transporter.sendMail(mailData, async function (err, info) {
-      if (err) {
-        return next(ApiError.internal(`Error with sending new order message letter, ${err}`));
-      } else {
-        console.log(`sendMail-${info}`);
-      }
-    });
+    if (html) {
+      const mailData = makeMailData({ to: messageReceiver.email, subject, html });
+      await transporter.sendMail(mailData, async function (err, info) {
+        if (err) {
+          return next(ApiError.internal(`Error with sending new order message letter, ${err}`));
+        } else {
+          console.log(`sendMail-${info}`);
+        }
+      });
+    }
   }
 };
 
