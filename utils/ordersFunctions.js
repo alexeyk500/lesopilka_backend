@@ -1,8 +1,11 @@
 const { Order } = require('../models/orderModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
-const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS } = require('./constants');
+const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS, MessageFromToOptions } = require('./constants');
 const { normalizeData, dateDayShift } = require('./functions');
+const { makeMailData, transporter } = require('../nodemailer/nodemailer');
+const ApiError = require('../error/apiError');
+const { getOrderMessageHTML } = require('../nodemailer/getOrderMessageHTML');
 
 const isOrderShouldBeInArchive = (orderDeliveryDate) => {
   const nowDate = normalizeData(new Date());
@@ -40,8 +43,32 @@ const getManufacturerForOrder = async (orderId) => {
   return undefined;
 };
 
+const sendNewMessageForOrder = async ({ orderId, messageFromTo, messageText, next }) => {
+  let messageReceiver;
+  if (messageFromTo === MessageFromToOptions.ManufacturerToUser) {
+    messageReceiver = await getUserForOrder(orderId);
+  } else if (messageFromTo === MessageFromToOptions.UserToManufacturer) {
+    messageReceiver = await getManufacturerForOrder(orderId);
+  } else {
+    return next(ApiError.internal(`Error with message receiver`));
+  }
+  if (messageReceiver.email && messageText) {
+    const subject = `Новое сообщение по заказу № ${orderId} на ${process.env.SITE_NAME}`;
+    const html = getOrderMessageHTML(orderId, messageFromTo, messageText);
+    const mailData = makeMailData({ to: messageReceiver.email, subject, html });
+    await transporter.sendMail(mailData, async function (err, info) {
+      if (err) {
+        return next(ApiError.internal(`Error with sending new order message letter, ${err}`));
+      } else {
+        console.log(`sendMail-${info}`);
+      }
+    });
+  }
+};
+
 module.exports = {
   getUserForOrder,
   getManufacturerForOrder,
   isOrderShouldBeInArchive,
+  sendNewMessageForOrder,
 };
