@@ -57,7 +57,7 @@ const sendNewMessageForOrder = async ({ orderId, messageFromTo, messageText, nex
   }
 
   if (messageReceiver.email && messageText) {
-    const subject = `Новое сообщение по заказу № ${orderId} на ${process.env.SITE_NAME}`;
+    const subject = `Сообщение по заказу № ${orderId} от ${process.env.SITE_NAME}`;
     const html = getOrderMessageHTML(orderId, messageFromTo, messageText);
     if (html) {
       const mailData = makeMailData({ to: messageReceiver.email, subject, html });
