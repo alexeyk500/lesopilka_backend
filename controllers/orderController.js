@@ -11,7 +11,7 @@ const { ConfirmedProduct } = require('../models/confirmedProducts');
 const { ARCHIVED_ORDERS_STATUS, MessageFromToOptions } = require('../utils/constants');
 const { User } = require('../models/userModels');
 const { isOrderShouldBeInArchive, sendNewMessageForOrder, createOrderMessage } = require('../utils/ordersFunctions');
-const { checkIsUserManufacturerForOrder } = require('../utils/checkFunctions');
+const { checkIsUserManufacturerForOrder, checkIsValueZeroAndPositiveNumber } = require('../utils/checkFunctions');
 const {
   normalizeData,
   formatProduct,
@@ -398,16 +398,19 @@ class OrderController {
       const orderProducts = await getProductsInOrder(newOrder.id, OrderProduct, req.protocol, req.headers.host);
       const orderInfo = formatOrderInfo(newOrder, orderProducts);
 
+      const newDate = new Date();
+      const messageDate = newDate.toISOString();
+      await createOrderMessage({ orderId: newOrder.id, messageDate, messageText: 'Покупатель создал заказ', next });
       await sendNewMessageForOrder({
         orderId: newOrder.id,
         messageFromTo: MessageFromToOptions.RobotToManufacturer,
-        messageText: 'Вам новый заказ от покупателя',
+        messageText: 'Покупатель создал новый заказ',
         next,
       });
       await sendNewMessageForOrder({
         orderId: newOrder.id,
         messageFromTo: MessageFromToOptions.RobotToUser,
-        messageText: 'Ваш заказ отправлен поставщику',
+        messageText: 'Вы создали новый заказ',
         next,
       });
 
@@ -447,7 +450,7 @@ class OrderController {
       const newDate = new Date();
       const messageDate = newDate.toISOString();
       if (isOrderForManufacturer) {
-        await createOrderMessage({ orderId, messageDate,  messageText: 'Поставщик отказался поставлять заказ', next });
+        await createOrderMessage({ orderId, messageDate, messageText: 'Поставщик отказался поставлять заказ', next });
         await sendNewMessageForOrder({
           orderId,
           messageFromTo: MessageFromToOptions.RobotToManufacturer,
@@ -461,7 +464,7 @@ class OrderController {
           next,
         });
       } else {
-        await createOrderMessage({ orderId, messageDate,  messageText:'Покупатель отменил заказ', next });
+        await createOrderMessage({ orderId, messageDate, messageText: 'Покупатель отменил заказ', next });
         await sendNewMessageForOrder({
           orderId,
           messageFromTo: MessageFromToOptions.RobotToManufacturer,
@@ -520,17 +523,19 @@ class OrderController {
       }
       await Order.destroy({ where: { id: orderId } });
 
+      const newDate = new Date();
+      const messageDate = newDate.toISOString();
+      await createOrderMessage({ orderId, messageDate, messageText: 'Покупатель отменил заказ', next });
       await sendNewMessageForOrder({
         orderId,
         messageFromTo: MessageFromToOptions.RobotToManufacturer,
-        messageText:
-          'Покупатель отменил заказ заказ и вернул товар к себе в корзину,\nвозможно он хочет изменить состав заказа',
+        messageText: 'Покупатель отменил заказ',
         next,
       });
       await sendNewMessageForOrder({
-        orderId: orderId,
+        orderId,
         messageFromTo: MessageFromToOptions.RobotToUser,
-        messageText: 'Вы отменили заказ заказ и вернули товар к себе в корзину.',
+        messageText: 'Вы отменили заказ',
         next,
       });
 
@@ -565,7 +570,6 @@ class OrderController {
           )
         );
       }
-
       const hasConfirmedProductsInOrder = await ConfirmedProduct.findOne({ where: { orderId: orderId } });
       if (hasConfirmedProductsInOrder) {
         return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} already has confirmed products`));
@@ -578,7 +582,7 @@ class OrderController {
         return next(ApiError.badRequest(`confirmOrder - error with length for Order with id=${orderId}`));
       }
       for (const requestProduct of requestProducts) {
-        if (!isValueZeroAndPositiveNumber(requestProduct.amount)) {
+        if (!checkIsValueZeroAndPositiveNumber(requestProduct.amount)) {
           return next(
             ApiError.badRequest(`confirmOrder - product with id=${requestProduct.productId} incorrect value in amount`)
           );
@@ -624,16 +628,22 @@ class OrderController {
       const manufacturerConfirmedDate = newDate.toISOString();
       await updateModelsField(order, { status: 'confirmedOrder', deliveryPrice, manufacturerConfirmedDate });
 
-      await sendNewMessageForOrder({
+      await createOrderMessage({
         orderId,
-        messageFromTo: MessageFromToOptions.RobotToManufacturer,
-        messageText: 'Вы подтвердили готовность поставить заказ покупателю',
+        messageDate: manufacturerConfirmedDate,
+        messageText: 'Поставщик подтвердил готовность поставить заказ',
         next,
       });
       await sendNewMessageForOrder({
-        orderId: orderId,
+        orderId,
+        messageFromTo: MessageFromToOptions.RobotToManufacturer,
+        messageText: 'Вы подтвердили готовность поставить заказ',
+        next,
+      });
+      await sendNewMessageForOrder({
+        orderId,
         messageFromTo: MessageFromToOptions.RobotToUser,
-        messageText: 'Поставщик подтвердил готовность поставить вам заказ',
+        messageText: 'Поставщик подтвердил готовность поставить заказ',
         next,
       });
 
@@ -668,15 +678,6 @@ class OrderController {
         }
         await updateModelsField(order, { inArchiveForUser: true });
       }
-
-      await sendNewMessageForOrder({
-        orderId,
-        messageFromTo: isOrderForManufacturer
-          ? MessageFromToOptions.RobotToManufacturer
-          : MessageFromToOptions.RobotToUser,
-        messageText: 'Вы отправили товар в архив',
-        next,
-      });
 
       return res.json({
         message: `Order with orderId=${orderId} for ${isOrderForManufacturer ? 'manufacturer' : 'user'} archived`,
