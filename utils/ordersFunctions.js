@@ -6,6 +6,7 @@ const { normalizeData, dateDayShift } = require('./functions');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const ApiError = require('../error/apiError');
 const { getOrderMessageHTML } = require('../nodemailer/getOrderMessageHTML');
+const { OrderMessage } = require("../models/orderMessageModels");
 
 const isOrderShouldBeInArchive = (orderDeliveryDate) => {
   const nowDate = normalizeData(new Date());
@@ -72,9 +73,18 @@ const sendNewMessageForOrder = async ({ orderId, messageFromTo, messageText, nex
   }
 };
 
+const createOrderMessage = async ({ orderId, userId, manufacturerId, messageDate, messageText, next }) => {
+  const newOrderMessage = await OrderMessage.create({ messageDate, userId, manufacturerId, orderId, messageText });
+  if (!newOrderMessage) {
+    return next(ApiError.badRequest(`createNewOrderMessage - request denied 15`));
+  }
+  return newOrderMessage
+}
+
 module.exports = {
   getUserForOrder,
   getManufacturerForOrder,
   isOrderShouldBeInArchive,
   sendNewMessageForOrder,
+  createOrderMessage
 };

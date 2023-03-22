@@ -9,7 +9,7 @@ const {
   checkIsUserManufacturerForOrder,
 } = require('../utils/checkFunctions');
 const { MessageFromToOptions } = require('../utils/constants');
-const { sendNewMessageForOrder } = require('../utils/ordersFunctions');
+const { sendNewMessageForOrder, createOrderMessage } = require('../utils/ordersFunctions');
 
 class OrderMessageController {
   async createNewOrderMessage(req, res, next) {
@@ -35,19 +35,21 @@ class OrderMessageController {
           return next(ApiError.badRequest(`createNewOrderMessage - request denied 4`));
         }
         const manufacturerId = await getManufacturerIdForUser(userId);
-        newOrderMessage = await OrderMessage.create({ messageDate, manufacturerId, orderId, messageText });
-        if (!newOrderMessage) {
-          return next(ApiError.badRequest(`createNewOrderMessage - request denied 5`));
-        }
+        newOrderMessage = await createOrderMessage({ orderId, manufacturerId, messageDate,  messageText, next })
+        // newOrderMessage = await OrderMessage.create({ messageDate, manufacturerId, orderId, messageText });
+        // if (!newOrderMessage) {
+        //   return next(ApiError.badRequest(`createNewOrderMessage - request denied 5`));
+        // }
       } else {
         const isUserOwnerForOrder = checkIsUserOwnerForOrder(userId, order);
         if (!isUserOwnerForOrder) {
           return next(ApiError.badRequest(`createNewOrderMessage - request denied 6`));
         }
-        newOrderMessage = await OrderMessage.create({ messageDate, userId, orderId, messageText });
-        if (!newOrderMessage) {
-          return next(ApiError.badRequest(`createNewOrderMessage - request denied 7`));
-        }
+        newOrderMessage = await createOrderMessage({ orderId, userId, messageDate, messageText, next })
+        // newOrderMessage = await OrderMessage.create({ messageDate, userId, orderId, messageText });
+        // if (!newOrderMessage) {
+        //   return next(ApiError.badRequest(`createNewOrderMessage - request denied 7`));
+        // }
       }
 
       await sendNewMessageForOrder({

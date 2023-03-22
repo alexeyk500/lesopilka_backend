@@ -10,7 +10,7 @@ const { Op } = require('sequelize');
 const { ConfirmedProduct } = require('../models/confirmedProducts');
 const { ARCHIVED_ORDERS_STATUS, MessageFromToOptions } = require('../utils/constants');
 const { User } = require('../models/userModels');
-const { isOrderShouldBeInArchive, sendNewMessageForOrder } = require('../utils/ordersFunctions');
+const { isOrderShouldBeInArchive, sendNewMessageForOrder, createOrderMessage } = require('../utils/ordersFunctions');
 const { checkIsUserManufacturerForOrder } = require('../utils/checkFunctions');
 const {
   normalizeData,
@@ -183,146 +183,6 @@ class OrderController {
     }
   }
 
-  async createNewOrder(req, res, next) {
-    try {
-      const {
-        mid,
-        deliveryDate,
-        contactPersonName,
-        contactPersonPhone,
-        deliveryAddress,
-        locationId,
-        paymentMethodId,
-        deliveryMethodId,
-      } = req.body;
-      const normDeliveryDate = normalizeData(deliveryDate);
-      if (
-        !mid ||
-        !normDeliveryDate ||
-        !contactPersonName ||
-        !contactPersonPhone ||
-        !paymentMethodId ||
-        !deliveryMethodId
-      ) {
-        return next(ApiError.internal('Create new order - request data is not complete'));
-      }
-      const userId = req.user.id;
-      if (!userId) {
-        return next(ApiError.badRequest('Create new order - userId does not exist in request'));
-      }
-      const basket = await Basket.findOne({ where: { userId } });
-      if (!basket.id) {
-        return next(ApiError.badRequest(`Create new order - could not find Basket for user with id=${userId}`));
-      }
-      const basketProductsByManufacturer = await BasketProduct.findAll({
-        where: { basketId: basket.id },
-        include: {
-          model: Product,
-          required: true,
-          include: [{ model: Manufacturer, where: { id: mid } }],
-        },
-      });
-      if (basketProductsByManufacturer.length === 0) {
-        return next(ApiError.badRequest(`Create new order - no product in Basket for manufacturer with id=${mid}`));
-      }
-
-      const nowDate = new Date();
-      const orderDate = nowDate.toISOString();
-      const newOrder = await Order.create({
-        orderDate,
-        deliveryDate: normDeliveryDate,
-        contactPersonName,
-        contactPersonPhone,
-        deliveryAddress,
-        userId,
-        manufacturerId: mid,
-        locationId,
-        paymentMethodId,
-        deliveryMethodId,
-      });
-
-      if (!newOrder) {
-        return next(ApiError.badRequest('Create new order - error in newOrder creating'));
-      }
-
-      for (const basketProduct of basketProductsByManufacturer) {
-        await OrderProduct.create({
-          orderId: newOrder.id,
-          amount: basketProduct.amount,
-          productId: basketProduct.productId,
-        });
-        const candidate = await BasketProduct.findOne({
-          where: { basketId: basket.id, productId: basketProduct.productId },
-        });
-        if (candidate) {
-          await BasketProduct.destroy({ where: { basketId: basket.id, productId: basketProduct.productId } });
-        }
-      }
-
-      const orderProducts = await getProductsInOrder(newOrder.id, OrderProduct, req.protocol, req.headers.host);
-      const orderInfo = formatOrderInfo(newOrder, orderProducts);
-
-      await sendNewMessageForOrder({
-        orderId: newOrder.id,
-        messageFromTo: MessageFromToOptions.RobotToManufacturer,
-        messageText: 'Вам новый заказ от покупателя',
-        next,
-      });
-      await sendNewMessageForOrder({
-        orderId: newOrder.id,
-        messageFromTo: MessageFromToOptions.RobotToUser,
-        messageText: 'Ваш заказ отправлен поставщику',
-        next,
-      });
-
-      return res.json(orderInfo);
-    } catch (e) {
-      console.log('Found Error', e);
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
-    }
-  }
-
-  async cancelOrderAndReturnToBasket(req, res, next) {
-    try {
-      const userId = req.user.id;
-      if (!userId) {
-        return next(ApiError.badRequest('cancelOrder - userId does not exist in request'));
-      }
-      const { orderId } = req.body;
-      const order = await Order.findOne({ where: { id: orderId } });
-      if (!order) {
-        return next(ApiError.badRequest(`cancelOrder - could not find Order with id=${orderId}`));
-      }
-      const orderProducts = await OrderProduct.findAll({
-        where: { orderId },
-      });
-      if (orderProducts.length === 0) {
-        return next(ApiError.badRequest(`cancelOrder - no products in Order with id=${orderId}`));
-      }
-      const basket = await Basket.findOne({ where: { userId } });
-      if (!basket.id) {
-        return next(ApiError.badRequest(`cancelOrder - could not find Basket for user with id=${userId}`));
-      }
-      for (const orderProduct of orderProducts) {
-        await BasketProduct.create({
-          basketId: basket.id,
-          amount: orderProduct.amount,
-          productId: orderProduct.productId,
-        });
-        const candidate = await OrderProduct.findOne({
-          where: { id: orderProduct.id },
-        });
-        if (candidate) {
-          await OrderProduct.destroy({ where: { id: orderProduct.id } });
-        }
-      }
-      await Order.destroy({ where: { id: orderId } });
-      return res.json({ message: `Order with id=${orderId} - canceled` });
-    } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
-    }
-  }
-
   async getOrderInfo(req, res, next) {
     try {
       const { id } = req.params;
@@ -459,6 +319,227 @@ class OrderController {
     }
   }
 
+  async createNewOrder(req, res, next) {
+    try {
+      const {
+        mid,
+        deliveryDate,
+        contactPersonName,
+        contactPersonPhone,
+        deliveryAddress,
+        locationId,
+        paymentMethodId,
+        deliveryMethodId,
+      } = req.body;
+      const normDeliveryDate = normalizeData(deliveryDate);
+      if (
+        !mid ||
+        !normDeliveryDate ||
+        !contactPersonName ||
+        !contactPersonPhone ||
+        !paymentMethodId ||
+        !deliveryMethodId
+      ) {
+        return next(ApiError.internal('Create new order - request data is not complete'));
+      }
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('Create new order - userId does not exist in request'));
+      }
+      const basket = await Basket.findOne({ where: { userId } });
+      if (!basket.id) {
+        return next(ApiError.badRequest(`Create new order - could not find Basket for user with id=${userId}`));
+      }
+      const basketProductsByManufacturer = await BasketProduct.findAll({
+        where: { basketId: basket.id },
+        include: {
+          model: Product,
+          required: true,
+          include: [{ model: Manufacturer, where: { id: mid } }],
+        },
+      });
+      if (basketProductsByManufacturer.length === 0) {
+        return next(ApiError.badRequest(`Create new order - no product in Basket for manufacturer with id=${mid}`));
+      }
+
+      const nowDate = new Date();
+      const orderDate = nowDate.toISOString();
+      const newOrder = await Order.create({
+        orderDate,
+        deliveryDate: normDeliveryDate,
+        contactPersonName,
+        contactPersonPhone,
+        deliveryAddress,
+        userId,
+        manufacturerId: mid,
+        locationId,
+        paymentMethodId,
+        deliveryMethodId,
+      });
+
+      if (!newOrder) {
+        return next(ApiError.badRequest('Create new order - error in newOrder creating'));
+      }
+
+      for (const basketProduct of basketProductsByManufacturer) {
+        await OrderProduct.create({
+          orderId: newOrder.id,
+          amount: basketProduct.amount,
+          productId: basketProduct.productId,
+        });
+        const candidate = await BasketProduct.findOne({
+          where: { basketId: basket.id, productId: basketProduct.productId },
+        });
+        if (candidate) {
+          await BasketProduct.destroy({ where: { basketId: basket.id, productId: basketProduct.productId } });
+        }
+      }
+
+      const orderProducts = await getProductsInOrder(newOrder.id, OrderProduct, req.protocol, req.headers.host);
+      const orderInfo = formatOrderInfo(newOrder, orderProducts);
+
+      await sendNewMessageForOrder({
+        orderId: newOrder.id,
+        messageFromTo: MessageFromToOptions.RobotToManufacturer,
+        messageText: 'Вам новый заказ от покупателя',
+        next,
+      });
+      await sendNewMessageForOrder({
+        orderId: newOrder.id,
+        messageFromTo: MessageFromToOptions.RobotToUser,
+        messageText: 'Ваш заказ отправлен поставщику',
+        next,
+      });
+
+      return res.json(orderInfo);
+    } catch (e) {
+      console.log('Found Error', e);
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+    }
+  }
+
+  async cancelOrder(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { orderId, isOrderForManufacturer } = req.body;
+      if (!orderId) {
+        return next(ApiError.badRequest('cancelOrder - request data is not complete'));
+      }
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`cancelOrder - order with id=${orderId} does not exist`));
+      }
+      if (!!isOrderForManufacturer) {
+        const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
+        if (!isManufacturer) {
+          return next(ApiError.badRequest(`cancelOrder - only manufacturer could cancel the order`));
+        }
+        await updateModelsField(order, { status: 'canceledByManufacturer' });
+      } else {
+        if (order.userId !== userId) {
+          return next(
+            ApiError.badRequest(`cancelOrder - user with id=${userId} is not owner for Order with id=${orderId}`)
+          );
+        }
+        await updateModelsField(order, { status: 'canceledByUser' });
+      }
+
+      const newDate = new Date();
+      const messageDate = newDate.toISOString();
+      if (isOrderForManufacturer) {
+        await createOrderMessage({ orderId, messageDate,  messageText: 'Поставщик отказался поставлять заказ', next });
+        await sendNewMessageForOrder({
+          orderId,
+          messageFromTo: MessageFromToOptions.RobotToManufacturer,
+          messageText: 'Вы отказалились поставлять заказ',
+          next,
+        });
+        await sendNewMessageForOrder({
+          orderId,
+          messageFromTo: MessageFromToOptions.RobotToUser,
+          messageText: 'Поставщик отказался поставлять заказ',
+          next,
+        });
+      } else {
+        await createOrderMessage({ orderId, messageDate,  messageText:'Покупатель отменил заказ', next });
+        await sendNewMessageForOrder({
+          orderId,
+          messageFromTo: MessageFromToOptions.RobotToManufacturer,
+          messageText: 'Покупатель отменил заказ',
+          next,
+        });
+        await sendNewMessageForOrder({
+          orderId: orderId,
+          messageFromTo: MessageFromToOptions.RobotToUser,
+          messageText: 'Вы отказались от заказа',
+          next,
+        });
+      }
+
+      return res.json({
+        message: `Order with orderId=${orderId} canceled by ${isOrderForManufacturer ? 'Manufacturer' : 'User'}`,
+      });
+    } catch (e) {
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+    }
+  }
+
+  async cancelOrderAndReturnToBasket(req, res, next) {
+    try {
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('cancelOrder - userId does not exist in request'));
+      }
+      const { orderId } = req.body;
+      const order = await Order.findOne({ where: { id: orderId } });
+      if (!order) {
+        return next(ApiError.badRequest(`cancelOrder - could not find Order with id=${orderId}`));
+      }
+      const orderProducts = await OrderProduct.findAll({
+        where: { orderId },
+      });
+      if (orderProducts.length === 0) {
+        return next(ApiError.badRequest(`cancelOrder - no products in Order with id=${orderId}`));
+      }
+      const basket = await Basket.findOne({ where: { userId } });
+      if (!basket.id) {
+        return next(ApiError.badRequest(`cancelOrder - could not find Basket for user with id=${userId}`));
+      }
+      for (const orderProduct of orderProducts) {
+        await BasketProduct.create({
+          basketId: basket.id,
+          amount: orderProduct.amount,
+          productId: orderProduct.productId,
+        });
+        const candidate = await OrderProduct.findOne({
+          where: { id: orderProduct.id },
+        });
+        if (candidate) {
+          await OrderProduct.destroy({ where: { id: orderProduct.id } });
+        }
+      }
+      await Order.destroy({ where: { id: orderId } });
+
+      await sendNewMessageForOrder({
+        orderId,
+        messageFromTo: MessageFromToOptions.RobotToManufacturer,
+        messageText:
+          'Покупатель отменил заказ заказ и вернул товар к себе в корзину,\nвозможно он хочет изменить состав заказа',
+        next,
+      });
+      await sendNewMessageForOrder({
+        orderId: orderId,
+        messageFromTo: MessageFromToOptions.RobotToUser,
+        messageText: 'Вы отменили заказ заказ и вернули товар к себе в корзину.',
+        next,
+      });
+
+      return res.json({ message: `Order with id=${orderId} - canceled` });
+    } catch (e) {
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+    }
+  }
+
   async confirmOrderFromManufacturer(req, res, next) {
     try {
       const userId = req.user.id;
@@ -543,6 +624,19 @@ class OrderController {
       const manufacturerConfirmedDate = newDate.toISOString();
       await updateModelsField(order, { status: 'confirmedOrder', deliveryPrice, manufacturerConfirmedDate });
 
+      await sendNewMessageForOrder({
+        orderId,
+        messageFromTo: MessageFromToOptions.RobotToManufacturer,
+        messageText: 'Вы подтвердили готовность поставить заказ покупателю',
+        next,
+      });
+      await sendNewMessageForOrder({
+        orderId: orderId,
+        messageFromTo: MessageFromToOptions.RobotToUser,
+        messageText: 'Поставщик подтвердил готовность поставить вам заказ',
+        next,
+      });
+
       return res.json(orderProductsDB);
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
@@ -574,41 +668,18 @@ class OrderController {
         }
         await updateModelsField(order, { inArchiveForUser: true });
       }
+
+      await sendNewMessageForOrder({
+        orderId,
+        messageFromTo: isOrderForManufacturer
+          ? MessageFromToOptions.RobotToManufacturer
+          : MessageFromToOptions.RobotToUser,
+        messageText: 'Вы отправили товар в архив',
+        next,
+      });
+
       return res.json({
         message: `Order with orderId=${orderId} for ${isOrderForManufacturer ? 'manufacturer' : 'user'} archived`,
-      });
-    } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
-    }
-  }
-
-  async cancelOrder(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const { orderId, isOrderForManufacturer } = req.body;
-      if (!orderId) {
-        return next(ApiError.badRequest('cancelOrder - request data is not complete'));
-      }
-      const order = await Order.findOne({ where: { id: orderId } });
-      if (!order) {
-        return next(ApiError.badRequest(`cancelOrder - order with id=${orderId} does not exist`));
-      }
-      if (!!isOrderForManufacturer) {
-        const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
-        if (!isManufacturer) {
-          return next(ApiError.badRequest(`cancelOrder - only manufacturer could cancel the order`));
-        }
-        await updateModelsField(order, { status: 'canceledByManufacturer' });
-      } else {
-        if (order.userId !== userId) {
-          return next(
-            ApiError.badRequest(`cancelOrder - user with id=${userId} is not owner for Order with id=${orderId}`)
-          );
-        }
-        await updateModelsField(order, { status: 'canceledByUser' });
-      }
-      return res.json({
-        message: `Order with orderId=${orderId} canceled by ${isOrderForManufacturer ? 'Manufacturer' : 'User'}`,
       });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
