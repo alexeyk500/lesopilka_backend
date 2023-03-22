@@ -20,7 +20,7 @@ const {
   updateModelsField,
 } = require('../utils/functions');
 
-const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
+const getProductsInOrder = async (orderId, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({
     where: { orderId },
     attributes: {
@@ -59,7 +59,7 @@ const getProductsInOrder = async (orderId, OrderProduct, protocol, host) => {
   });
 };
 
-const getConfirmedProductsByOrderId = async (orderId, ConfirmedProduct, protocol, host, manufacturerConfirmedDate) => {
+const getConfirmedProductsByOrderId = async (orderId, protocol, host, manufacturerConfirmedDate) => {
   if (!manufacturerConfirmedDate) {
     return undefined;
   }
@@ -88,7 +88,7 @@ const formatOrderInfo = (order, products, confirmedProducts) => {
   };
 };
 
-const getOrderById = async (id, Order) => {
+const getOrderById = async (id) => {
   return await Order.findOne({
     where: { id },
     attributes: { exclude: ['paymentMethodId', 'deliveryMethodId', 'locationId'] },
@@ -96,8 +96,8 @@ const getOrderById = async (id, Order) => {
   });
 };
 
-const getOrderHeaderByOrderId = async (id, Order, isOrderForManufacturer) => {
-  const orderHeader = await getOrderById(id, Order);
+const getOrderHeaderByOrderId = async (id, isOrderForManufacturer) => {
+  const orderHeader = await getOrderById(id);
   if (!isOrderForManufacturer && !orderHeader.inArchiveForUser) {
     const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
     if (orderShouldBeInArchive) {
@@ -126,20 +126,11 @@ const getOrderHeaderByOrderId = async (id, Order, isOrderForManufacturer) => {
   return orderHeader;
 };
 
-const getOrderResponse = async (
-  order,
-  protocol,
-  host,
-  Order,
-  OrderProduct,
-  ConfirmedProduct,
-  isOrderForManufacturer
-) => {
-  const orderHeader = await getOrderHeaderByOrderId(order.id, Order, isOrderForManufacturer);
-  const orderProducts = await getProductsInOrder(order.id, OrderProduct, protocol, host);
+const getOrderResponse = async (order, protocol, host, isOrderForManufacturer) => {
+  const orderHeader = await getOrderHeaderByOrderId(order.id, isOrderForManufacturer);
+  const orderProducts = await getProductsInOrder(order.id, protocol, host);
   const confirmedProducts = await getConfirmedProductsByOrderId(
     order.id,
-    ConfirmedProduct,
     protocol,
     host,
     order.manufacturerConfirmedDate
@@ -186,14 +177,17 @@ class OrderController {
   async getOrderInfo(req, res, next) {
     try {
       const { id } = req.params;
+      console.log('id =', id);
       if (!id) {
         return next(ApiError.badRequest('getOrderInfo - request data is not complete'));
       }
       const userId = req.user.id;
+      console.log('userId =', userId);
       if (!userId) {
         return next(ApiError.badRequest('getOrderInfo - userId does not exist in request'));
       }
       const candidateOrder = await getOrderById(id);
+      console.log({ candidateOrder });
       if (!candidateOrder) {
         return next(ApiError.badRequest('getOrderInfo - order does not exist'));
       }
@@ -216,7 +210,7 @@ class OrderController {
           return next(ApiError.badRequest('getOrderInfo - user is not manufacturer for order'));
         }
       }
-      const orderProducts = await getProductsInOrder(id, OrderProduct, req.protocol, req.headers.host);
+      const orderProducts = await getProductsInOrder(id, req.protocol, req.headers.host);
       const orderInfo = formatOrderInfo(candidateOrder, orderProducts);
       return res.json(orderInfo);
     } catch (e) {
@@ -395,7 +389,7 @@ class OrderController {
         }
       }
 
-      const orderProducts = await getProductsInOrder(newOrder.id, OrderProduct, req.protocol, req.headers.host);
+      const orderProducts = await getProductsInOrder(newOrder.id, req.protocol, req.headers.host);
       const orderInfo = formatOrderInfo(newOrder, orderProducts);
 
       const newDate = new Date();
@@ -574,7 +568,7 @@ class OrderController {
       if (hasConfirmedProductsInOrder) {
         return next(ApiError.badRequest(`confirmOrder - order with id=${orderId} already has confirmed products`));
       }
-      const orderProductsDB = await getProductsInOrder(orderId, OrderProduct, req.protocol, req.headers.host);
+      const orderProductsDB = await getProductsInOrder(orderId, req.protocol, req.headers.host);
       if (!orderProductsDB || orderProductsDB.length === 0) {
         return next(ApiError.badRequest(`confirmOrder - no products in DB for Order with id=${orderId}`));
       }
