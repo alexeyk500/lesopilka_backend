@@ -30,26 +30,18 @@ class OrderMessageController {
       const newDate = new Date();
       const messageDate = newDate.toISOString();
       if (isManufacturerMessage) {
-        const isManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
-        if (!isManufacturer) {
+        const isLegalManufacturer = await checkIsUserManufacturerForOrder(userId, orderId);
+        if (!isLegalManufacturer) {
           return next(ApiError.badRequest(`createNewOrderMessage - request denied 4`));
         }
         const manufacturerId = await getManufacturerIdForUser(userId);
         newOrderMessage = await createOrderMessage({ orderId, manufacturerId, messageDate, messageText, next });
-        // newOrderMessage = await OrderMessage.create({ messageDate, manufacturerId, orderId, messageText });
-        // if (!newOrderMessage) {
-        //   return next(ApiError.badRequest(`createNewOrderMessage - request denied 5`));
-        // }
       } else {
-        const isUserOwnerForOrder = checkIsUserOwnerForOrder(userId, order);
-        if (!isUserOwnerForOrder) {
+        const isLegalUser = checkIsUserOwnerForOrder(userId, order);
+        if (!isLegalUser) {
           return next(ApiError.badRequest(`createNewOrderMessage - request denied 6`));
         }
         newOrderMessage = await createOrderMessage({ orderId, userId, messageDate, messageText, next });
-        // newOrderMessage = await OrderMessage.create({ messageDate, userId, orderId, messageText });
-        // if (!newOrderMessage) {
-        //   return next(ApiError.badRequest(`createNewOrderMessage - request denied 7`));
-        // }
       }
 
       await sendNewMessageForOrder({
