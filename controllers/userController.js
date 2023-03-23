@@ -83,11 +83,11 @@ class UserController {
       const { email, password } = req.body;
       const user = await User.findOne({ where: { email } });
       if (!user) {
-        return next(ApiError.internal('User not found'));
+        return next(ApiError.internal('User email or password is not correct'));
       }
       const comparePassword = bcrypt.compareSync(password, user.password);
       if (!comparePassword) {
-        return next(ApiError.internal('Password is not correct'));
+        return next(ApiError.internal('User email or password is not correct'));
       }
       const response = await getUserResponse(user.id);
       return res.json(response);
@@ -98,12 +98,12 @@ class UserController {
 
   async getUserByToken(req, res, next) {
     try {
-      const email = req.user.email;
-      const user = await User.findOne({ where: { email } });
+      const userId = req.user.id;
+      const user = await User.findOne({ where: { id: userId } });
       if (!user) {
         return next(ApiError.internal('User not found'));
       }
-      const response = await getUserResponse(user.id);
+      const response = await getUserResponse(userId);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
@@ -112,13 +112,13 @@ class UserController {
 
   async updateUser(req, res, next) {
     try {
-      const userEmail = req.user.email;
+      const userId = req.user.id;
       const token = req.headers.authorization.split(' ')[1];
-      const user = await User.findOne({ where: { email: userEmail } });
+      const user = await User.findOne({ where: { id: userId } });
       if (!user) {
-        return next(ApiError.internal('User not found'));
+        return next(ApiError.internal('UpdateUser - user not found'));
       }
-      const searchRegionAndLocation = await SearchRegionAndLocation.findOne({ where: { userId: user.id } });
+      const searchRegionAndLocation = await SearchRegionAndLocation.findOne({ where: { userId } });
       if (!searchRegionAndLocation) {
         return next(ApiError.internal(`SearchRegionAndLocation not found for userId = ${user.id}`));
       }

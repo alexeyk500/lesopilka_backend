@@ -41,7 +41,13 @@ const PasswordRecoveryCode = sequelize.define(
 Address.hasOne(User);
 User.belongsTo(Address);
 
-const SearchRegionAndLocation = sequelize.define('searchRegionAndLocation', {}, { timestamps: false });
+const SearchRegionAndLocation = sequelize.define(
+  'searchRegionAndLocation',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  },
+  { timestamps: false }
+);
 User.hasOne(SearchRegionAndLocation);
 SearchRegionAndLocation.belongsTo(User);
 SearchRegionAndLocation.belongsTo(Region);
