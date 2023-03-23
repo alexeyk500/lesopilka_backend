@@ -98,16 +98,19 @@ const getOrderById = async (id) => {
 
 const getOrderHeaderByOrderId = async (id, isOrderForManufacturer) => {
   const orderHeader = await getOrderById(id);
-  if (!isOrderForManufacturer && !orderHeader.inArchiveForUser) {
-    const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
-    if (orderShouldBeInArchive) {
-      orderHeader.inArchiveForUser = true;
+  if (isOrderForManufacturer) {
+    if (!orderHeader.inArchiveForManufacturer) {
+      const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
+      if (orderShouldBeInArchive) {
+        orderHeader.inArchiveForManufacturer = true;
+      }
     }
-  }
-  if (isOrderForManufacturer && !orderHeader.inArchiveForManufacturer) {
-    const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
-    if (orderShouldBeInArchive) {
-      orderHeader.inArchiveForManufacturer = true;
+  } else {
+    if (!orderHeader.inArchiveForUser) {
+      const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
+      if (orderShouldBeInArchive) {
+        orderHeader.inArchiveForUser = true;
+      }
     }
   }
   if (isOrderForManufacturer && orderHeader.userId) {
@@ -126,7 +129,7 @@ const getOrderHeaderByOrderId = async (id, isOrderForManufacturer) => {
   return orderHeader;
 };
 
-const getOrderResponse = async (order, protocol, host, isOrderForManufacturer) => {
+const getOrderResponse = async ({ order, protocol, host, isOrderForManufacturer }) => {
   const orderHeader = await getOrderHeaderByOrderId(order.id, isOrderForManufacturer);
   const orderProducts = await getProductsInOrder(order.id, protocol, host);
   const confirmedProducts = await getConfirmedProductsByOrderId(
@@ -263,15 +266,12 @@ class OrderController {
       const ordersList = await Order.findAll({ where: searchParams, order: ['deliveryDate'] });
       if (ordersList && ordersList.length > 0) {
         for (const order of ordersList) {
-          const orderResponse = await getOrderResponse(
+          const orderResponse = await getOrderResponse({
             order,
-            req.protocol,
-            req.headers.host,
-            Order,
-            OrderProduct,
-            ConfirmedProduct,
-            isOrdersForManufacturer
-          );
+            protocol: req.protocol,
+            host: req.headers.host,
+            isOrdersForManufacturer,
+          });
           if (ordersStatus === 'all') {
             orders.push(orderResponse);
           } else if (ordersStatus === 'active') {
