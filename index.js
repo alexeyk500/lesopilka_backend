@@ -7,7 +7,6 @@ const cors = require('cors');
 const errorHandlerMiddleware = require('./middleware/errorHandlerMiddleware');
 const path = require('path');
 const fileUpload = require('express-fileupload');
-const licenseJob = require('./jobs/licenseJob');
 
 const PORT = process.env.SERVER_PORT || 5500;
 
@@ -27,14 +26,14 @@ const start = async () => {
     await sequelize.sync();
     app.listen(PORT, () => {
       console.log(`server version: 1.0.3, Server started on PORT ${PORT}`);
-      const job = schedule.scheduleJob('42 * * * * *', function () {
-        licenseJob();
-      });
-      console.log('Started licenseJob as', job.name);
+      // const job = schedule.scheduleJob('42 * * * * *', function () {
+      //   licenseJob();
+      // });
+      // console.log('Started licenseJob as', job.name);
     });
   } catch (e) {
-    await schedule.gracefulShutdown();
     console.log(e);
+    await schedule.gracefulShutdown();
   }
 };
 

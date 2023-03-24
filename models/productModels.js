@@ -51,6 +51,16 @@ const ProductDescription = sequelize.define(
   { timestamps: false }
 );
 
+const DepublishedProduct = sequelize.define(
+  'depublishedProduct',
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    depublishedDate: { type: DataTypes.DATE },
+    productId: { type: DataTypes.INTEGER },
+  },
+  { timestamps: false }
+);
+
 Manufacturer.hasMany(Product);
 Product.belongsTo(Manufacturer);
 
@@ -71,4 +81,5 @@ module.exports = {
   ProductDescription,
   ProductMaterial,
   ProductSort,
+  DepublishedProduct,
 };
