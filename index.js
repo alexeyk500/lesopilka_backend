@@ -32,7 +32,9 @@ const start = async () => {
     await sequelize.sync();
     app.listen(PORT, async () => {
       // Production actions for licenses with daily routine
-      console.log('---------------------------------------------------------------------------------------------------');
+      console.log(
+        '---------------------------------------------------------------------------------------------------'
+      );
       console.log(`   - server version: 1.0.5, Server started on PORT ${PORT}`);
       const firstJob = schedule.scheduleJob('0 0 3 * * *', async () => {
         await doJobForManufacturers(depublishProductsByManufacturerId);
@@ -46,7 +48,9 @@ const start = async () => {
         await doJobForManufacturers(informLicensesRunOutByManufacturerId);
       });
       console.log('   - started nightInformLicensesRunOutJob as', thirdJob.name);
-      console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||');
+      console.log(
+        '|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||'
+      );
 
       // Test for actions for licenses with one minute routine
       // console.log('--------------------------------------------------------------------------------------------')
