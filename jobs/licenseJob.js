@@ -52,6 +52,10 @@ const redeemLicenseByManufacturerId = async (manufacturerId) => {
     let restLicenseAmount = 0;
     let redeemLicenseAmount = 0;
     if (lastLicenseAction) {
+      // if (lastLicenseAction.actionDate.toISOString().split('T')[0] === actionDate.split('T')[0] ) {
+      //   console.log(`   - redeemLicense for manufacturer with id = ${manufacturerId} already exist with for ${actionDate.split('T')[0]} -> do nothing and return`);
+      //   return;
+      // }
       if (lastLicenseAction.restLicenseAmount > 0) {
         if (activeProductCardAmount > 0) {
           restLicenseAmount = lastLicenseAction.restLicenseAmount - activeProductCardAmount;
@@ -141,3 +145,53 @@ module.exports = {
   informLicensesRunOutByManufacturerId,
   getProductCardsAmountsByManufacturerId,
 };
+
+// const redeemLicenseByManufacturerId = async (manufacturerId) => {
+//   try {
+//     const newDate = new Date();
+//     const actionDate = newDate.toISOString();
+//
+//     const { activeProductCardAmount, draftProductCardAmount } = await getProductCardsAmountsByManufacturerId(
+//       manufacturerId
+//     );
+//
+//     const lastLicenseAction = await LicenseAction.findOne({
+//       where: { manufacturerId },
+//       order: [['actionDate', 'DESC']],
+//     });
+//     if (lastLicenseAction) {
+//       if (normalizeData(actionDate) !== normalizeData(lastLicenseAction.actionDate)) {
+//         let restLicenseAmount = 0;
+//         let redeemLicenseAmount = 0;
+//         if (lastLicenseAction.restLicenseAmount > 0) {
+//           if (activeProductCardAmount > 0) {
+//             restLicenseAmount = lastLicenseAction.restLicenseAmount - activeProductCardAmount;
+//             redeemLicenseAmount = activeProductCardAmount;
+//           } else {
+//             restLicenseAmount = lastLicenseAction.restLicenseAmount;
+//           }
+//         }
+//         await LicenseAction.create({
+//           actionDate,
+//           restLicenseAmount,
+//           redeemLicenseAmount,
+//           activeProductCardAmount,
+//           draftProductCardAmount,
+//           manufacturerId,
+//         });
+//       }
+//     } else {
+//       await LicenseAction.create({
+//         actionDate,
+//         restLicenseAmount: 0,
+//         redeemLicenseAmount: 0,
+//         activeProductCardAmount,
+//         draftProductCardAmount,
+//         manufacturerId,
+//       });
+//     }
+//
+//   } catch (e) {
+//     console.log(`Error in redeemLicenseByManufacturerId, manufacturerId = ${manufacturerId}`, e);
+//   }
+// };

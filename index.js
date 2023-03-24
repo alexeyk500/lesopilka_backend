@@ -7,6 +7,12 @@ const cors = require('cors');
 const errorHandlerMiddleware = require('./middleware/errorHandlerMiddleware');
 const path = require('path');
 const fileUpload = require('express-fileupload');
+const {
+  doJobForManufacturers,
+  depublishProductsByManufacturerId,
+  redeemLicenseByManufacturerId,
+  informLicensesRunOutByManufacturerId,
+} = require('./jobs/licenseJob');
 
 const PORT = process.env.SERVER_PORT || 5500;
 
@@ -24,12 +30,40 @@ const start = async () => {
     await schedule.gracefulShutdown();
     await sequelize.authenticate();
     await sequelize.sync();
-    app.listen(PORT, () => {
-      console.log(`server version: 1.0.3, Server started on PORT ${PORT}`);
-      // const job = schedule.scheduleJob('42 * * * * *', function () {
-      //   licenseJob();
+    app.listen(PORT, async () => {
+      // Production actions for licenses with daily routine
+      console.log('---------------------------------------------------------------------------------------------------');
+      console.log(`   - server version: 1.0.5, Server started on PORT ${PORT}`);
+      const firstJob = schedule.scheduleJob('0 0 3 * * *', async () => {
+        await doJobForManufacturers(depublishProductsByManufacturerId);
+      });
+      console.log('   - started nightDepublishProductsJob as', firstJob.name);
+      const secondJob = schedule.scheduleJob('0 30 3 * * *', async () => {
+        await doJobForManufacturers(redeemLicenseByManufacturerId);
+      });
+      console.log('   - started nightRedeemLicenseJob as', secondJob.name);
+      const thirdJob = schedule.scheduleJob('0 0 4 * * *', async () => {
+        await doJobForManufacturers(informLicensesRunOutByManufacturerId);
+      });
+      console.log('   - started nightInformLicensesRunOutJob as', thirdJob.name);
+      console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||');
+
+      // Test for actions for licenses with one minute routine
+      // console.log('--------------------------------------------------------------------------------------------')
+      // console.log(`   - server version: 1.0.5, Server started on PORT ${PORT}`);
+      // const firstJob = schedule.scheduleJob('15 * * * * *',  async () => {
+      //   await doJobForManufacturers(depublishProductsByManufacturerId);
       // });
-      // console.log('Started licenseJob as', job.name);
+      // console.log('   - started nightDepublishProductsJob as', firstJob.name);
+      // const secondJob = schedule.scheduleJob('20 * * * * *',  async () => {
+      //   await doJobForManufacturers(redeemLicenseByManufacturerId);
+      // });
+      // console.log('   - started nightRedeemLicenseJob as', secondJob.name);
+      // const thirdJob = schedule.scheduleJob('30 * * * * *',  async () => {
+      //   await doJobForManufacturers(informLicensesRunOutByManufacturerId);
+      // });
+      // console.log('   - started nightInformLicensesRunOutJob as', thirdJob.name);
+      // console.log('||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||')
     });
   } catch (e) {
     console.log(e);
