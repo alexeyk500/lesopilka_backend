@@ -49,16 +49,16 @@ const redeemLicenseByManufacturerId = async (manufacturerId) => {
       where: { manufacturerId },
       order: [['actionDate', 'DESC']],
     });
-    let restLicenseAmount;
-    let redeemLicenseAmount;
-    if (!lastLicenseAction) {
-      restLicenseAmount = 0;
-    } else {
+    let restLicenseAmount = 0;
+    let redeemLicenseAmount = 0;
+    if (lastLicenseAction) {
       if (lastLicenseAction.restLicenseAmount > 0) {
-        restLicenseAmount = lastLicenseAction.restLicenseAmount - activeProductCardAmount;
-        redeemLicenseAmount = activeProductCardAmount;
-      } else {
-        restLicenseAmount = 0;
+        if (activeProductCardAmount > 0) {
+          restLicenseAmount = lastLicenseAction.restLicenseAmount - activeProductCardAmount;
+          redeemLicenseAmount = activeProductCardAmount;
+        } else {
+          restLicenseAmount = lastLicenseAction.restLicenseAmount;
+        }
       }
     }
     await LicenseAction.create({
