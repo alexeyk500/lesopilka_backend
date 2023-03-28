@@ -7,9 +7,10 @@ const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct, updateModelsField, checkManufacturerForProduct } = require('../utils/functions');
+const { formatProduct, updateModelsField } = require('../utils/functions');
 const { SizeTypeEnum, PRODUCTS_PAGE_SIZE } = require('../utils/constants');
 const { Op } = require('sequelize');
+const { checkIsUserManufacturerForProduct } = require('../utils/checkFunctions');
 
 const getProductResponse = async (productId, protocol, host) => {
   const product = await Product.findOne({
@@ -36,6 +37,7 @@ const getProductResponse = async (productId, protocol, host) => {
 class ProductController {
   async updateProduct(req, res, next) {
     try {
+      const userId = req.user.id;
       const {
         productId,
         subCategoryId,
@@ -51,13 +53,13 @@ class ProductController {
         sizeValue,
       } = req.body;
 
-      if (!productId) {
-        return next(ApiError.badRequest('productId is missed'));
+      if (!productId || !userId) {
+        return next(ApiError.badRequest('updateProduct - request denied 1'));
       }
 
-      const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
+      const checkManufacturer = await checkIsUserManufacturerForProduct(userId, productId);
       if (!checkManufacturer) {
-        return next(ApiError.badRequest('Only manufacturer can edit the product'));
+        return next(ApiError.badRequest('updateProduct - request denied 2'));
       }
 
       const product = await Product.findOne({ where: { id: productId } });
@@ -129,7 +131,6 @@ class ProductController {
 
       const editionDate = new Date().toISOString();
       await updateModelsField(product, { editionDate });
-      console.log({ product });
       const response = await getProductResponse(productId, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {
@@ -399,11 +400,12 @@ class ProductController {
 
   async updateDescription(req, res, next) {
     try {
+      const userId = req.user.id;
       const { productId, description } = req.body;
-      if (!productId || (!description && description !== null)) {
+      if ((!userId && !productId) || (!description && description !== null)) {
         return next(ApiError.badRequest('updateDescription - not complete data'));
       }
-      const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
+      const checkManufacturer = await checkIsUserManufacturerForProduct(userId, productId);
       if (!checkManufacturer) {
         return next(ApiError.badRequest('Only manufacturer can edit the product'));
       }

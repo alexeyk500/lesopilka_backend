@@ -138,13 +138,11 @@ class LicenseController {
       if (!lastLicenseAction) {
         return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 3'));
       }
-      const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(
-        manufacturerId
-      );
+      const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturerId);
       if (!activeProductCardAmount) {
         return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 4'));
       }
-      return res.json({ activeProductCardAmount,  restLicenseAmount: lastLicenseAction.restLicenseAmount});
+      return res.json({ activeProductCardAmount, restLicenseAmount: lastLicenseAction.restLicenseAmount });
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError: getManufacturerLicenseInfo')

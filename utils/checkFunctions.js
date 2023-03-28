@@ -24,17 +24,32 @@ const checkIsUserManufacturerForOrder = async (userId, orderId) => {
   if (!manufacturerId) {
     return false;
   }
-  const oneOrderProduct = await OrderProduct.findOne({
+  const orderProduct = await OrderProduct.findOne({
     where: { orderId },
     include: {
       model: Product,
       required: true,
     },
   });
-  if (!oneOrderProduct) {
+  if (!orderProduct) {
     return false;
   }
-  return manufacturerId === oneOrderProduct.product.manufacturerId;
+  const product = await orderProduct.get('product');
+  return manufacturerId === product.manufacturerId;
+};
+
+const checkIsUserManufacturerForProduct = async (userId, productId) => {
+  const manufacturerId = await getManufacturerIdForUser(userId);
+  if (!manufacturerId) {
+    return false;
+  }
+  const product = await Product.findOne({
+    where: { id: productId },
+  });
+  if (!product) {
+    return false;
+  }
+  return manufacturerId === product.manufacturerId;
 };
 
 const checkIsDateStrIsValidDate = (dateStr) => {
@@ -51,5 +66,6 @@ module.exports = {
   checkIsValueZeroAndPositiveNumber,
   checkIsUserOwnerForOrder,
   checkIsUserManufacturerForOrder,
+  checkIsUserManufacturerForProduct,
   checkIsDateStrIsValidDate,
 };
