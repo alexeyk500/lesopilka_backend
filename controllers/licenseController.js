@@ -1,5 +1,5 @@
 const ApiError = require('../error/apiError');
-const { checkIsValuePositiveNumber } = require('../utils/checkFunctions');
+const { checkIsValuePositiveNumber, checkIsDateStrIsValidDate } = require('../utils/checkFunctions');
 const { LicensePrice, ReceiptTransaction, LicenseAction } = require('../models/licenseModels');
 const {
   doJobForManufacturers,
@@ -9,6 +9,8 @@ const {
   getProductCardsAmountsByManufacturerId,
 } = require('../jobs/licenseJob');
 const { Manufacturer } = require('../models/manufacturerModels');
+const { getManufacturerIdForUser, normalizeData, dateDayShift } = require('../utils/functions');
+const { Op } = require('sequelize');
 
 class LicenseController {
   async licensePurchase(req, res, next) {
@@ -79,6 +81,74 @@ class LicenseController {
       return res.json({ message: newLicenseAction });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError: licensePurchase'));
+    }
+  }
+
+  async getManufacturerLicenseActions(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { dateFrom, dateTo } = req.body;
+      if (!userId || !checkIsDateStrIsValidDate(dateFrom) || !checkIsDateStrIsValidDate(dateTo)) {
+        return next(ApiError.badRequest('getManufacturerLicenseActions - request denied 1'));
+      }
+      const manufacturerId = await getManufacturerIdForUser(userId);
+      if (!manufacturerId) {
+        return next(ApiError.badRequest('getManufacturerLicenseActions - request denied 2'));
+      }
+
+      let searchParams = {};
+      searchParams.manufacturerId = manufacturerId;
+      const normDateFrom = normalizeData(dateFrom);
+      const normDateTo = normalizeData(dateDayShift(dateTo, 1));
+      searchParams.actionDate = {
+        [Op.and]: {
+          [Op.gte]: normDateFrom,
+          [Op.lte]: normDateTo,
+        },
+      };
+
+      const licenseActions = await LicenseAction.findAll({
+        where: searchParams,
+        attributes: { exclude: ['manufacturerId'] },
+        order: ['actionDate'],
+      });
+
+      return res.json(licenseActions);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError: getManufacturerLicenseActions')
+      );
+    }
+  }
+
+  async getManufacturerLicenseInfo(req, res, next) {
+    try {
+      const userId = req.user.id;
+      if (!userId) {
+        return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 1'));
+      }
+      const manufacturerId = await getManufacturerIdForUser(userId);
+      if (!manufacturerId) {
+        return next(ApiError.badRequest('getCurrentManufacturerLicenseInfo - request denied 2'));
+      }
+      const lastLicenseAction = await LicenseAction.findOne({
+        where: { manufacturerId },
+        order: [['actionDate', 'DESC']],
+      });
+      if (!lastLicenseAction) {
+        return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 3'));
+      }
+      const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(
+        manufacturerId
+      );
+      if (!activeProductCardAmount) {
+        return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 4'));
+      }
+      return res.json({ activeProductCardAmount,  restLicenseAmount: lastLicenseAction.restLicenseAmount});
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError: getManufacturerLicenseInfo')
+      );
     }
   }
 

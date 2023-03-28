@@ -37,10 +37,19 @@ const checkIsUserManufacturerForOrder = async (userId, orderId) => {
   return manufacturerId === oneOrderProduct.product.manufacturerId;
 };
 
+const checkIsDateStrIsValidDate = (dateStr) => {
+  if (dateStr.length === 0) {
+    return false;
+  } else {
+    return new Date(dateStr).toString() !== 'Invalid Date';
+  }
+};
+
 module.exports = {
   checkIsValueBoolean,
   checkIsValuePositiveNumber,
   checkIsValueZeroAndPositiveNumber,
   checkIsUserOwnerForOrder,
   checkIsUserManufacturerForOrder,
+  checkIsDateStrIsValidDate,
 };

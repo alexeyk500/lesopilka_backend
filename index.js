@@ -36,15 +36,15 @@ const start = async () => {
         '---------------------------------------------------------------------------------------------------'
       );
       console.log(`   - server version: 1.0.5, Server started on PORT ${PORT}`);
-      const firstJob = schedule.scheduleJob('0 0 3 * * *', async () => {
+      const firstJob = schedule.scheduleJob('0 0 13 * * *', async () => {
         await doJobForManufacturers(depublishProductsByManufacturerId);
       });
       console.log('   - started nightDepublishProductsJob as', firstJob.name);
-      const secondJob = schedule.scheduleJob('0 30 3 * * *', async () => {
+      const secondJob = schedule.scheduleJob('0 30 13 * * *', async () => {
         await doJobForManufacturers(redeemLicenseByManufacturerId);
       });
       console.log('   - started nightRedeemLicenseJob as', secondJob.name);
-      const thirdJob = schedule.scheduleJob('0 0 4 * * *', async () => {
+      const thirdJob = schedule.scheduleJob('0 0 14 * * *', async () => {
         await doJobForManufacturers(informLicensesRunOutByManufacturerId);
       });
       console.log('   - started nightInformLicensesRunOutJob as', thirdJob.name);

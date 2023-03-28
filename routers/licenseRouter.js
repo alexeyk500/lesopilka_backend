@@ -4,7 +4,9 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const licenseController = require('../controllers/licenseController');
 
+licenseRouter.get('/', authMiddleware, licenseController.getManufacturerLicenseInfo);
 licenseRouter.post('/', authMiddleware, licenseController.licensePurchase);
+licenseRouter.post('/manufacturer-license-actions', authMiddleware, licenseController.getManufacturerLicenseActions);
 
 licenseRouter.post(
   '/test-manufacturer-inform-licenses-run-out-job',
