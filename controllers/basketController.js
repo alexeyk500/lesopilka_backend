@@ -5,7 +5,8 @@ const { Product, ProductDescription, ProductMaterial, ProductSort } = require('.
 const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct, updateModelsField } = require('../utils/functions');
+const { updateModelsField } = require('../utils/functions');
+const { formatProduct } = require('../utils/productFunctions');
 
 const getProductsInBasket = async (basketId, BasketProduct, protocol, host) => {
   const basketProductsRaw = await BasketProduct.findAll({

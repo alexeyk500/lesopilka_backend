@@ -12,13 +12,9 @@ const { ARCHIVED_ORDERS_STATUS, MessageFromToOptions } = require('../utils/const
 const { User } = require('../models/userModels');
 const { isOrderShouldBeInArchive, sendNewMessageForOrder, createOrderMessage } = require('../utils/ordersFunctions');
 const { checkIsUserManufacturerForOrder, checkIsValueZeroAndPositiveNumber } = require('../utils/checkFunctions');
-const {
-  normalizeData,
-  formatProduct,
-  formatAddress,
-  getManufacturerIdForUser,
-  updateModelsField,
-} = require('../utils/functions');
+const { normalizeData, formatAddress, getManufacturerIdForUser, updateModelsField } = require('../utils/functions');
+
+const { formatProduct } = require('../utils/productFunctions');
 
 const getProductsInOrder = async (orderId, protocol, host) => {
   const orderProductsRaw = await OrderProduct.findAll({

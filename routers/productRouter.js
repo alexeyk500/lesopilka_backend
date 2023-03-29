@@ -17,7 +17,9 @@ productRouter.post(
 productRouter.get('/materials', productController.getAllProductMaterials);
 productRouter.post('/sort', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createProductSort);
 productRouter.get('/sorts', productController.getAllProductSorts);
+
 productRouter.get('/:id', productController.getProduct);
+
 // productRouter.put('/review', checkRoleMiddleware('ADMIN'), productController.updateReview);
 // productRouter.post('/review', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), productController.createReview);
 

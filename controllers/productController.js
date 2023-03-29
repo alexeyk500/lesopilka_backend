@@ -2,37 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const ApiError = require('../error/apiError');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
-const { SubCategory, Category } = require('../models/categoryModels');
+const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
-const { formatProduct, updateModelsField } = require('../utils/functions');
+const { updateModelsField } = require('../utils/functions');
 const { SizeTypeEnum, PRODUCTS_PAGE_SIZE } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { checkIsUserManufacturerForProduct } = require('../utils/checkFunctions');
-
-const getProductResponse = async (productId, protocol, host) => {
-  const product = await Product.findOne({
-    where: { id: productId },
-    include: [
-      ProductDescription,
-      ProductMaterial,
-      ProductSort,
-      {
-        model: SubCategory,
-        include: [{ model: Category }],
-      },
-      {
-        model: Manufacturer,
-        include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
-      },
-      { model: Picture },
-    ],
-    order: [[Picture, 'order', 'ASC']],
-  });
-  return formatProduct(product, protocol, host);
-};
+const { formatProduct, getProductResponse } = require('../utils/productFunctions');
 
 class ProductController {
   async updateProduct(req, res, next) {
@@ -134,7 +113,7 @@ class ProductController {
       const response = await getProductResponse(productId, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'updateProduct - unknownError'));
     }
   }
 
@@ -157,7 +136,7 @@ class ProductController {
       await ProductDescription.create({ productId: product.id });
       return res.json(product);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'createProduct - unknownError'));
     }
   }
 
@@ -170,7 +149,7 @@ class ProductController {
       const newDescription = await ProductDescription.create({ productId, description });
       return res.json(newDescription);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'createDescription - unknownError'));
     }
   }
 
@@ -178,25 +157,33 @@ class ProductController {
     try {
       const { title, isPine } = req.body;
       if (!title) {
-        return next(ApiError.badRequest('createMaterial - not complete data'));
+        return next(ApiError.badRequest('createProductMaterial - not complete data'));
       }
       const order = (await ProductMaterial.max('order')) + 1;
       const newMaterial = await ProductMaterial.create({ title, isPine, order });
       return res.json(newMaterial);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'createProductMaterial - unknownError')
+      );
     }
   }
 
-  async getAllProductMaterials(req, res) {
-    const materials = await ProductMaterial.findAll();
-    return res.json(materials);
+  async getAllProductMaterials(req, res, next) {
+    try {
+      const materials = await ProductMaterial.findAll();
+      return res.json(materials);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'getAllProductMaterials - unknownError')
+      );
+    }
   }
 
   async deleteProduct(req, res, next) {
     try {
       const { productId } = req.body;
-      const checkManufacturer = await checkManufacturerForProduct(req.user.id, productId);
+      const checkManufacturer = await checkIsUserManufacturerForProduct(req.user.id, productId);
       if (!checkManufacturer) {
         return next(ApiError.badRequest('Only manufacturer can delete the product'));
       }
@@ -224,7 +211,7 @@ class ProductController {
       const result = await Product.destroy({ where: { id: productId } });
       return res.json({ productId, result });
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteProduct - unknownError'));
     }
   }
 
@@ -237,13 +224,17 @@ class ProductController {
       const productSort = await ProductSort.create({ title });
       return res.json(productSort);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'createProductSort - unknownError'));
     }
   }
 
-  async getAllProductSorts(req, res) {
-    const categories = await ProductSort.findAll();
-    return res.json(categories);
+  async getAllProductSorts(req, res, next) {
+    try {
+      const categories = await ProductSort.findAll();
+      return res.json(categories);
+    } catch (e) {
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'getAllProductSorts - unknownError'));
+    }
   }
 
   async getProduct(req, res, next) {
@@ -255,7 +246,7 @@ class ProductController {
       const response = await getProductResponse(id, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'getProduct - unknownError'));
     }
   }
 
@@ -394,7 +385,7 @@ class ProductController {
         currentPage: pageParam,
       });
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'getProducts - unknownError'));
     }
   }
 
@@ -419,7 +410,7 @@ class ProductController {
       const response = await getProductResponse(productId, req.protocol, req.headers.host);
       return res.json(response);
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'updateDescription - unknownError'));
     }
   }
 }
