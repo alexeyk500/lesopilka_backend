@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const { updateModelsField } = require('../utils/functions');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { getLicensesRunOutHTML } = require('../nodemailer/getLicensesRunOutHTML');
+const { checkIsValueExist } = require('../utils/checkFunctions');
 
 const depublishProductsByManufacturerId = async (manufacturerId) => {
   try {
@@ -13,9 +14,16 @@ const depublishProductsByManufacturerId = async (manufacturerId) => {
       order: [['actionDate', 'DESC']],
     });
 
+    let restLicenseAmount;
+    if (checkIsValueExist(lastLicenseAction)) {
+      restLicenseAmount = lastLicenseAction.restLicenseAmount;
+    } else {
+      restLicenseAmount = 0;
+    }
+
     const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturerId);
 
-    if (activeProductCardAmount > 0 && lastLicenseAction.restLicenseAmount <= 0) {
+    if (activeProductCardAmount > 0 && restLicenseAmount <= 0) {
       const newDate = new Date();
       const depublishedDate = newDate.toISOString();
       const products = await Product.findAll({
@@ -51,7 +59,7 @@ const redeemLicenseByManufacturerId = async (manufacturerId) => {
     });
     let restLicenseAmount = 0;
     let redeemLicenseAmount = 0;
-    if (lastLicenseAction) {
+    if (checkIsValueExist(lastLicenseAction)) {
       if (lastLicenseAction.actionDate.toISOString().split('T')[0] === actionDate.split('T')[0]) {
         console.log(
           `   - redeemLicense for manufacturer with id = ${manufacturerId} already exist with for ${
@@ -88,30 +96,32 @@ const informLicensesRunOutByManufacturerId = async (manufacturerId) => {
       order: [['actionDate', 'DESC']],
     });
 
-    const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturerId);
+    if (checkIsValueExist(lastLicenseAction)) {
+      const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturerId);
 
-    if (activeProductCardAmount > 0 && lastLicenseAction.restLicenseAmount <= 0) {
-      const products = await Product.findAll({
-        where: { manufacturerId, publicationDate: { [Op.ne]: null } },
-        order: [['id']],
-      });
+      if (activeProductCardAmount > 0 && lastLicenseAction.restLicenseAmount <= 0) {
+        const products = await Product.findAll({
+          where: { manufacturerId, publicationDate: { [Op.ne]: null } },
+          order: [['id']],
+        });
 
-      if (products.length > 0) {
-        const manufacturer = await Manufacturer.findOne({ where: { id: manufacturerId } });
-        if (manufacturer.email) {
-          const subject = `Сообщение об исчерпании запаса лицензий на ${process.env.SITE_NAME}`;
-          const html = getLicensesRunOutHTML(manufacturer.title ?? manufacturer.email);
-          if (html) {
-            const mailData = makeMailData({ to: manufacturer.email, subject, html });
-            await transporter.sendMail(mailData, async function (err, info) {
-              if (err) {
-                console.log('Error with sending licenses run out letter', err);
-              } else {
-                console.log(
-                  `sendMail for manufacturerId=${manufacturerId}: ${mailData.from} -> ${mailData.to} "${mailData.subject}"`
-                );
-              }
-            });
+        if (products.length > 0) {
+          const manufacturer = await Manufacturer.findOne({ where: { id: manufacturerId } });
+          if (manufacturer.email) {
+            const subject = `Сообщение об исчерпании запаса лицензий на ${process.env.SITE_NAME}`;
+            const html = getLicensesRunOutHTML(manufacturer.title ?? manufacturer.email);
+            if (html) {
+              const mailData = makeMailData({ to: manufacturer.email, subject, html });
+              await transporter.sendMail(mailData, async function (err, info) {
+                if (err) {
+                  console.log('Error with sending licenses run out letter', err);
+                } else {
+                  console.log(
+                    `sendMail for manufacturerId=${manufacturerId}: ${mailData.from} -> ${mailData.to} "${mailData.subject}"`
+                  );
+                }
+              });
+            }
           }
         }
       }
