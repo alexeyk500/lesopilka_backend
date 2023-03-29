@@ -1,5 +1,5 @@
 const ApiError = require('../error/apiError');
-const { checkIsValuePositiveNumber, checkIsDateStrIsValidDate } = require('../utils/checkFunctions');
+const { checkIsValuePositiveNumber, checkIsDateStrIsValidDate, checkIsValueExist } = require('../utils/checkFunctions');
 const { LicensePrice, ReceiptTransaction, LicenseAction } = require('../models/licenseModels');
 const {
   doJobForManufacturers,
@@ -55,10 +55,10 @@ class LicenseController {
         order: [['actionDate', 'DESC']],
       });
       let restLicenseAmount;
-      if (!lastLicenseAction) {
-        restLicenseAmount = licenseAmount;
-      } else {
+      if (checkIsValueExist(lastLicenseAction)) {
         restLicenseAmount = lastLicenseAction.restLicenseAmount + licenseAmount;
+      } else {
+        restLicenseAmount = licenseAmount;
       }
 
       const { activeProductCardAmount, draftProductCardAmount } = await getProductCardsAmountsByManufacturerId(
@@ -131,18 +131,20 @@ class LicenseController {
       if (!manufacturerId) {
         return next(ApiError.badRequest('getCurrentManufacturerLicenseInfo - request denied 2'));
       }
+
       const lastLicenseAction = await LicenseAction.findOne({
         where: { manufacturerId },
         order: [['actionDate', 'DESC']],
       });
-      if (!lastLicenseAction) {
-        return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 3'));
+      let restLicenseAmount;
+      if (checkIsValueExist(lastLicenseAction)) {
+        restLicenseAmount = lastLicenseAction.restLicenseAmount;
+      } else {
+        restLicenseAmount = 0;
       }
       const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturerId);
-      if (!activeProductCardAmount) {
-        return next(ApiError.badRequest('getManufacturerLicenseInfo - request denied 4'));
-      }
-      return res.json({ activeProductCardAmount, restLicenseAmount: lastLicenseAction.restLicenseAmount });
+
+      return res.json({ activeProductCardAmount, restLicenseAmount });
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError: getManufacturerLicenseInfo')

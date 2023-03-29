@@ -60,6 +60,10 @@ const checkIsDateStrIsValidDate = (dateStr) => {
   }
 };
 
+const checkIsValueExist = (value) => {
+  return !(value === null || value === undefined);
+};
+
 module.exports = {
   checkIsValueBoolean,
   checkIsValuePositiveNumber,
@@ -68,4 +72,5 @@ module.exports = {
   checkIsUserManufacturerForOrder,
   checkIsUserManufacturerForProduct,
   checkIsDateStrIsValidDate,
+  checkIsValueExist,
 };
