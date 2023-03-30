@@ -60,9 +60,12 @@ const redeemLicenseByManufacturerId = async (manufacturerId) => {
     let restLicenseAmount = 0;
     let redeemLicenseAmount = 0;
     if (checkIsValueExist(lastLicenseAction)) {
-      if (lastLicenseAction.actionDate.toISOString().split('T')[0] === actionDate.split('T')[0]) {
+      if (
+        lastLicenseAction.redeemLicenseAmount !== null &&
+        lastLicenseAction.actionDate.toISOString().split('T')[0] === actionDate.split('T')[0]
+      ) {
         console.log(
-          `   - redeemLicense for manufacturer with id = ${manufacturerId} already exist with for ${
+          `   - redeemLicense for manufacturer with id = ${manufacturerId} already done for ${
             actionDate.split('T')[0]
           } -> do nothing and return`
         );
