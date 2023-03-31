@@ -1,11 +1,11 @@
 const getManufacturerAddress = (manufacturer) => {
   let address = '';
-  address += manufacturer.address.location.region.title + ', ';
-  address += manufacturer.address.location.title + ', ';
-  address += manufacturer.address.street + ', д.';
-  address += manufacturer.address.building;
-  if (manufacturer.address.office) {
-    address += ', оф.' + manufacturer.address.office;
+  address += manufacturer?.address?.location?.region?.title + ', ';
+  address += manufacturer?.address?.location?.title + ', ';
+  address += manufacturer?.address?.street + ', д.';
+  address += manufacturer?.address?.building;
+  if (manufacturer?.address?.office) {
+    address += ', оф.' + manufacturer?.address?.office;
   }
   return address;
 };
