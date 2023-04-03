@@ -1,3 +1,6 @@
+const puppeteer = require('puppeteer');
+const handlebars = require('handlebars');
+
 const getManufacturerAddress = (manufacturer) => {
   let address = '';
   address += manufacturer?.address?.location?.region?.title + ', ';
@@ -157,9 +160,68 @@ const groupProducts = (products, subCategories) => {
   return separatedProducts;
 };
 
+const getPriceSections = (groupedProducts) => {
+  return groupedProducts.map((section) => {
+    const subCategory = section[0].subCategory.title;
+    const isDried = section[0].isDried || false;
+    const isSeptic = section[0].isSeptic || false;
+    let title = subCategory ? `${subCategory} (` : 'Пиломатериал без выбранной категории (';
+    if (isDried) {
+      title += 'камерная сушка';
+    } else {
+      title += 'естественная влажность';
+    }
+    if (isSeptic) {
+      title += ', септирован';
+    }
+    title += ')';
+    const products = section.map((product) => {
+      return {
+        size: getProductSizesStr(product),
+        material: product.material ? product.material.title : '',
+        sort: product.sort ? product.sort.title : '',
+        code: product.code ? product.code : '',
+        price: product.price ? product.price : '',
+      };
+    });
+    return { title, products };
+  });
+};
+
+const bitmapToBase64 = (bitmap) => {
+  return Buffer.from(bitmap).toString('base64');
+};
+
+const createPDF = async (data, htmlTemplate) => {
+  try {
+    const template = handlebars.compile(htmlTemplate);
+    const html = template(data);
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      margin: {
+        top: 30,
+        bottom: 10,
+        left: 30,
+        right: 5,
+      },
+      printBackground: true,
+    });
+    await browser.close();
+    return pdfBuffer;
+  } catch (e) {
+    throw new Error('creating PDF error');
+  }
+};
+
 module.exports = {
   getManufacturerAddress,
   formatUTCtoDDMonthYear,
   getProductSizesStr,
   groupProducts,
+  getPriceSections,
+  bitmapToBase64,
+  createPDF,
 };

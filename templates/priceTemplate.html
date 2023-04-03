@@ -26,7 +26,7 @@
     }
     .dateTitle {
      font-size: 10px;
-     margin-right: 80px;
+     margin-right: 150px;
     }
     .twoColumnContainer {
      display: flex;
@@ -97,7 +97,6 @@
     }
   </style>
   <title>Price</title>
-
  </head>
  <body style="{margin: 20px 40px}">
  <div class="contentContainer">
@@ -121,34 +120,34 @@
     </div>
    </div>
    <div class="logoContainer">
-    <img src={{{image}}} height="54" width="54"  alt=""/>
+    <img src={{logo}} height="54" width="54"  alt=""/>
    </div>
   </div>
   <div class="sectionsContainer">
-   {{ #priceSections }}
+   {{#each priceSections}}
     <div class="sectionTitle">
      {{title}}
     </div>
-   <div class="delimiter" ></div>
-   <div class="titlesRow">
-    <div class="sizeContainer">Размеры, мм</div>
-    <div class="materialContainer">Тип древисины</div>
-    <div class="sortContainer">Сорт</div>
-    <div class="codeContainer">Артикул</div>
-    <div class="priceContainer">руб/шт</div>
-   </div>
-   <div class="delimiter" ></div>
-    {{#products}}
-    <div class="productRow">
-     <div class="sizeContainer">{{size}}</div>
-     <div class="materialContainer">{{material}}</div>
-     <div class="sortContainer">{{sort}}</div>
-     <div class="codeContainer">{{code}}</div>
-     <div class="priceContainer">{{price}}</div>
+    <div class="delimiter" ></div>
+    <div class="titlesRow">
+     <div class="sizeContainer">Размеры, мм</div>
+     <div class="materialContainer">Тип древисины</div>
+     <div class="sortContainer">Сорт</div>
+     <div class="codeContainer">Артикул</div>
+     <div class="priceContainer">руб/шт</div>
     </div>
     <div class="delimiter" ></div>
-    {{/products}}
-   {{ /priceSections }}
+    {{#each products}}
+     <div class="productRow">
+      <div class="sizeContainer">{{size}}</div>
+      <div class="materialContainer">{{material}}</div>
+      <div class="sortContainer">{{sort}}</div>
+      <div class="codeContainer">{{code}}</div>
+      <div class="priceContainer">{{price}}</div>
+     </div>
+     <div class="delimiter" ></div>
+    {{/each }}
+   {{/each}}
   </div>
  </div>
  </body>
