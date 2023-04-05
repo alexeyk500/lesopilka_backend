@@ -36,6 +36,8 @@ class ProductController {
         return next(ApiError.badRequest('updateProduct - request denied 1'));
       }
 
+      console.log('productId =', productId, 'userId =', userId);
+
       const checkManufacturer = await checkIsUserManufacturerForProduct(userId, productId);
       if (!checkManufacturer) {
         return next(ApiError.badRequest('updateProduct - request denied 2'));

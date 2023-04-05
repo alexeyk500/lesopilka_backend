@@ -25,9 +25,6 @@ Manufacturer.belongsTo(Address);
 Manufacturer.hasOne(ManufacturerPickUpAddress);
 ManufacturerPickUpAddress.belongsTo(Manufacturer);
 
-// ManufacturerPickUpAddress.hasOne(Manufacturer);
-// Manufacturer.belongsTo(ManufacturerPickUpAddress);
-
 module.exports = {
   Manufacturer,
 };

@@ -40,6 +40,20 @@ const formatManufacturer = (manufacturer) => {
   };
 };
 
+const formatReseller = (reseller) => {
+  if (!reseller) {
+    return undefined;
+  }
+  return {
+    id: reseller.id,
+    family: reseller.family ? reseller.family : undefined,
+    name: reseller.name ? reseller.name : undefined,
+    middleName: reseller.middleName ? reseller.middleName : undefined,
+    phone: reseller.phone ? reseller.phone : undefined,
+    address: formatAddress(reseller.address),
+  };
+};
+
 const updateModelsField = async (model, field) => {
   if (field) {
     return await model.update(field);
@@ -70,6 +84,7 @@ const dateDayShift = (date, days) => {
 module.exports = {
   formatAddress,
   formatManufacturer,
+  formatReseller,
   updateModelsField,
   getManufacturerIdForUser,
   normalizeData,

@@ -1,60 +1,13 @@
 const ApiError = require('../error/apiError');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const { User, UnconfirmedUser, PasswordRecoveryCode, SearchRegionAndLocation } = require('../models/userModels');
 const uuid = require('uuid');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
-const { Location, Region, Address } = require('../models/addressModels');
-const { Manufacturer } = require('../models/manufacturerModels');
-const { formatManufacturer, updateModelsField } = require('../utils/functions');
 const { Basket } = require('../models/basketModels');
-
-const generateUserToken = (user) => {
-  return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
-};
-
-const getUserResponse = async (userId, tokenRaw) => {
-  const user = await User.findOne({
-    where: { id: userId },
-    include: [
-      {
-        model: SearchRegionAndLocation,
-        include: [Region, Location],
-      },
-      {
-        model: Manufacturer,
-        include: [{ model: Address, include: [{ model: Location, include: [{ model: Region }] }] }],
-      },
-    ],
-  });
-
-  let token;
-  if (tokenRaw) {
-    token = tokenRaw;
-  } else {
-    token = generateUserToken(user);
-  }
-
-  return {
-    user: {
-      email: user.email,
-      name: user.name ? user.name : user.email,
-      phone: user.phone ? user.phone : undefined,
-      searchRegion:
-        user.searchRegionAndLocation && user.searchRegionAndLocation.region
-          ? { id: user.searchRegionAndLocation.region.id, title: user.searchRegionAndLocation.region.title }
-          : undefined,
-      searchLocation:
-        user.searchRegionAndLocation && user.searchRegionAndLocation.location
-          ? { id: user.searchRegionAndLocation.location.id, title: user.searchRegionAndLocation.location.title }
-          : undefined,
-      manufacturer: user.manufacturer ? formatManufacturer(user.manufacturer) : undefined,
-    },
-    token,
-  };
-};
+const { getUserResponse } = require("../utils/userFunction");
+const { updateModelsField } = require("../utils/functions");
 
 class UserController {
   async registration(req, res, next) {
@@ -113,25 +66,27 @@ class UserController {
   async updateUser(req, res, next) {
     try {
       const userId = req.user.id;
-      const token = req.headers.authorization.split(' ')[1];
       const user = await User.findOne({ where: { id: userId } });
       if (!user) {
         return next(ApiError.internal('UpdateUser - user not found'));
       }
-      const searchRegionAndLocation = await SearchRegionAndLocation.findOne({ where: { userId } });
-      if (!searchRegionAndLocation) {
-        return next(ApiError.internal(`SearchRegionAndLocation not found for userId = ${user.id}`));
-      }
       const { name, phone, password, searchRegionId, searchLocationId } = req.body;
       await updateModelsField(user, { name });
       await updateModelsField(user, { phone });
-      await updateModelsField(searchRegionAndLocation, { regionId: searchRegionId });
-      await updateModelsField(searchRegionAndLocation, { locationId: searchLocationId });
-
       if (password) {
         const hashPassword = await bcrypt.hash(password, 3);
         await user.update({ password: hashPassword });
       }
+      if (searchRegionId !== undefined || searchLocationId !== undefined) {
+        const searchRegionAndLocation = await SearchRegionAndLocation.findOne({ where: { userId } });
+        if (searchRegionAndLocation) {
+          await updateModelsField(searchRegionAndLocation, { regionId: searchRegionId });
+          await updateModelsField(searchRegionAndLocation, { locationId: searchLocationId });
+        } else {
+          await SearchRegionAndLocation.create({ userId, regionId: searchRegionId, locationId: searchLocationId });
+        }
+      }
+      const token = req.headers.authorization.split(' ')[1];
       const response = await getUserResponse(user.id, token);
       return res.json(response);
     } catch (e) {

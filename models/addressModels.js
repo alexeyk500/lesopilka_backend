@@ -23,8 +23,8 @@ const Address = sequelize.define(
   'address',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    street: { type: DataTypes.STRING, allowNull: false },
-    building: { type: DataTypes.STRING, allowNull: false },
+    street: { type: DataTypes.STRING },
+    building: { type: DataTypes.STRING },
     office: { type: DataTypes.STRING },
     postIndex: { type: DataTypes.STRING },
   },
@@ -35,8 +35,8 @@ const ManufacturerPickUpAddress = sequelize.define(
   'pickUpAddress',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    street: { type: DataTypes.STRING, allowNull: false },
-    building: { type: DataTypes.STRING, allowNull: false },
+    street: { type: DataTypes.STRING },
+    building: { type: DataTypes.STRING },
     office: { type: DataTypes.STRING },
     postIndex: { type: DataTypes.STRING },
   },

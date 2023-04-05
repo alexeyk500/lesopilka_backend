@@ -11,6 +11,7 @@ const orderRouter = require('./orderRouter');
 const orderMessageRouter = require('./orderMessageRouter');
 const licenseRouter = require('./licenseRouter');
 const favoriteRouter = require('./favoriteRouter');
+const resellerRouter = require('./resellerRouter')
 
 const router = new Router();
 
@@ -26,6 +27,8 @@ router.use('/orders', orderRouter);
 router.use('/order_message', orderMessageRouter);
 router.use('/licenses', licenseRouter);
 router.use('/favorite', favoriteRouter);
+router.use('/reseller', resellerRouter);
+
 
 router.use('/ping', (req, res) => {
   res.json({ message: 'pong' });
