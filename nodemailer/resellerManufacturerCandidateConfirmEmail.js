@@ -48,7 +48,7 @@ const resellerManufacturerCandidateConfirmEmail = ({ resellerFIO, resellerPhone,
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${resellerEmail}
       </p>
 
-      <p style="color: #FF0000; margin-bottom: 32px; white-space: pre-line" >
+      <p style="color: #979797; margin-bottom: 32px; white-space: pre-line" >
           - В случае, если по нажатию ссылки в письме, переход на площадку не произошел,
           &nbsp;&nbsp;&nbsp;то скопируйте эту ссылку ${confirmUrl} и вставьте ее в адресную строку браузера.
       </p>
