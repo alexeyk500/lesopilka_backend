@@ -130,6 +130,24 @@ class ResellerController {
     }
   }
 
+  async manufacturerCandidateActivate(req, res, next) {
+    try {
+      const { code } = req.body;
+      if (!code) {
+        return next(ApiError.badRequest('activateManufacturerCandidate - request data is not complete'));
+      }
+      const manufacturerCandidate = await ResellerManufacturerCandidate.findOne({ where: { code } });
+      if (!manufacturerCandidate) {
+        return next(ApiError.badRequest(`код активации не действителен`));
+      }
+      return res.json({ manufacturerCandidate });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'activateManufacturerCandidate - unknownError')
+      );
+    }
+  }
+
   async registerManufacturerOld(req, res, next) {
     try {
       const userId = req.user.id;

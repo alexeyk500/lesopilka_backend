@@ -3,7 +3,7 @@ const resellerManufacturerCandidateConfirmEmail = ({ resellerFIO, resellerPhone,
   const siteHost = process.env.SITE_HOST;
   const siteName = process.env.SITE_NAME;
   const emailAddress = process.env.EMAIL_ADDRESS;
-  const confirmUrl = `${siteHost}/${siteName}/${code}`;
+  const confirmUrl = `${siteHost}/manufacturer-activation/${code}`;
 
   return `
     <style>
@@ -23,7 +23,7 @@ const resellerManufacturerCandidateConfirmEmail = ({ resellerFIO, resellerPhone,
       </table>
 
       <h4 style="color: #4A90E2" >
-          Для того что бы начать публиковать и продавать свои товары через площадку,
+          Для того, что бы начать публиковать и продавать свои товары через площадку,
           <br>активируйте личный кабинет перейдя по этой прямой ссылке: &nbsp;<a href="${confirmUrl}">Личный кабинет</a>
       </h4>
 
