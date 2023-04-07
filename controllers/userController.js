@@ -6,8 +6,8 @@ const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
 const { passwordRecoveryCodeEmail } = require('../nodemailer/passwordRecoveryCodeEmail');
 const { Basket } = require('../models/basketModels');
-const { getUserResponse } = require("../utils/userFunction");
-const { updateModelsField } = require("../utils/functions");
+const { getUserResponse } = require('../utils/userFunction');
+const { updateModelsField } = require('../utils/functions');
 
 class UserController {
   async registration(req, res, next) {
@@ -22,9 +22,10 @@ class UserController {
       }
       const hashPassword = await bcrypt.hash(password, 3);
       const user = await User.create({ email, password: hashPassword, role });
-      await Basket.create({ userId: user.id });
-      await SearchRegionAndLocation.create({ userId: user.id });
-      const response = await getUserResponse(user.id);
+      const userId = user.id;
+      await Basket.create({ userId });
+      await SearchRegionAndLocation.create({ userId });
+      const response = await getUserResponse(userId);
       return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
@@ -70,9 +71,10 @@ class UserController {
       if (!user) {
         return next(ApiError.internal('UpdateUser - user not found'));
       }
-      const { name, phone, password, searchRegionId, searchLocationId } = req.body;
+      const { name, phone, password, searchRegionId, searchLocationId, addressId } = req.body;
       await updateModelsField(user, { name });
       await updateModelsField(user, { phone });
+      await updateModelsField(user, { addressId });
       if (password) {
         const hashPassword = await bcrypt.hash(password, 3);
         await user.update({ password: hashPassword });

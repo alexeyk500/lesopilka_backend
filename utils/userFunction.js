@@ -1,9 +1,9 @@
-const jwt = require("jsonwebtoken");
-const { User, SearchRegionAndLocation } = require("../models/userModels");
-const { Region, Location, Address } = require("../models/addressModels");
-const { Manufacturer } = require("../models/manufacturerModels");
-const { formatManufacturer, formatReseller } = require("./functions");
-const { Reseller } = require("../models/resellerModels");
+const jwt = require('jsonwebtoken');
+const { User, SearchRegionAndLocation } = require('../models/userModels');
+const { Region, Location, Address } = require('../models/addressModels');
+const { Manufacturer } = require('../models/manufacturerModels');
+const { formatManufacturer, formatReseller } = require('./functions');
+const { Reseller } = require('../models/resellerModels');
 
 const generateUserToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
@@ -37,6 +37,7 @@ const getUserResponse = async (userId, tokenRaw) => {
 
   return {
     user: {
+      id: user.id,
       email: user.email,
       name: user.name ? user.name : user.email,
       phone: user.phone ? user.phone : undefined,

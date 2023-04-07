@@ -11,7 +11,7 @@ const Manufacturer = sequelize.define(
     title: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING, unique: true },
     phone: { type: DataTypes.STRING, unique: true },
-    approved: { type: DataTypes.BOOLEAN, defaultValue: false },
+    approved: { type: DataTypes.BOOLEAN, defaultValue: true },
   },
   { timestamps: false }
 );

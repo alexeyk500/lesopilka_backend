@@ -6,7 +6,7 @@ class ManufacturerController {
   async createManufacturer(req, res, next) {
     try {
       const userId = req.user.id;
-      const { title, inn, phone, locationId, street, building, office, postIndex } = req.body;
+      const { title, inn, phone, locationId, street, building, office, postIndex, email } = req.body;
       if (!userId || !title || !inn || !phone || !locationId || !street || !building || !postIndex) {
         return next(ApiError.badRequest('createManufacturer - request data is not complete'));
       }
@@ -15,7 +15,7 @@ class ManufacturerController {
         return next(ApiError.badRequest(`Manufacturer with inn=${inn} already has been registered`));
       }
       const address = await Address.create({ locationId, street, building, office, postIndex });
-      const manufacturer = await Manufacturer.create({ title, inn, phone, userId, addressId: address.id });
+      const manufacturer = await Manufacturer.create({ title, inn, phone, userId, email, addressId: address.id });
       return res.json(manufacturer);
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'createManufacturer - unknownError'));

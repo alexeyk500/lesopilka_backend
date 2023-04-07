@@ -1,8 +1,9 @@
 const Router = require('express');
-const ResellerController = require('../controllers/resellerController');
+const resellerController = require('../controllers/resellerController');
 const authMiddleware = require('../middleware/authMiddleware');
 const resellerRouter = new Router();
 
-resellerRouter.post('/', authMiddleware, ResellerController.createReseller);
+resellerRouter.post('/', authMiddleware, resellerController.createReseller);
+resellerRouter.post('/manufacturer-candidate', authMiddleware, resellerController.manufacturerCandidate);
 
 module.exports = resellerRouter;

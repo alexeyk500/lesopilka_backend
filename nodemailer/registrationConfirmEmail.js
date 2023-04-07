@@ -6,7 +6,7 @@ const makeRegistrationConfirmLetter = (code) => {
   const confirmUrl = `${baseConfirmURL}/${code}`;
   return `
     <h3 style="color: #4A90E2; margin-bottom: 32px">
-        <span>Подтвердите свою регистрацию на сайте:&nbsp;</span>
+        <span>Подтвердите регистрацию на сайте:&nbsp;</span>
         <a href=${siteHost}>${siteName}</a>
         <span>&nbsp;перейдя по ссылке:</span>
     </h3>
@@ -18,7 +18,6 @@ const makeRegistrationConfirmLetter = (code) => {
         и вставьте ее в адресную сроку браузера.
     </p>
     <p style="color: #4A90E2; margin-bottom: 48px">Служба поддержки: ${emailAddress}</p>
-
   `;
 };
 
