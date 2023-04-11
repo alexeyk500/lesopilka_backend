@@ -45,8 +45,8 @@ const getProductSizesStr = (product) => {
 };
 
 const splitBySubCategory = (products, subCategories) => {
+  const separatedProducts = [];
   if (products && products.length > 0) {
-    const separatedProducts = [];
     subCategories.forEach((subCategory) => {
       const subCategoryProducts = products.filter((product) =>
         product.subCategory ? product.subCategory.id === subCategory.id : undefined
@@ -59,12 +59,12 @@ const splitBySubCategory = (products, subCategories) => {
     if (withoutSubCategoryProducts.length > 0) {
       separatedProducts.push(withoutSubCategoryProducts);
     }
-    return separatedProducts;
   }
+  return separatedProducts;
 };
 const splitByIsDried = (productsGroup) => {
+  const separatedProducts = [];
   if (productsGroup && productsGroup.length > 0) {
-    const separatedProducts = [];
     productsGroup.forEach((productGroup) => {
       const isDriedProducts = productGroup.filter((product) => product.isDried === true);
       const notIsDriedProducts = productGroup.filter((product) => product.isDried === false);
@@ -75,12 +75,12 @@ const splitByIsDried = (productsGroup) => {
         separatedProducts.push(isDriedProducts);
       }
     });
-    return separatedProducts;
   }
+  return separatedProducts;
 };
 const splitByIsSeptic = (productsGroup) => {
+  const separatedProducts = [];
   if (productsGroup && productsGroup.length > 0) {
-    const separatedProducts = [];
     productsGroup.forEach((productGroup) => {
       const isSepticProducts = productGroup.filter((product) => product.isSeptic === true);
       const notIsSepticProducts = productGroup.filter((product) => product.isSeptic === false);
@@ -91,12 +91,12 @@ const splitByIsSeptic = (productsGroup) => {
         separatedProducts.push(isSepticProducts);
       }
     });
-    return separatedProducts;
   }
+  return separatedProducts;
 };
 const sortBySortId = (productsGroup) => {
+  const separatedProducts = [];
   if (productsGroup && productsGroup.length > 0) {
-    const separatedProducts = [];
     productsGroup.forEach((productGroup) => {
       if (productGroup.length > 0) {
         const sortedBySortId = productGroup.sort((a, b) => {
@@ -105,12 +105,12 @@ const sortBySortId = (productsGroup) => {
         separatedProducts.push(sortedBySortId);
       }
     });
-    return separatedProducts;
   }
+  return separatedProducts;
 };
 const sortByMaterialId = (productsGroup) => {
+  const separatedProducts = [];
   if (productsGroup && productsGroup.length > 0) {
-    const separatedProducts = [];
     productsGroup.forEach((productGroup) => {
       if (productGroup.length > 0) {
         const sortedBySortId = productGroup.sort((a, b) => {
@@ -119,12 +119,12 @@ const sortByMaterialId = (productsGroup) => {
         separatedProducts.push(sortedBySortId);
       }
     });
-    return separatedProducts;
   }
+  return separatedProducts;
 };
 const sortBySize = (productsGroup) => {
+  const separatedProducts = [];
   if (productsGroup && productsGroup.length > 0) {
-    const separatedProducts = [];
     productsGroup.forEach((productGroup) => {
       if (productGroup.length > 0) {
         const sortedByLength = productGroup.sort((a, b) => {
@@ -146,8 +146,8 @@ const sortBySize = (productsGroup) => {
         }
       }
     });
-    return separatedProducts;
   }
+  return separatedProducts;
 };
 
 const groupProducts = (products, subCategories) => {
