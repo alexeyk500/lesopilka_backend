@@ -51,6 +51,7 @@ const ResellerManufacturerCandidate = sequelize.define(
     postIndex: { type: DataTypes.STRING },
     resellerId: { type: DataTypes.INTEGER },
     code: { type: DataTypes.STRING },
+    isActivated: { type: DataTypes.BOOLEAN, defaultValue: false },
     time: { type: DataTypes.DATE },
   },
   { timestamps: false }

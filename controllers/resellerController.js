@@ -18,6 +18,7 @@ const addressController = require('../controllers/addressController');
 const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { UnconfirmedUser, User } = require('../models/userModels');
+const { updateModelsField } = require('../utils/functions');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -89,7 +90,6 @@ class ResellerController {
       const code = uuid.v4().slice(0, 8);
       const time = new Date().toISOString();
       const resellerId = resellerCandidate.id;
-      console.log({ code }, { time }, { resellerId });
       await ResellerManufacturerCandidate.create({
         title,
         inn,
@@ -111,7 +111,6 @@ class ResellerController {
       const subject = `Подтверждение регистрации поставщика на ${process.env.SITE_NAME}`;
       const html = resellerRegisterManufacturerConfirmEmail({ resellerFIO, resellerPhone, resellerEmail, code });
       const mailData = makeMailData({ to: 'alexeyk500@yandex.ru', subject, html });
-      // const mailData = makeMailData({ to: 'alexeyk500@yandex.ru', subject, html });
       return await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending resellerRegisterManufacturerConfirmEmail letter, ${err}`));
@@ -122,7 +121,6 @@ class ResellerController {
           message: `Reseller register new manufacturer confirmation email has been sent to ${email} in ${time}`,
         });
       });
-      // return next(ApiError.internal(`resellerRegisterManufacturer - processing error`));
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'resellerRegisterManufacturer - unknownError')
@@ -136,11 +134,88 @@ class ResellerController {
       if (!code) {
         return next(ApiError.badRequest('activateManufacturerCandidate - request data is not complete'));
       }
+
       const manufacturerCandidate = await ResellerManufacturerCandidate.findOne({ where: { code } });
       if (!manufacturerCandidate) {
         return next(ApiError.badRequest(`код активации не действителен`));
       }
-      return res.json({ manufacturerCandidate });
+      if (manufacturerCandidate.isActivated) {
+        return next(
+          ApiError.badRequest(
+            `\nкод активации уже был задействован,\nвойдите в аккаунт производителя\nс той электронной почтой,\nна которую пришло письмо о регистрации`
+          )
+        );
+      }
+
+      const email = manufacturerCandidate.email;
+      const phone = manufacturerCandidate.phone;
+      const isUserExist = await checkIsUserExist({ email, phone });
+      if (isUserExist) {
+        return next(ApiError.badRequest(isUserExist));
+      }
+
+      const inn = manufacturerCandidate.inn;
+      const isManufacturerExist = await checkIsManufacturerExist({ email, phone, inn });
+      if (isManufacturerExist) {
+        return next(ApiError.badRequest(isManufacturerExist));
+      }
+
+      const password = manufacturerCandidate.code;
+      const userResult = await userController.registration(
+        { body: { email, password } },
+        serverResponseHandler,
+        serverErrorHandler
+      );
+      if (userResult.status !== 200) {
+        return next(ApiError.badRequest(`activateManufacturerCandidate - ${userResult.message}`));
+      }
+
+      const locationId = manufacturerCandidate.locationId;
+      const street = manufacturerCandidate.street;
+      const building = manufacturerCandidate.building;
+      const office = manufacturerCandidate.office;
+      const postIndex = manufacturerCandidate.postIndex;
+      const addressResult = await addressController.createAddress(
+        { body: { locationId, street, building, office, postIndex } },
+        serverResponseHandler,
+        serverErrorHandler
+      );
+      if (addressResult.status !== 200) {
+        return next(ApiError.badRequest(`activateManufacturerCandidate - ${addressResult.message}`));
+      }
+
+      const newUserId = userResult.response.user.id;
+      const addressId = addressResult.response.id;
+      const name = manufacturerCandidate.title;
+      const updateUserResult = await userController.updateUser(
+        {
+          user: { id: newUserId },
+          headers: { authorization: '' },
+          body: { name, phone, addressId },
+        },
+        serverResponseHandler,
+        serverErrorHandler
+      );
+      if (updateUserResult.status !== 200) {
+        return next(ApiError.badRequest(`activateManufacturerCandidate - ${updateUserResult.message}`));
+      }
+
+      const title = manufacturerCandidate.title;
+      const manufacturerResult = await manufacturerController.createManufacturer(
+        {
+          user: { id: newUserId },
+          body: { title, inn, phone, email, locationId, street, building, office, postIndex },
+        },
+        serverResponseHandler,
+        serverErrorHandler
+      );
+      if (manufacturerResult.status !== 200) {
+        return next(ApiError.badRequest(`activateManufacturerCandidate - ${manufacturerResult.message}`));
+      }
+
+      await updateModelsField(manufacturerCandidate, { isActivated: true });
+      const response = await getUserResponse(newUserId);
+      return res.json(response);
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'activateManufacturerCandidate - unknownError')
