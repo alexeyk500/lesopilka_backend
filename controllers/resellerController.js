@@ -18,7 +18,6 @@ const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/reseller
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { User } = require('../models/userModels');
 const { updateModelsField } = require('../utils/functions');
-const { setManufacturerWelcomeLicenses } = require('../utils/manufacturerFunctions');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -214,7 +213,7 @@ class ResellerController {
       }
 
       await updateModelsField(manufacturerCandidate, { isActivated: true });
-      await setManufacturerWelcomeLicenses(manufacturerResult.response.id, next);
+      // await setManufacturerWelcomeLicenses(manufacturerResult.response.id, next);
 
       const response = await getUserResponse(newUserId);
       return res.json(response);

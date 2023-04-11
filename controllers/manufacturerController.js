@@ -15,7 +15,7 @@ class ManufacturerController {
       }
 
       const resellerCandidate = await Reseller.findOne({ where: { userId } });
-      if (!resellerCandidate) {
+      if (resellerCandidate) {
         return next(ApiError.badRequest(`createManufacturer - request denied 2`));
       }
 
