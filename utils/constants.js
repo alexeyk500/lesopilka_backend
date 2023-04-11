@@ -6,6 +6,8 @@ const AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS = 30;
 
 const ARCHIVED_ORDERS_STATUS = 'inArchive';
 
+const WELCOME_LICENSES_AMOUNT = 500;
+
 const MessageFromToOptions = Object.freeze({
   ManufacturerToUser: 'MTU',
   UserToManufacturer: 'UTM',
@@ -18,5 +20,6 @@ module.exports = {
   PRODUCTS_PAGE_SIZE,
   AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS,
   ARCHIVED_ORDERS_STATUS,
+  WELCOME_LICENSES_AMOUNT,
   MessageFromToOptions,
 };
