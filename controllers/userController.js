@@ -99,18 +99,29 @@ class UserController {
   async sendConfirmationEmail(req, res, next) {
     try {
       const { email, password } = req.body;
+      console.log({ email }, { password });
+
       if (!email && !password) {
         return next(ApiError.internal('Bad request no user email or password'));
       }
-      const candidate = await User.findOne({ where: { email } });
-      if (candidate) {
-        return next(ApiError.badRequest(`User with email ${email} already exist`));
+      const userCandidate = await User.findOne({ where: { email } });
+      if (userCandidate) {
+        return next(ApiError.badRequest(`Пользователь с такой электроной почтой\nуже зарегестрирован на площадке`));
       }
-      const code = uuid.v4();
+      const unconfirmedUserCandidate = await UnconfirmedUser.findOne({ where: { email } });
+      if (unconfirmedUserCandidate) {
+        return next(
+          ApiError.badRequest(
+            `Пользователь данной электроной почтой\nуже прошел предварительную регистрацию.\nЕму на электронную на почту было отправлено письмо\nс инструкцией по активации его личного кабинета`
+          )
+        );
+      }
+      const code = uuid.v4().slice(0, 8);
       const time = new Date().toISOString();
       const subject = 'Подтверждение регистрации на lesopilka24.ru';
       const html = makeRegistrationConfirmLetter(code);
-      const mailData = makeMailData({ to: email, subject, html });
+      // const mailData = makeMailData({ to: email, subject, html });
+      const mailData = makeMailData({ to: 'alexeyk500@yandex.ru', subject, html });
       await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending Confirmation Registration letter, ${err}`));
@@ -173,6 +184,38 @@ class UserController {
       });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+    }
+  }
+
+  async deleteTestUser(req, res, next) {
+    try {
+      const { email, isUnconfirmed } = req.body;
+      console.log(`testUserDelete email=`, email, isUnconfirmed);
+      if (!email) {
+        return next(ApiError.internal('Bad request no test user email'));
+      }
+      const testKey = email.split('-')[0];
+      console.log({ testKey });
+      if (testKey !== 'test') {
+        return next(ApiError.internal('Bad request no testKey in user email'));
+      }
+      if (isUnconfirmed) {
+        const unconfirmedUserCandidate = await UnconfirmedUser.findOne({ where: { email } });
+        if (!unconfirmedUserCandidate) {
+          return next(ApiError.badRequest(`unconfirmedUser with email ${email} do not exist`));
+        }
+        await UnconfirmedUser.destroy({ where: { email } });
+        return res.json({ message: `testUnconfirmedUser - deleted` });
+      } else {
+        const userCandidate = await User.findOne({ where: { email } });
+        if (!userCandidate) {
+          return next(ApiError.badRequest(`user with email ${email} do not exist`));
+        }
+        await User.destroy({ where: { email } });
+        return res.json({ message: `testUser - deleted` });
+      }
+    } catch (e) {
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUser - unknownError'));
     }
   }
 

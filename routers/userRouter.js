@@ -11,6 +11,9 @@ userRouter.post('/send_confirmation_email', UserController.sendConfirmationEmail
 userRouter.get('/confirm_registration/:code', UserController.confirmRegistration);
 userRouter.post('/send_recovery_password_email', UserController.sendRecoveryPasswordEmail);
 userRouter.post('/confirm_recovery_password_code', UserController.confirmRecoveryPasswordCode);
+
+userRouter.post('/delete-test-user', UserController.deleteTestUser);
+
 userRouter.put('/', authMiddleware, UserController.updateUser);
 
 module.exports = userRouter;
