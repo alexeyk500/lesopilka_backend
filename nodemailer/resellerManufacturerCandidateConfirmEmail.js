@@ -24,7 +24,7 @@ const resellerManufacturerCandidateConfirmEmail = ({ resellerFIO, resellerPhone,
 
       <h4 style="color: #4A90E2" >
           Для того, что бы начать публиковать и продавать свои товары через площадку,
-          <br>активируйте личный кабинет перейдя по этой прямой ссылке: &nbsp;<a href="${confirmUrl}">Активация личного кабинета</a>
+          <br>активируйте личный кабинет перейдя по этой прямой ссылке: &nbsp;<a href="${confirmUrl}">Личный кабинет поставшика</a>
       </h4>
 
       <p style="color: #4A90E2">
