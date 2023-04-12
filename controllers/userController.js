@@ -96,11 +96,9 @@ class UserController {
     }
   }
 
-  async sendConfirmationEmail(req, res, next) {
+  async createUnconfirmedUser(req, res, next) {
     try {
       const { email, password } = req.body;
-      console.log({ email }, { password });
-
       if (!email && !password) {
         return next(ApiError.internal('Bad request no user email or password'));
       }
@@ -118,6 +116,10 @@ class UserController {
       }
       const code = uuid.v4().slice(0, 8);
       const time = new Date().toISOString();
+
+      const hashPassword = await bcrypt.hash(password, 3);
+      await UnconfirmedUser.create({ email, password: hashPassword, code, time });
+
       const subject = 'Подтверждение регистрации на lesopilka24.ru';
       const html = makeRegistrationConfirmLetter(code);
       // const mailData = makeMailData({ to: email, subject, html });
@@ -128,9 +130,7 @@ class UserController {
         } else {
           console.log(`sendMail-${info}`);
         }
-        const hashPassword = await bcrypt.hash(password, 3);
-        await UnconfirmedUser.create({ email, password: hashPassword, code, time });
-        return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}` });
+        return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}@${code}` });
       });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
