@@ -1,6 +1,6 @@
 const ApiError = require('../error/apiError');
 const bcrypt = require('bcrypt');
-const { User, UnconfirmedUser, PasswordRecoveryCode, SearchRegionAndLocation } = require('../models/userModels');
+const { User, UserCandidate, PasswordRecoveryCode, SearchRegionAndLocation } = require('../models/userModels');
 const uuid = require('uuid');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { makeRegistrationConfirmLetter } = require('../nodemailer/registrationConfirmEmail');
@@ -13,6 +13,8 @@ class UserController {
   async registration(req, res, next) {
     try {
       const { email, password, role } = req.body;
+
+      console.log('registration -', email, password, role);
       if (!email || !password) {
         return next(ApiError.badRequest('Not valid user password or email'));
       }
@@ -96,18 +98,18 @@ class UserController {
     }
   }
 
-  async createUnconfirmedUser(req, res, next) {
+  async createUserCandidate(req, res, next) {
     try {
       const { email, password } = req.body;
       if (!email && !password) {
         return next(ApiError.internal('Bad request no user email or password'));
       }
-      const userCandidate = await User.findOne({ where: { email } });
-      if (userCandidate) {
+      const userCandidateEmail = await User.findOne({ where: { email } });
+      if (userCandidateEmail) {
         return next(ApiError.badRequest(`Пользователь с такой электроной почтой\nуже зарегестрирован на площадке`));
       }
-      const unconfirmedUserCandidate = await UnconfirmedUser.findOne({ where: { email } });
-      if (unconfirmedUserCandidate) {
+      const userCandidate = await UserCandidate.findOne({ where: { email } });
+      if (userCandidate) {
         return next(
           ApiError.badRequest(
             `Пользователь данной электроной почтой\nуже прошел предварительную регистрацию.\nЕму на электронную на почту было отправлено письмо\nс инструкцией по активации его личного кабинета`
@@ -118,7 +120,7 @@ class UserController {
       const time = new Date().toISOString();
 
       const hashPassword = await bcrypt.hash(password, 3);
-      await UnconfirmedUser.create({ email, password: hashPassword, code, time });
+      await UserCandidate.create({ email, password: hashPassword, code, time });
 
       const subject = 'Подтверждение регистрации на lesopilka24.ru';
       const html = makeRegistrationConfirmLetter(code);
@@ -130,32 +132,32 @@ class UserController {
         } else {
           console.log(`sendMail-${info}`);
         }
-        return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}@${code}` });
+        return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}$${code}` });
       });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
 
-  async confirmRegistration(req, res, next) {
-    try {
-      const { code } = req.params;
-      if (!code) {
-        return next(ApiError.internal('Wrong link from registration email'));
-      }
-      const candidate = await UnconfirmedUser.findOne({ where: { code } });
-      if (!candidate) {
-        return next(ApiError.badRequest(`Wrong link from registration email`));
-      }
-      const email = await candidate.get('email');
-      const password = await candidate.get('password');
-      await User.create({ email, password });
-      await UnconfirmedUser.destroy({ where: { code } });
-      return res.redirect(process.env.SUCCESS_REGISTRATION_SITE_PAGE);
-    } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
-    }
-  }
+  // async confirmRegistration(req, res, next) {
+  //   try {
+  //     const { code } = req.params;
+  //     if (!code) {
+  //       return next(ApiError.internal('Wrong link from registration email'));
+  //     }
+  //     const candidate = await UserCandidate.findOne({ where: { code } });
+  //     if (!candidate) {
+  //       return next(ApiError.badRequest(`Wrong link from registration email`));
+  //     }
+  //     const email = await candidate.get('email');
+  //     const password = await candidate.get('password');
+  //     await User.create({ email, password });
+  //     await UserCandidate.destroy({ where: { code } });
+  //     return res.redirect(process.env.SUCCESS_REGISTRATION_SITE_PAGE);
+  //   } catch (e) {
+  //     return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+  //   }
+  // }
 
   async sendRecoveryPasswordEmail(req, res, next) {
     try {
@@ -190,7 +192,6 @@ class UserController {
   async deleteTestUser(req, res, next) {
     try {
       const { email, isUnconfirmed } = req.body;
-      console.log(`testUserDelete email=`, email, isUnconfirmed);
       if (!email) {
         return next(ApiError.internal('Bad request no test user email'));
       }
@@ -200,12 +201,12 @@ class UserController {
         return next(ApiError.internal('Bad request no testKey in user email'));
       }
       if (isUnconfirmed) {
-        const unconfirmedUserCandidate = await UnconfirmedUser.findOne({ where: { email } });
-        if (!unconfirmedUserCandidate) {
-          return next(ApiError.badRequest(`unconfirmedUser with email ${email} do not exist`));
+        const userCandidate = await UserCandidate.findOne({ where: { email } });
+        if (!userCandidate) {
+          return next(ApiError.badRequest(`userCandidate with email ${email} do not exist`));
         }
-        await UnconfirmedUser.destroy({ where: { email } });
-        return res.json({ message: `testUnconfirmedUser - deleted` });
+        await UserCandidate.destroy({ where: { email } });
+        return res.json({ message: `testUserCandidate - deleted` });
       } else {
         const userCandidate = await User.findOne({ where: { email } });
         if (!userCandidate) {

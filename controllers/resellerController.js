@@ -141,7 +141,7 @@ class ResellerController {
       if (manufacturerCandidate.isActivated) {
         return next(
           ApiError.badRequest(
-            `\nкод активации уже был задействован,\nвойдите в аккаунт производителя\nс тем адресом электронной почты,\nна которую пришло письмо о регистрации`
+            `\nкод активации уже был задействован,\nвойдите в аккаунт производителя\nс тем адресом электронной почты,\nкоторый вы указали при регистрации`
           )
         );
       }
@@ -213,7 +213,6 @@ class ResellerController {
       }
 
       await updateModelsField(manufacturerCandidate, { isActivated: true });
-      // await setManufacturerWelcomeLicenses(manufacturerResult.response.id, next);
 
       const response = await getUserResponse(newUserId);
       return res.json(response);

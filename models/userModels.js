@@ -15,13 +15,14 @@ const User = sequelize.define(
   { timestamps: false }
 );
 
-const UnconfirmedUser = sequelize.define(
-  'unconfirmedUser',
+const UserCandidate = sequelize.define(
+  'userCandidate',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     email: { type: DataTypes.STRING, unique: true },
     password: { type: DataTypes.STRING },
     code: { type: DataTypes.STRING },
+    isActivated: { type: DataTypes.BOOLEAN, defaultValue: false },
     time: { type: DataTypes.DATE },
   },
   { timestamps: false }
@@ -55,7 +56,7 @@ SearchRegionAndLocation.belongsTo(Location);
 
 module.exports = {
   User,
-  UnconfirmedUser,
+  UserCandidate,
   PasswordRecoveryCode,
   SearchRegionAndLocation,
 };

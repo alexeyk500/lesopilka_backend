@@ -72,9 +72,11 @@ const checkIsUserExist = async ({ email, phone }) => {
   if (userCandidateEmail) {
     return `User with email ${email} already exist`;
   }
-  const userCandidatePhone = await User.findOne({ where: { phone } });
-  if (userCandidatePhone) {
-    return `User with phone ${phone} already exist`;
+  if (phone) {
+    const userCandidatePhone = await User.findOne({ where: { phone } });
+    if (userCandidatePhone) {
+      return `User with phone ${phone} already exist`;
+    }
   }
 };
 
