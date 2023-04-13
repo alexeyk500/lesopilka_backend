@@ -21,18 +21,22 @@ class ResellerController {
       if (!userId || !family || !name || !middleName || !phone || !locationId) {
         return next(ApiError.badRequest('createReseller - request data is not complete'));
       }
+
       const manufacturerCandidate = await Manufacturer.findOne({ where: { userId } });
       if (manufacturerCandidate) {
         return next(ApiError.badRequest(`User already has been registered as manufacturer`));
       }
+
       const resellerCandidate = await Reseller.findOne({ where: { userId } });
       if (resellerCandidate) {
         return next(ApiError.badRequest(`User already has been registered as reseller`));
       }
+
       const resellerCandidateWithPhone = await Reseller.findOne({ where: { phone } });
       if (resellerCandidateWithPhone) {
         return next(ApiError.badRequest(`Reseller with phone=${phone} already exist`));
       }
+
       const address = await Address.create({ locationId });
       await Reseller.create({ family, name, middleName, phone, userId, addressId: address.id });
 

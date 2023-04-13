@@ -3,6 +3,7 @@ const { User, UserCandidate, SearchRegionAndLocation } = require('../models/user
 const { Address } = require('../models/addressModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
+const { Reseller } = require('../models/resellerModels');
 
 class TestController {
   async deleteTestUser(req, res, next) {
@@ -176,6 +177,65 @@ class TestController {
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserManufacturer - unknownError')
+      );
+    }
+  }
+
+  async deleteTestUserReseller(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return next(ApiError.internal('deleteTestUserReseller - bad request no test user email'));
+      }
+      const testKey = email.split('-')[0];
+      if (testKey !== 'test') {
+        return next(ApiError.internal('deleteTestUserReseller - bad request no testKey in user email'));
+      }
+
+      const userCandidate = await User.findOne({ where: { email } });
+      if (!userCandidate) {
+        return next(ApiError.badRequest(`deleteTestUserReseller - user with email ${email} do not exist`));
+      }
+      const result = await Reseller.destroy({ where: { userId: userCandidate.id } });
+      if (result !== 1) {
+        return next(ApiError.badRequest(`deleteTestUserReseller - Reseller destroy error`));
+      }
+      return res.json({ message: `testUserReseller - deleted` });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserReseller - unknownError')
+      );
+    }
+  }
+
+  async deleteTestUserResellerAddress(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return next(ApiError.internal('deleteTestUserResellerAddress - bad request no test user email'));
+      }
+      const testKey = email.split('-')[0];
+      if (testKey !== 'test') {
+        return next(ApiError.internal('deleteTestUserResellerAddress - bad request no testKey in user email'));
+      }
+
+      const userCandidate = await User.findOne({
+        where: { email },
+        include: [Reseller],
+      });
+      if (!userCandidate) {
+        return next(ApiError.badRequest(`deleteTestUserResellerAddress - user with email ${email} do not exist`));
+      }
+
+      const addressId = userCandidate.reseller.addressId;
+      const result = await Address.destroy({ where: { id: addressId } });
+      if (result !== 1) {
+        return next(ApiError.badRequest(`deleteTestUserResellerAddress - Address destroy error`));
+      }
+      return res.json({ message: `testUserResellerAddress - deleted` });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserResellerAddress - unknownError')
       );
     }
   }
