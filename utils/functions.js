@@ -8,16 +8,16 @@ const formatAddress = (address) => {
   return {
     id: address.id,
     postIndex: address.postIndex ? address.postIndex : undefined,
-    region: address.location.region
+    region: address.location?.region
       ? {
-          id: address.location.region.id ? address.location.region.id : undefined,
-          title: address.location.region.title ? address.location.region.title : undefined,
+          id: address.location.region?.id ? address.location.region.id : undefined,
+          title: address.location.region?.title ? address.location.region.title : undefined,
         }
       : undefined,
     location: address.location
       ? {
-          id: address.location.id ? address.location.id : undefined,
-          title: address.location.title ? address.location.title : undefined,
+          id: address.location?.id ? address.location.id : undefined,
+          title: address.location?.title ? address.location.title : undefined,
         }
       : undefined,
     street: address.street ? address.street : undefined,

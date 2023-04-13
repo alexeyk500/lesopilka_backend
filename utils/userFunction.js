@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { User, SearchRegionAndLocation } = require('../models/userModels');
 const { Region, Location, Address } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
-const { formatManufacturer, formatReseller } = require('./functions');
+const { formatManufacturer, formatReseller, formatAddress } = require('./functions');
 const { Reseller } = require('../models/resellerModels');
 
 const generateUserToken = (user) => {
@@ -28,6 +28,14 @@ const getUserResponse = async (userId, tokenRaw) => {
     ],
   });
 
+  let userAddress;
+  if (user.addressId) {
+    userAddress = await Address.findOne({
+      where: { id: user.addressId },
+      include: [{ model: Location, include: Region }],
+    });
+  }
+
   let token;
   if (tokenRaw) {
     token = tokenRaw;
@@ -49,6 +57,7 @@ const getUserResponse = async (userId, tokenRaw) => {
         user.searchRegionAndLocation && user.searchRegionAndLocation.location
           ? { id: user.searchRegionAndLocation.location.id, title: user.searchRegionAndLocation.location.title }
           : undefined,
+      address: userAddress ? formatAddress(userAddress) : undefined,
       manufacturer: user.manufacturer ? formatManufacturer(user.manufacturer) : undefined,
       reseller: user.reseller ? formatReseller(user.reseller) : undefined,
     },

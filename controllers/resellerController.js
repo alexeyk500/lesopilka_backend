@@ -4,20 +4,14 @@ const { getUserResponse } = require('../utils/userFunction');
 const { Reseller, ResellerManufacturerCandidate } = require('../models/resellerModels');
 const { Address } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
-const { serverResponseHandler, serverErrorHandler } = require('../utils/serverHandler');
 const {
   checkIsUserExist,
   checkIsManufacturerExist,
   checkIsResellerManufacturerCandidateExist,
 } = require('../utils/checkFunctions');
-
-const userController = require('../controllers/userController');
-const manufacturerController = require('../controllers/manufacturerController');
-const addressController = require('../controllers/addressController');
 const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { User } = require('../models/userModels');
-const { updateModelsField } = require('../utils/functions');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -49,7 +43,7 @@ class ResellerController {
     }
   }
 
-  async manufacturerCandidate(req, res, next) {
+  async createResellerManufacturerCandidate(req, res, next) {
     try {
       const userId = req.user.id;
       const { title, inn, phone, email, locationId, street, building, office, postIndex } = req.body;
@@ -123,102 +117,6 @@ class ResellerController {
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'resellerRegisterManufacturer - unknownError')
-      );
-    }
-  }
-
-  async manufacturerCandidateActivate(req, res, next) {
-    try {
-      const { code } = req.body;
-      if (!code) {
-        return next(ApiError.badRequest('activateManufacturerCandidate - request data is not complete'));
-      }
-
-      const manufacturerCandidate = await ResellerManufacturerCandidate.findOne({ where: { code } });
-      if (!manufacturerCandidate) {
-        return next(ApiError.badRequest(`код активации не действителен`));
-      }
-      if (manufacturerCandidate.isActivated) {
-        return next(
-          ApiError.badRequest(
-            `\nкод активации уже был задействован,\nвойдите в аккаунт производителя\nс тем адресом электронной почты,\nкоторый вы указали при регистрации`
-          )
-        );
-      }
-
-      const email = manufacturerCandidate.email;
-      const phone = manufacturerCandidate.phone;
-      const isUserExist = await checkIsUserExist({ email, phone });
-      if (isUserExist) {
-        return next(ApiError.badRequest(isUserExist));
-      }
-
-      const inn = manufacturerCandidate.inn;
-      const isManufacturerExist = await checkIsManufacturerExist({ email, phone, inn });
-      if (isManufacturerExist) {
-        return next(ApiError.badRequest(isManufacturerExist));
-      }
-
-      const password = manufacturerCandidate.code;
-      const userResult = await userController.createUser(
-        { body: { email, password } },
-        serverResponseHandler,
-        serverErrorHandler
-      );
-      if (userResult.status !== 200) {
-        return next(ApiError.badRequest(`activateManufacturerCandidate - ${userResult.message}`));
-      }
-
-      const locationId = manufacturerCandidate.locationId;
-      const street = manufacturerCandidate.street;
-      const building = manufacturerCandidate.building;
-      const office = manufacturerCandidate.office;
-      const postIndex = manufacturerCandidate.postIndex;
-      const addressResult = await addressController.createAddress(
-        { body: { locationId, street, building, office, postIndex } },
-        serverResponseHandler,
-        serverErrorHandler
-      );
-      if (addressResult.status !== 200) {
-        return next(ApiError.badRequest(`activateManufacturerCandidate - ${addressResult.message}`));
-      }
-
-      const newUserId = userResult.response.user.id;
-      const addressId = addressResult.response.id;
-      const name = manufacturerCandidate.title;
-      const updateUserResult = await userController.updateUser(
-        {
-          user: { id: newUserId },
-          headers: { authorization: '' },
-          body: { name, phone, addressId },
-        },
-        serverResponseHandler,
-        serverErrorHandler
-      );
-      if (updateUserResult.status !== 200) {
-        return next(ApiError.badRequest(`activateManufacturerCandidate - ${updateUserResult.message}`));
-      }
-
-      const title = manufacturerCandidate.title;
-      const manufacturerResult = await manufacturerController.createManufacturer(
-        {
-          user: { id: newUserId },
-          body: { title, inn, phone, email, locationId, street, building, office, postIndex },
-        },
-        serverResponseHandler,
-        serverErrorHandler
-      );
-      if (manufacturerResult.status !== 200) {
-        return next(ApiError.badRequest(`activateManufacturerCandidate - ${manufacturerResult.message}`));
-      }
-
-      await updateModelsField(manufacturerCandidate, { isActivated: true });
-
-      const response = await getUserResponse(newUserId);
-      return res.json(response);
-    } catch (e) {
-      return next(
-        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'activateManufacturerCandidate - unknownError')
       );
     }
   }

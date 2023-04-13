@@ -1,7 +1,7 @@
 const ApiError = require('../error/apiError');
 const { User, UserCandidate, SearchRegionAndLocation } = require('../models/userModels');
 const { Address } = require('../models/addressModels');
-const { Basket } = require("../models/basketModels");
+const { Basket } = require('../models/basketModels');
 
 class TestController {
   async deleteTestUserAddress(req, res, next) {
@@ -61,15 +61,20 @@ class TestController {
 
       const userCandidate = await User.findOne({ where: { email } });
       if (!userCandidate) {
-        return next(ApiError.badRequest(`deleteTestUserSearchRegionAndLocation - user with email ${email} do not exist`));
+        return next(
+          ApiError.badRequest(`deleteTestUserSearchRegionAndLocation - user with email ${email} do not exist`)
+        );
       }
       await SearchRegionAndLocation.destroy({ where: { userId: userCandidate.id } });
       return res.json({ message: `testUserSearchRegionAndLocation - deleted` });
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserSearchRegionAndLocation - unknownError'));
+      return next(
+        ApiError.badRequest(
+          e?.original?.detail ? e.original.detail : 'deleteTestUserSearchRegionAndLocation - unknownError'
+        )
+      );
     }
   }
-
 
   async deleteTestUser(req, res, next) {
     try {
