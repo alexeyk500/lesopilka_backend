@@ -3,6 +3,6 @@ const ManufacturerController = require('../controllers/manufacturerController');
 const authMiddleware = require('../middleware/authMiddleware');
 const manufacturerRouter = new Router();
 
-manufacturerRouter.post('/', authMiddleware, ManufacturerController.createManufacturer);
+manufacturerRouter.post('/create', authMiddleware, ManufacturerController.createManufacturer);
 
 module.exports = manufacturerRouter;

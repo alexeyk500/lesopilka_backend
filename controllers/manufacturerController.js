@@ -4,14 +4,21 @@ const { Manufacturer } = require('../models/manufacturerModels');
 const { Reseller } = require('../models/resellerModels');
 const { checkIsManufacturerExist } = require('../utils/checkFunctions');
 const { setManufacturerWelcomeLicenses } = require('../utils/manufacturerFunctions');
+const { getUserResponse } = require('../utils/userFunction');
+const { User } = require('../models/userModels');
 
 class ManufacturerController {
   async createManufacturer(req, res, next) {
     try {
       const userId = req.user.id;
       const { title, inn, phone, locationId, street, building, office, postIndex, email } = req.body;
-      if (!userId || !title || !inn || !phone || !locationId || !street || !building || !postIndex) {
+      if (!userId || !title || !inn || !phone || !locationId || !street || !building || !postIndex || !email) {
         return next(ApiError.badRequest('createManufacturer - request data is not complete'));
+      }
+
+      const userCandidate = await User.findOne({ where: { id: userId } });
+      if (!userCandidate) {
+        return next(ApiError.badRequest(`createManufacturer - request denied 1`));
       }
 
       const resellerCandidate = await Reseller.findOne({ where: { userId } });
@@ -32,7 +39,8 @@ class ManufacturerController {
 
       await setManufacturerWelcomeLicenses(manufacturer.id, next);
 
-      return res.json(manufacturer);
+      const response = await getUserResponse(userId);
+      return res.json(response);
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'createManufacturer - unknownError'));
     }
