@@ -1,6 +1,6 @@
 const sequelize = require('../db');
 const { DataTypes } = require('sequelize');
-const { Address, ManufacturerPickUpAddress } = require('./addressModels');
+const { Address, PickUpAddress } = require('./addressModels');
 const { User } = require('./userModels');
 
 const Manufacturer = sequelize.define(
@@ -22,8 +22,8 @@ Manufacturer.belongsTo(User);
 Address.hasOne(Manufacturer);
 Manufacturer.belongsTo(Address);
 
-Manufacturer.hasOne(ManufacturerPickUpAddress);
-ManufacturerPickUpAddress.belongsTo(Manufacturer);
+Manufacturer.hasOne(PickUpAddress);
+PickUpAddress.belongsTo(Manufacturer);
 
 module.exports = {
   Manufacturer,

@@ -4,7 +4,6 @@ const { checkIsUserExist } = require('../utils/checkFunctions');
 const { serverResponseHandler, serverErrorHandler } = require('../utils/serverHandler');
 
 const userController = require('../controllers/userController');
-const { Address } = require('../models/addressModels');
 const { getUserResponse } = require('../utils/userFunction');
 const { updateModelsField } = require('../utils/functions');
 
@@ -35,7 +34,7 @@ class ActivationController {
       }
 
       const password = userCandidate.password;
-      const userResult = await userController.registration(
+      const userResult = await userController.createUser(
         { body: { email, password } },
         serverResponseHandler,
         serverErrorHandler
@@ -44,36 +43,8 @@ class ActivationController {
         return next(ApiError.badRequest(`activateUserCandidate - ${userResult.message}`));
       }
 
-      const addressResult = await Address.create({
-        locationId: null,
-        street: null,
-        building: null,
-        office: null,
-        postIndex: null,
-      });
-      if (!addressResult) {
-        return next(ApiError.badRequest(`activateUserCandidate - addressResult error`));
-      }
-
-      const newUserId = userResult.response.user.id;
-      const addressId = addressResult.id;
-      const name = email.split('@')?.[0] ?? null;
-      const updateUserResult = await userController.updateUser(
-        {
-          user: { id: newUserId },
-          headers: { authorization: '' },
-          body: { name, addressId },
-        },
-        serverResponseHandler,
-        serverErrorHandler
-      );
-      if (updateUserResult.status !== 200) {
-        return next(ApiError.badRequest(`activateUserCandidate - ${updateUserResult.message}`));
-      }
-
       await updateModelsField(userCandidate, { isActivated: true });
-
-      const response = await getUserResponse(newUserId);
+      const response = await getUserResponse(userResult.response.user.id);
       return res.json(response);
     } catch (e) {
       return next(

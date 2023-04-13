@@ -160,7 +160,7 @@ class ResellerController {
       }
 
       const password = manufacturerCandidate.code;
-      const userResult = await userController.registration(
+      const userResult = await userController.createUser(
         { body: { email, password } },
         serverResponseHandler,
         serverErrorHandler

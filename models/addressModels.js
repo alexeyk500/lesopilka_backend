@@ -31,7 +31,7 @@ const Address = sequelize.define(
   { timestamps: false }
 );
 
-const ManufacturerPickUpAddress = sequelize.define(
+const PickUpAddress = sequelize.define(
   'pickUpAddress',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -49,12 +49,12 @@ Location.belongsTo(Region);
 Location.hasMany(Address);
 Address.belongsTo(Location);
 
-Location.hasMany(ManufacturerPickUpAddress);
-ManufacturerPickUpAddress.belongsTo(Location);
+Location.hasMany(PickUpAddress);
+PickUpAddress.belongsTo(Location);
 
 module.exports = {
   Region,
   Location,
   Address,
-  ManufacturerPickUpAddress,
+  PickUpAddress,
 };

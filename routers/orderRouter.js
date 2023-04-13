@@ -5,7 +5,7 @@ const orderRouter = new Router();
 
 orderRouter.get('/payment_methods', orderController.getPaymentMethods);
 orderRouter.get('/delivery_methods', orderController.getDeliveryMethods);
-orderRouter.get('/pick_up_address/:mid', orderController.getManufacturerPickUpAddress);
+orderRouter.get('/pick_up_address/:mid', orderController.getPickUpAddress);
 orderRouter.get('/:id', authMiddleware, orderController.getOrderInfo);
 orderRouter.post('/new_order', authMiddleware, orderController.createNewOrder);
 orderRouter.post('/cancel_order_return_to_basket', authMiddleware, orderController.cancelOrderAndReturnToBasket);

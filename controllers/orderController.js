@@ -1,6 +1,6 @@
 const ApiError = require('../error/apiError');
 const { PaymentMethod, DeliveryMethod, Order, OrderProduct } = require('../models/orderModels');
-const { ManufacturerPickUpAddress, Location, Region, Address } = require('../models/addressModels');
+const { PickUpAddress, Location, Region, Address } = require('../models/addressModels');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { Basket, BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
@@ -156,17 +156,17 @@ class OrderController {
     }
   }
 
-  async getManufacturerPickUpAddress(req, res, next) {
+  async getPickUpAddress(req, res, next) {
     try {
       const { mid } = req.params;
       if (!mid) {
         return next(ApiError.badRequest('getManufacturerPickUpAddress - request data is not complete'));
       }
-      const manufacturerPickUpAddress = await ManufacturerPickUpAddress.findOne({
+      const pickUpAddress = await PickUpAddress.findOne({
         where: { manufacturerId: mid },
         include: [{ model: Location, include: [{ model: Region }] }],
       });
-      const address = formatAddress(manufacturerPickUpAddress);
+      const address = formatAddress(pickUpAddress);
       return res.json({ address });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
