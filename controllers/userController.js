@@ -61,6 +61,7 @@ class UserController {
   async createUserCandidate(req, res, next) {
     try {
       const { email, password } = req.body;
+      const isTest = email.split('-')?.[0] === 'test';
       if (!email && !password) {
         return next(ApiError.internal('Bad request no user email or password'));
       }
@@ -82,17 +83,18 @@ class UserController {
       const hashPassword = await bcrypt.hash(password, 3);
       await UserCandidate.create({ email, password: hashPassword, code, time });
 
-      const subject = 'Подтверждение регистрации на lesopilka24.ru';
+      const subject = `Подтверждение регистрации на ${process.env.SITE_NAME}`;
       const html = makeRegistrationConfirmLetter(code);
-      // const mailData = makeMailData({ to: email, subject, html });
-      const mailData = makeMailData({ to: 'alexeyk500@yandex.ru', subject, html });
+      const mailData = makeMailData({ to: isTest ? 'alexeyk500@yandex.ru' : email, subject, html });
       await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending Confirmation Registration letter, ${err}`));
         } else {
           console.log(`sendMail-${info}`);
         }
-        return res.json({ message: `Register confirmation email has been sent to ${email} in ${time}$${code}` });
+        return res.json({
+          message: `Register confirmation email has been sent to ${email} in ${time} ${isTest ? `$${code}` : ''}`,
+        });
       });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
@@ -148,18 +150,19 @@ class UserController {
   async sendRecoveryPasswordEmail(req, res, next) {
     try {
       const { email } = req.body;
+      const isTest = email.split('-')?.[0] === 'test';
       if (!email) {
         return next(ApiError.internal('Bad request no user email'));
       }
       const candidate = await User.findOne({ where: { email } });
+      const time = new Date().toISOString();
       if (!candidate) {
-        return next(ApiError.badRequest(`User with email ${email} do not exist`));
+        return res.json({ message: `Letter with password recovery code has been sent to ${email} in ${time}` });
       }
       const code = uuid.v4().slice(0, 6);
-      const time = new Date().toISOString();
-      const subject = 'Востановление пароля на lesopilka24.ru';
+      const subject = `Востановление пароля на ${process.env.SITE_NAME}`;
       const html = passwordRecoveryCodeEmail(code);
-      const mailData = makeMailData({ to: email, subject, html });
+      const mailData = makeMailData({ to: isTest ? 'alexeyk500@yandex.ru' : email, subject, html });
       await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending recovery password letter, ${err}`));
@@ -168,7 +171,11 @@ class UserController {
         }
         await PasswordRecoveryCode.destroy({ where: { email } });
         await PasswordRecoveryCode.create({ email, code, time });
-        return res.json({ message: `Letter with password recovery code has been sent to ${email} in ${time}` });
+        return res.json({
+          message: `Letter with password recovery code has been sent to ${email} in ${time} ${
+            isTest ? `$${code}` : ''
+          }`,
+        });
       });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
@@ -183,13 +190,13 @@ class UserController {
       }
       const candidate = await PasswordRecoveryCode.findOne({ where: { code } });
       if (!candidate) {
-        return next(ApiError.badRequest(`This recovery code does not exist`));
+        return next(ApiError.badRequest(`неверный код`));
       }
       const email = await candidate.get('email');
       const hashPassword = await bcrypt.hash(password, 3);
       await User.update({ password: hashPassword }, { where: { email } });
       await PasswordRecoveryCode.destroy({ where: { code } });
-      return res.json({ message: `Пароль для пользователя ${email}\n был успешно сменен` });
+      return res.json({ message: `Пароль для пользователя ${email}\n был успешно изменен` });
     } catch (e) {
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
