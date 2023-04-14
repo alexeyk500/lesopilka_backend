@@ -360,11 +360,9 @@ class ProductController {
             required: true,
             include: {
               model: Address,
-              required: true,
               where: searchParamsLocation,
               include: {
                 model: Location,
-                required: true,
                 where: searchParamsRegion,
                 include: {
                   model: Region,
