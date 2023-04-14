@@ -12,6 +12,7 @@ const {
 const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { User } = require('../models/userModels');
+const { getResellerManufacturersList, getResellerManufacturersLicensesInfoList } = require('../utils/resellerUtils');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -121,6 +122,25 @@ class ResellerController {
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'resellerRegisterManufacturer - unknownError')
+      );
+    }
+  }
+
+  async getResellerManufacturersList(req, res, next) {
+    try {
+      const userId = req.user.id;
+
+      const resellerCandidate = await Reseller.findOne({ where: { userId } });
+      if (!resellerCandidate) {
+        return next(ApiError.badRequest(`getResellerManufacturersList - request denied 1`));
+      }
+
+      const manufacturersList = await getResellerManufacturersList(resellerCandidate.id);
+      const infoList = await getResellerManufacturersLicensesInfoList(manufacturersList);
+      return res.json(infoList);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'getResellerManufacturersList - unknownError')
       );
     }
   }

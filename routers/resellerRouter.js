@@ -9,5 +9,6 @@ resellerRouter.post(
   authMiddleware,
   resellerController.createResellerManufacturerCandidate
 );
+resellerRouter.get('/reseller-manufacturers-list', authMiddleware, resellerController.getResellerManufacturersList);
 
 module.exports = resellerRouter;
