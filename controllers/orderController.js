@@ -176,17 +176,14 @@ class OrderController {
   async getOrderInfo(req, res, next) {
     try {
       const { id } = req.params;
-      console.log('id =', id);
       if (!id) {
         return next(ApiError.badRequest('getOrderInfo - request data is not complete'));
       }
       const userId = req.user.id;
-      console.log('userId =', userId);
       if (!userId) {
         return next(ApiError.badRequest('getOrderInfo - userId does not exist in request'));
       }
       const candidateOrder = await getOrderById(id);
-      console.log({ candidateOrder });
       if (!candidateOrder) {
         return next(ApiError.badRequest('getOrderInfo - order does not exist'));
       }
@@ -406,7 +403,6 @@ class OrderController {
 
       return res.json(orderInfo);
     } catch (e) {
-      console.log('Found Error', e);
       return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
     }
   }
