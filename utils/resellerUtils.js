@@ -3,6 +3,7 @@ const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
 const { LicenseAction } = require('../models/licenseModels');
 const { getProductCardsAmountsByManufacturerId } = require('../jobs/licenseJob');
+const { formatManufacturerAddress } = require('./priceListFunctions');
 
 const getResellerManufacturersList = async (resellerId) =>
   await ResellerManufacturer.findAll({
@@ -39,9 +40,15 @@ const getResellerManufacturersLicensesInfoList = async (manufacturersList) => {
     let newManufacturer = {};
     const restLicenseAmount = await getManufacturerRestLicenseAmount(manufacturer.id);
     const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturer.id);
-    newManufacturer.manufacturer = manufacturer.manufacturer;
-    newManufacturer.restLicenseAmount = restLicenseAmount;
-    newManufacturer.activeProductCardAmount = activeProductCardAmount;
+    newManufacturer.id = manufacturer.manufacturer.id;
+    newManufacturer.inn = manufacturer.manufacturer.inn;
+    newManufacturer.title = manufacturer.manufacturer.title;
+    newManufacturer.phone = manufacturer.manufacturer.phone;
+    newManufacturer.email = manufacturer.manufacturer.email;
+    newManufacturer.address = formatManufacturerAddress(manufacturer.manufacturer);
+    newManufacturer.approved = manufacturer.manufacturer.approved;
+    newManufacturer.activeCards = activeProductCardAmount;
+    newManufacturer.restLicenses = restLicenseAmount;
     resultList.push(newManufacturer);
   }
   return resultList;

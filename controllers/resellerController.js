@@ -1,13 +1,13 @@
 const uuid = require('uuid');
 const ApiError = require('../error/apiError');
 const { getUserResponse } = require('../utils/userFunction');
-const { Reseller, ResellerManufacturerCandidate } = require('../models/resellerModels');
+const { Reseller, ResellerManufacturerCandidate, ResellerManufacturer } = require('../models/resellerModels');
 const { Address } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const {
   checkIsUserExist,
   checkIsManufacturerExist,
-  checkIsResellerManufacturerCandidateExist,
+  checkIsResellerManufacturerCandidateExist, checkIsValuePositiveNumber,
 } = require('../utils/checkFunctions');
 const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
@@ -141,6 +141,38 @@ class ResellerController {
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'getResellerManufacturersList - unknownError')
+      );
+    }
+  }
+
+  async unregisterResellerManufacturer(req, res, next) {
+    try {
+      const userId = req.user.id;
+
+      const { manufacturerId } = req.body;
+      if (!checkIsValuePositiveNumber(manufacturerId)) {
+        return next(ApiError.badRequest('unregisterResellerManufacturer - request denied 1'));
+      }
+
+      const resellerCandidate = await Reseller.findOne({ where: { userId } });
+      if (!resellerCandidate) {
+        return next(ApiError.badRequest(`unregisterResellerManufacturer - request denied 2`));
+      }
+
+      const resellerId = resellerCandidate.id
+      const resellerManufacturerCandidate = await ResellerManufacturer.findOne({ where: { resellerId, manufacturerId} });
+      if (!resellerManufacturerCandidate) {
+        return next(ApiError.badRequest(`unregisterResellerManufacturer - request denied 3`));
+      }
+
+      await ResellerManufacturer.destroy({ where: { resellerId, manufacturerId} });
+
+      const manufacturersList = await getResellerManufacturersList(resellerId);
+      const infoList = await getResellerManufacturersLicensesInfoList(manufacturersList);
+      return res.json(infoList);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unregisterResellerManufacturer - unknownError')
       );
     }
   }

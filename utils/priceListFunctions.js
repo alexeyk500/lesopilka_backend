@@ -13,6 +13,21 @@ const getManufacturerAddress = (manufacturer) => {
   return address;
 };
 
+const formatManufacturerAddress = (manufacturer) => {
+  return {
+    id: manufacturer.address.id,
+    region: manufacturer.address.location.region,
+    location: {
+      id: manufacturer.address.location.id,
+      title: manufacturer.address.location.title,
+    },
+    postIndex: manufacturer.address.postIndex,
+    street: manufacturer.address.street,
+    building: manufacturer.address.building,
+    office: manufacturer.address.office,
+  };
+};
+
 const formatUTCtoDDMonthYear = (utcData) => {
   if (utcData) {
     return new Date(utcData).toLocaleString('ru-Ru', {
@@ -218,6 +233,7 @@ const createPDF = async (data, htmlTemplate) => {
 
 module.exports = {
   getManufacturerAddress,
+  formatManufacturerAddress,
   formatUTCtoDDMonthYear,
   getProductSizesStr,
   groupProducts,
