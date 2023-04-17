@@ -17,5 +17,4 @@ resellerRouter.post(
   resellerController.unregisterResellerManufacturer
 );
 
-
 module.exports = resellerRouter;

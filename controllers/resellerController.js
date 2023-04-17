@@ -1,18 +1,19 @@
 const uuid = require('uuid');
 const ApiError = require('../error/apiError');
-const { getUserResponse } = require('../utils/userFunction');
-const { Reseller, ResellerManufacturerCandidate, ResellerManufacturer } = require('../models/resellerModels');
+const { User } = require('../models/userModels');
 const { Address } = require('../models/addressModels');
+const { getUserResponse } = require('../utils/userFunction');
 const { Manufacturer } = require('../models/manufacturerModels');
+const { makeMailData, transporter } = require('../nodemailer/nodemailer');
+const { Reseller, ResellerManufacturerCandidate, ResellerManufacturer } = require('../models/resellerModels');
+const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
+const { getResellerManufacturersList, getResellerManufacturersLicensesInfoList } = require('../utils/resellerUtils');
 const {
   checkIsUserExist,
   checkIsManufacturerExist,
-  checkIsResellerManufacturerCandidateExist, checkIsValuePositiveNumber,
+  checkIsResellerManufacturerCandidateExist,
+  checkIsValuePositiveNumber,
 } = require('../utils/checkFunctions');
-const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
-const { makeMailData, transporter } = require('../nodemailer/nodemailer');
-const { User } = require('../models/userModels');
-const { getResellerManufacturersList, getResellerManufacturersLicensesInfoList } = require('../utils/resellerUtils');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -159,13 +160,15 @@ class ResellerController {
         return next(ApiError.badRequest(`unregisterResellerManufacturer - request denied 2`));
       }
 
-      const resellerId = resellerCandidate.id
-      const resellerManufacturerCandidate = await ResellerManufacturer.findOne({ where: { resellerId, manufacturerId} });
+      const resellerId = resellerCandidate.id;
+      const resellerManufacturerCandidate = await ResellerManufacturer.findOne({
+        where: { resellerId, manufacturerId },
+      });
       if (!resellerManufacturerCandidate) {
         return next(ApiError.badRequest(`unregisterResellerManufacturer - request denied 3`));
       }
 
-      await ResellerManufacturer.destroy({ where: { resellerId, manufacturerId} });
+      await ResellerManufacturer.destroy({ where: { resellerId, manufacturerId } });
 
       const manufacturersList = await getResellerManufacturersList(resellerId);
       const infoList = await getResellerManufacturersLicensesInfoList(manufacturersList);
