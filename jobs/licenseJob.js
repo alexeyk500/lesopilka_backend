@@ -129,7 +129,7 @@ const informLicensesRunOutByManufacturerId = async (manufacturerId) => {
             const html = getLicensesRunOutHTML(manufacturer.title ?? manufacturer.email);
             if (html) {
               const mailData = makeMailData({ to: manufacturer.email, subject, html });
-              await transporter.sendMail(mailData, async function (err, info) {
+              await transporter.sendMail(mailData, async function (err) {
                 if (err) {
                   console.log('Error with sending licenses run out letter', err);
                 } else {
