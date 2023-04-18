@@ -1,9 +1,10 @@
 const Router = require('express');
-const checkRoleMiddleware = require('../middleware/checkRoleMiddleware');
 const pictureController = require('../controllers/pictureController');
+const authMiddleware = require('../middleware/authMiddleware');
 const pictureRouter = new Router();
 
-pictureRouter.post('/', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), pictureController.uploadPicture);
-pictureRouter.delete('/', checkRoleMiddleware(['ADMIN', 'MANUFACTURER']), pictureController.deletePicture);
+pictureRouter.post('/product', authMiddleware, pictureController.uploadProductPicture);
+pictureRouter.post('/category', authMiddleware, pictureController.uploadCategoryPicture);
+pictureRouter.delete('/', authMiddleware, pictureController.deletePicture);
 
 module.exports = pictureRouter;

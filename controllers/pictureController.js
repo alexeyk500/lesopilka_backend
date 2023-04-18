@@ -1,41 +1,73 @@
+const fs = require('fs');
 const uuid = require('uuid');
 const path = require('path');
 const ApiError = require('../error/apiError');
 const { Picture } = require('../models/pictureModels');
-const { checkManufacturerForProduct } = require('../utils/functions');
+const {
+  checkIsUserManufacturerForProduct,
+  checkIsValuePositiveNumber,
+  checkIsUserIsAdmin,
+} = require('../utils/checkFunctions');
 
 class PictureController {
-  async uploadPicture(req, res, next) {
+  async uploadProductPicture(req, res, next) {
     try {
-      const { categoryId, productId } = req.body;
       const { img } = req.files;
-
-      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
-      if (!checkResult) {
-        return next(ApiError.badRequest('Only manufacturer could edit the product'));
+      const userId = req.user.id;
+      const { categoryId, productId } = req.body;
+      if (!img && !userId && !checkIsValuePositiveNumber(productId)) {
+        return next(ApiError.badRequest('uploadProductPicture - request denied 1'));
+      }
+      const manufacturerCandidate = await checkIsUserManufacturerForProduct({ userId, productId });
+      if (!manufacturerCandidate) {
+        return next(ApiError.badRequest('uploadProductPicture - request denied 2'));
       }
 
-      if (!img || !(!!categoryId || !!productId)) {
-        return next(ApiError.badRequest('Not valid data for uploadPicture'));
+      const productPictures = await Picture.findAll({ where: { productId } });
+
+      if (productPictures.length >= 3) {
+        return next(ApiError.badRequest('uploadProductPicture - request denied 3'));
       }
+      const maxProductPictureOrder =
+        productPictures.length === 0 ? 0 : Math.max(...productPictures.map((picture) => picture.order));
+
       const fileName = uuid.v4() + '.jpg';
       await img.mv(path.resolve(__dirname, '..', 'static', fileName));
-      const productPictures = await Picture.findAll({ where: { productId } });
-      let order = 1;
-      for (const curPicture of productPictures) {
-        if (curPicture.order) {
-          order += 1;
-        }
-      }
+
       const picture = await Picture.create({
         fileName,
         categoryId,
         productId,
-        order,
+        order: maxProductPictureOrder + 1,
       });
       return res.json({ picture });
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'uploadProductPicture - unknownError'));
+    }
+  }
+
+  async uploadCategoryPicture(req, res, next) {
+    try {
+      const { img } = req.files;
+      const userId = req.user.id;
+      const { categoryId } = req.body;
+      console.log({ categoryId }, { img });
+
+      if (checkIsUserIsAdmin(userId) || !img || !checkIsValuePositiveNumber(categoryId)) {
+        return next(ApiError.badRequest('uploadCategoryPicture - request denied'));
+      }
+
+      const fileName = uuid.v4() + '.jpg';
+      await img.mv(path.resolve(__dirname, '..', 'static', fileName));
+      const picture = await Picture.create({
+        fileName,
+        categoryId,
+      });
+      return res.json({ picture });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'uploadCategoryPicture - unknownError')
+      );
     }
   }
 
@@ -44,20 +76,22 @@ class PictureController {
       const { fileName } = req.body;
       const picture = await Picture.findOne({ where: { fileName: fileName } });
       if (!picture) {
-        return next(ApiError.badRequest(`Image with fileName=${fileName} does not exist`));
+        return next(ApiError.badRequest(`deletePicture - request denied 1`));
       }
+
+      const userId = req.user.id;
       const productId = picture.productId;
-      if (!productId) {
-        return next(ApiError.badRequest(`Could not find product for image with fileName=${fileName}`));
+      const manufacturerCandidate = await checkIsUserManufacturerForProduct({ userId, productId });
+      if (!manufacturerCandidate) {
+        return next(ApiError.badRequest('deletePicture - request denied 2'));
       }
-      const checkResult = await checkManufacturerForProduct(req.user.id, productId);
-      if (!checkResult) {
-        return next(ApiError.badRequest('Only manufacturer could edit the product'));
-      }
+
+      fs.unlinkSync(path.resolve(__dirname, '..', 'static', fileName));
       const result = await Picture.destroy({ where: { fileName: fileName } });
+
       return res.json({ fileName, result });
     } catch (e) {
-      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unknownError'));
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deletePicture - unknownError'));
     }
   }
 }

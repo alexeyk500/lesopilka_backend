@@ -41,7 +41,7 @@ const checkIsUserManufacturerForOrder = async (userId, orderId) => {
   return manufacturerId === product.manufacturerId;
 };
 
-const checkIsUserManufacturerForProduct = async (userId, productId) => {
+const checkIsUserManufacturerForProduct = async ({ userId, productId }) => {
   const manufacturerId = await getManufacturerIdForUser(userId);
   if (!manufacturerId) {
     return false;
@@ -110,6 +110,10 @@ const checkIsResellerManufacturerCandidateExist = async ({ email, phone, inn }) 
   }
 };
 
+const checkIsUserIsAdmin = (userId) => {
+  return userId === 1;
+};
+
 module.exports = {
   checkIsValueBoolean,
   checkIsValuePositiveNumber,
@@ -122,4 +126,5 @@ module.exports = {
   checkIsUserExist,
   checkIsManufacturerExist,
   checkIsResellerManufacturerCandidateExist,
+  checkIsUserIsAdmin,
 };
