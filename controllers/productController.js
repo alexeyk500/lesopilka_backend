@@ -10,7 +10,7 @@ const { Address, Location, Region } = require('../models/addressModels');
 const { updateModelsField } = require('../utils/functions');
 const { SizeTypeEnum, PRODUCTS_PAGE_SIZE } = require('../utils/constants');
 const { Op } = require('sequelize');
-const { checkIsUserManufacturerForProduct } = require('../utils/checkFunctions');
+const { checkIsUserManufacturerForProduct, checkIsValuePositiveNumber } = require('../utils/checkFunctions');
 const { formatProduct, getProductResponse } = require('../utils/productFunctions');
 
 class ProductController {
@@ -36,16 +36,14 @@ class ProductController {
         return next(ApiError.badRequest('updateProduct - request denied 1'));
       }
 
-      console.log('productId =', productId, 'userId =', userId);
-
-      const checkManufacturer = await checkIsUserManufacturerForProduct(userId, productId);
+      const checkManufacturer = await checkIsUserManufacturerForProduct({ userId, productId });
       if (!checkManufacturer) {
         return next(ApiError.badRequest('updateProduct - request denied 2'));
       }
 
       const product = await Product.findOne({ where: { id: productId } });
       if (!product) {
-        return next(ApiError.badRequest(`product with id=${productId} not found`));
+        return next(ApiError.badRequest(`updateProduct - request denied 3`));
       }
       if (subCategoryId === null || subCategoryId) {
         await updateModelsField(product, { subCategoryId: subCategoryId });
@@ -119,6 +117,66 @@ class ProductController {
     }
   }
 
+  async productPublication(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { productId } = req.body;
+      if (!userId || !checkIsValuePositiveNumber(productId)) {
+        return next(ApiError.badRequest('productPublication - request denied 1'));
+      }
+
+      const checkManufacturer = await checkIsUserManufacturerForProduct({ userId, productId });
+      if (!checkManufacturer) {
+        return next(ApiError.badRequest('productPublication - request denied 2'));
+      }
+
+      const product = await Product.findOne({ where: { id: productId } });
+      if (!product) {
+        return next(ApiError.badRequest(`productPublication - request denied 3`));
+      }
+
+      const dateNow = new Date().toISOString();
+      await updateModelsField(product, { publicationDate: dateNow });
+      await updateModelsField(product, { editionDate: dateNow });
+
+      const response = await getProductResponse(productId, req.protocol, req.headers.host);
+      return res.json(response);
+    } catch (e) {
+      return next(ApiError.badRequest(e?.original?.detail ? e.original.detail : 'productPublication - unknownError'));
+    }
+  }
+
+  async productStopPublication(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { productId } = req.body;
+      if (!userId || !checkIsValuePositiveNumber(productId)) {
+        return next(ApiError.badRequest('productStopPublication - request denied 1'));
+      }
+
+      const checkManufacturer = await checkIsUserManufacturerForProduct({ userId, productId });
+      if (!checkManufacturer) {
+        return next(ApiError.badRequest('productStopPublication - request denied 2'));
+      }
+
+      const product = await Product.findOne({ where: { id: productId } });
+      if (!product) {
+        return next(ApiError.badRequest(`productStopPublication - request denied 3`));
+      }
+
+      const dateNow = new Date().toISOString();
+      await updateModelsField(product, { publicationDate: null });
+      await updateModelsField(product, { editionDate: dateNow });
+
+      const response = await getProductResponse(productId, req.protocol, req.headers.host);
+      return res.json(response);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'productStopPublication - unknownError')
+      );
+    }
+  }
+
   async createProduct(req, res, next) {
     try {
       const userId = req.user.id;
@@ -184,26 +242,21 @@ class ProductController {
 
   async deleteProduct(req, res, next) {
     try {
+      const userId = req.user.id;
       const { productId } = req.body;
-      const checkManufacturer = await checkIsUserManufacturerForProduct(req.user.id, productId);
-      if (!checkManufacturer) {
-        return next(ApiError.badRequest('Only manufacturer can delete the product'));
-      }
       if (!productId) {
         return next(ApiError.badRequest('deleteProduct - not complete data'));
+      }
+      const checkManufacturer = await checkIsUserManufacturerForProduct({ userId, productId });
+      if (!checkManufacturer) {
+        return next(ApiError.badRequest('Only manufacturer can delete the product'));
       }
       const pictures = await Picture.findAll({ where: { productId } });
       if (pictures.length > 0) {
         for (const picture in pictures) {
           if (picture && picture.fileName) {
             const fullFileName = path.resolve(__dirname, '..', 'static', picture.fileName);
-            await fs.unlink(fullFileName, function (err) {
-              if (err) {
-                console.log(fullFileName, '- does not exist');
-              } else {
-                console.log(fullFileName, '- removed');
-              }
-            });
+            await fs.unlink(fullFileName, (res) => console.log(res));
           }
         }
       }
@@ -396,7 +449,7 @@ class ProductController {
       if ((!userId && !productId) || (!description && description !== null)) {
         return next(ApiError.badRequest('updateDescription - not complete data'));
       }
-      const checkManufacturer = await checkIsUserManufacturerForProduct(userId, productId);
+      const checkManufacturer = await checkIsUserManufacturerForProduct({ userId, productId });
       if (!checkManufacturer) {
         return next(ApiError.badRequest('Only manufacturer can edit the product'));
       }

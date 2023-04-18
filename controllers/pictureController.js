@@ -87,7 +87,8 @@ class PictureController {
         }
       }
 
-      fs.unlinkSync(path.resolve(__dirname, '..', 'static', fileName));
+      const fullFileName = path.resolve(__dirname, '..', 'static', fileName);
+      await fs.unlink(fullFileName, (res) => console.log(res));
       const result = await Picture.destroy({ where: { fileName: fileName } });
 
       return res.json({ fileName, result });

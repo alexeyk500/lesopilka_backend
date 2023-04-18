@@ -13,6 +13,8 @@ productRouter.post('/material', authMiddleware, productController.createProductM
 productRouter.get('/materials', productController.getAllProductMaterials);
 productRouter.post('/sort', authMiddleware, productController.createProductSort);
 productRouter.get('/sorts', productController.getAllProductSorts);
+productRouter.post('/product-publication', authMiddleware, productController.productPublication);
+productRouter.post('/product-stop-publication', authMiddleware, productController.productStopPublication);
 
 productRouter.get('/:id', productController.getProduct);
 

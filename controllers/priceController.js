@@ -48,17 +48,11 @@ class PriceController {
         include: [SubCategory, ProductMaterial, ProductSort],
       });
 
-      console.log({ products });
-
       const nowDate = new Date().toISOString();
       const priceProducts = products.map((product) => formatProduct(product));
-      console.log({ priceProducts });
       const subCategories = await SubCategory.findAll();
       const groupedProducts = groupProducts(priceProducts, subCategories);
-      console.log({ groupedProducts });
       const priceSections = getPriceSections(groupedProducts);
-
-      console.log({ priceSections });
 
       const priceLogoPath = path.resolve(__dirname, '..', 'templates', 'priceLogo.png');
       const bitmapPriceLogo = fs.readFileSync(priceLogoPath);
