@@ -1,5 +1,5 @@
 const ApiError = require('../error/apiError');
-const { UserCandidate } = require('../models/userModels');
+const { UserCandidate, User } = require('../models/userModels');
 const { checkIsUserExist, checkIsManufacturerExist } = require('../utils/checkFunctions');
 const { serverResponseHandler, serverErrorHandler } = require('../utils/serverHandler');
 const { getUserResponse } = require('../utils/userFunction');
@@ -37,7 +37,7 @@ class ActivationController {
 
       const password = userCandidate.password;
       const userResult = await userController.createUser(
-        { body: { email, password } },
+        { body: { email, password: 'noPassword' } },
         serverResponseHandler,
         serverErrorHandler
       );
@@ -45,6 +45,13 @@ class ActivationController {
         return next(ApiError.badRequest(`activateUserCandidate - ${userResult.message}`));
       }
 
+      const newUserId = userResult.response.user.id
+      const newUserCandidate = await User.findOne({ where: { id: newUserId } });
+      if (!userCandidate) {
+        return next(ApiError.badRequest(`activateUserCandidate - новый пользователь не найден`));
+      }
+
+      await updateModelsField(newUserCandidate, { password });
       await updateModelsField(userCandidate, { isActivated: true });
       const response = await getUserResponse(userResult.response.user.id);
       return res.json(response);
