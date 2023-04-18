@@ -34,19 +34,21 @@ const getManufacturerRestLicenseAmount = async (manufacturerId) => {
   return restLicenseAmount !== null ? restLicenseAmount : 0;
 };
 
-const getResellerManufacturersLicensesInfoList = async (manufacturersList) => {
+const getResellerManufacturersLicensesInfoList = async (resellerManufacturersList) => {
   const resultList = [];
-  for (let manufacturer of manufacturersList) {
+  for (let resellerManufacturer of resellerManufacturersList) {
     let newManufacturer = {};
-    const restLicenseAmount = await getManufacturerRestLicenseAmount(manufacturer.id);
-    const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(manufacturer.id);
-    newManufacturer.id = manufacturer.manufacturer.id;
-    newManufacturer.inn = manufacturer.manufacturer.inn;
-    newManufacturer.title = manufacturer.manufacturer.title;
-    newManufacturer.phone = manufacturer.manufacturer.phone;
-    newManufacturer.email = manufacturer.manufacturer.email;
-    newManufacturer.address = formatManufacturerAddress(manufacturer.manufacturer);
-    newManufacturer.approved = manufacturer.manufacturer.approved;
+    const restLicenseAmount = await getManufacturerRestLicenseAmount(resellerManufacturer.manufacturer.id);
+    const { activeProductCardAmount } = await getProductCardsAmountsByManufacturerId(
+      resellerManufacturer.manufacturer.id
+    );
+    newManufacturer.id = resellerManufacturer.manufacturer.id;
+    newManufacturer.inn = resellerManufacturer.manufacturer.inn;
+    newManufacturer.title = resellerManufacturer.manufacturer.title;
+    newManufacturer.phone = resellerManufacturer.manufacturer.phone;
+    newManufacturer.email = resellerManufacturer.manufacturer.email;
+    newManufacturer.address = formatManufacturerAddress(resellerManufacturer.manufacturer);
+    newManufacturer.approved = resellerManufacturer.manufacturer.approved;
     newManufacturer.activeCards = activeProductCardAmount;
     newManufacturer.restLicenses = restLicenseAmount;
     resultList.push(newManufacturer);

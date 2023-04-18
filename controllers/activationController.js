@@ -45,7 +45,7 @@ class ActivationController {
         return next(ApiError.badRequest(`activateUserCandidate - ${userResult.message}`));
       }
 
-      const newUserId = userResult.response.user.id
+      const newUserId = userResult.response.user.id;
       const newUserCandidate = await User.findOne({ where: { id: newUserId } });
       if (!userCandidate) {
         return next(ApiError.badRequest(`activateUserCandidate - новый пользователь не найден`));

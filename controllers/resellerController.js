@@ -136,8 +136,8 @@ class ResellerController {
         return next(ApiError.badRequest(`getResellerManufacturersList - request denied 1`));
       }
 
-      const manufacturersList = await getResellerManufacturersList(resellerCandidate.id);
-      const infoList = await getResellerManufacturersLicensesInfoList(manufacturersList);
+      const resellerManufacturers = await getResellerManufacturersList(resellerCandidate.id);
+      const infoList = await getResellerManufacturersLicensesInfoList(resellerManufacturers);
       return res.json(infoList);
     } catch (e) {
       return next(
