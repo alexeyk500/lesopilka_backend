@@ -46,6 +46,20 @@ const depublishProductsByManufacturerId = async (manufacturerId) => {
 };
 const redeemLicenseByManufacturerId = async (manufacturerId) => {
   try {
+    const manufacturerCandidate = await Manufacturer.findOne({ where: { id: manufacturerId } });
+    if (!manufacturerCandidate) {
+      console.log(
+        `Error in redeemLicenseByManufacturerId, could not find manufacturer with id = ${manufacturerId}, do nothing and return`
+      );
+      return;
+    }
+    if (!manufacturerCandidate.approved) {
+      console.log(
+        `redeemLicenseByManufacturerId, manufacturer with id = ${manufacturerId} is not approved, do nothing and return`
+      );
+      return;
+    }
+
     const newDate = new Date();
     const actionDate = newDate.toISOString();
 

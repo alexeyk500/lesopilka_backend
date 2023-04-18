@@ -437,6 +437,7 @@ class ProductController {
           Picture,
           {
             model: Manufacturer,
+            where: { approved: true },
             required: true,
             include: {
               model: Address,
