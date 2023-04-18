@@ -51,9 +51,8 @@ class PictureController {
       const { img } = req.files;
       const userId = req.user.id;
       const { categoryId } = req.body;
-      console.log({ categoryId }, { img });
 
-      if (checkIsUserIsAdmin(userId) || !img || !checkIsValuePositiveNumber(categoryId)) {
+      if (!checkIsUserIsAdmin(userId) || !img || !checkIsValuePositiveNumber(categoryId)) {
         return next(ApiError.badRequest('uploadCategoryPicture - request denied'));
       }
 
@@ -80,10 +79,12 @@ class PictureController {
       }
 
       const userId = req.user.id;
-      const productId = picture.productId;
-      const manufacturerCandidate = await checkIsUserManufacturerForProduct({ userId, productId });
-      if (!manufacturerCandidate) {
-        return next(ApiError.badRequest('deletePicture - request denied 2'));
+      if (!checkIsUserIsAdmin(userId)) {
+        const productId = picture.productId;
+        const manufacturerCandidate = await checkIsUserManufacturerForProduct({ userId, productId });
+        if (!manufacturerCandidate) {
+          return next(ApiError.badRequest('deletePicture - request denied 2'));
+        }
       }
 
       fs.unlinkSync(path.resolve(__dirname, '..', 'static', fileName));
