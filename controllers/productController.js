@@ -12,6 +12,7 @@ const { SizeTypeEnum, PRODUCTS_PAGE_SIZE } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { checkIsUserManufacturerForProduct, checkIsValuePositiveNumber } = require('../utils/checkFunctions');
 const { formatProduct, getProductResponse } = require('../utils/productFunctions');
+const { LicenseAction } = require('../models/licenseModels');
 
 class ProductController {
   async updateProduct(req, res, next) {
@@ -135,7 +136,33 @@ class ProductController {
         return next(ApiError.badRequest(`productPublication - request denied 3`));
       }
 
+      const manufacturer = await Manufacturer.findOne({ where: { userId } });
+      if (!manufacturer) {
+        return next(ApiError.badRequest('productPublication - request denied 4'));
+      }
+
+      const manufacturerId = manufacturer.id;
+      const lastLicenseAction = await LicenseAction.findOne({
+        where: { manufacturerId },
+        order: [['actionDate', 'DESC']],
+      });
+      if (!lastLicenseAction || lastLicenseAction.restLicenseAmount <= 0) {
+        return next(ApiError.badRequest('Лицензий не найдено - купите еще'));
+      }
+
       const dateNow = new Date().toISOString();
+      const newLicenseAction = await LicenseAction.create({
+        actionDate: dateNow,
+        redeemLicenseAmount: 1,
+        restLicenseAmount: lastLicenseAction.restLicenseAmount - 1,
+        activeProductCardAmount: lastLicenseAction.activeProductCardAmount,
+        draftProductCardAmount: lastLicenseAction.draftProductCardAmount,
+        manufacturerId,
+      });
+      if (!newLicenseAction) {
+        return next(ApiError.badRequest('licensePurchase - request denied 6'));
+      }
+
       await updateModelsField(product, { publicationDate: dateNow });
       await updateModelsField(product, { editionDate: dateNow });
 
