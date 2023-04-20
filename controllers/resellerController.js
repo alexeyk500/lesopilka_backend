@@ -8,10 +8,10 @@ const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { Reseller, ResellerManufacturerCandidate, ResellerManufacturer } = require('../models/resellerModels');
 const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
 const {
-  getResellerManufacturersList,
   getResellerManufacturersLicensesInfoList,
   getGroupedResellersManufacturersLicenseActions,
   getResellerManufacturersLicensesInfoListByDate,
+  getResellerManufacturers,
 } = require('../utils/resellerUtils');
 const {
   checkIsUserExist,
@@ -21,7 +21,7 @@ const {
   checkIsDateStrIsValidDate,
   checkIsTest,
 } = require('../utils/checkFunctions');
-const { normalizeData, dateDayShift } = require('../utils/functions');
+const { normalizeData, dateDayShift, updateModelsField } = require('../utils/functions');
 const { Op } = require('sequelize');
 const { LicenseAction } = require('../models/licenseModels');
 const { TEST_EMAIL } = require('../utils/constants');
@@ -150,7 +150,10 @@ class ResellerController {
         return next(ApiError.badRequest(`getResellerManufacturersList - request denied 1`));
       }
 
-      const resellerManufacturers = await getResellerManufacturersList(resellerCandidate.id);
+      const resellerManufacturers = await getResellerManufacturers({
+        resellerId: resellerCandidate.id,
+        subscribed: true,
+      });
       const infoList = await getResellerManufacturersLicensesInfoList(resellerManufacturers);
       return res.json(infoList);
     } catch (e) {
@@ -182,9 +185,9 @@ class ResellerController {
         return next(ApiError.badRequest(`unregisterResellerManufacturer - request denied 3`));
       }
 
-      await ResellerManufacturer.destroy({ where: { resellerId, manufacturerId } });
-
-      const manufacturersList = await getResellerManufacturersList(resellerId);
+      const unsubscribeDate = new Date().toISOString();
+      await updateModelsField(resellerManufacturerCandidate, { unsubscribeDate });
+      const manufacturersList = await getResellerManufacturers({ resellerId, subscribed: true });
       const infoList = await getResellerManufacturersLicensesInfoList(manufacturersList);
       return res.json(infoList);
     } catch (e) {
@@ -220,15 +223,13 @@ class ResellerController {
           [Op.lte]: normDateTo,
         },
       };
-      console.log(searchParams);
 
       const licenseActionsRaw = await LicenseAction.findAll({
         where: searchParams,
-        attributes: { exclude: ['manufacturerId'] },
         order: ['actionDate'],
       });
 
-      const licenseActions = getGroupedResellersManufacturersLicenseActions(licenseActionsRaw);
+      const licenseActions = getGroupedResellersManufacturersLicenseActions(licenseActionsRaw, resellerManufacturers);
 
       return res.json(licenseActions);
     } catch (e) {
@@ -247,14 +248,15 @@ class ResellerController {
       if (!userId || !checkIsDateStrIsValidDate(date)) {
         return next(ApiError.badRequest('getResellerManufacturersListByDate - request denied 1'));
       }
-
-      console.log({ userId }, date);
       const resellerCandidate = await Reseller.findOne({ where: { userId } });
       if (!resellerCandidate) {
         return next(ApiError.badRequest(`getResellerManufacturersListByDate - request denied 1`));
       }
 
-      const resellerManufacturers = await getResellerManufacturersList(resellerCandidate.id);
+      const resellerManufacturers = await getResellerManufacturers({
+        resellerId: resellerCandidate.id,
+        subscribed: false,
+      });
 
       const infoList = await getResellerManufacturersLicensesInfoListByDate(resellerManufacturers, date);
       return res.json(infoList);

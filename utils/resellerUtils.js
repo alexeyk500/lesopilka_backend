@@ -7,9 +7,14 @@ const { formatManufacturerAddress } = require('./priceListFunctions');
 const { normalizeData } = require('./functions');
 const { Op } = require('sequelize');
 
-const getResellerManufacturersList = async (resellerId) =>
-  await ResellerManufacturer.findAll({
-    where: { resellerId },
+const getResellerManufacturers = async ({ resellerId, subscribed }) => {
+  const searchParams = {};
+  searchParams.resellerId = resellerId;
+  if (subscribed) {
+    searchParams.unsubscribeDate = null;
+  }
+  return await ResellerManufacturer.findAll({
+    where: searchParams,
     include: {
       model: Manufacturer,
       attributes: { exclude: ['userId', 'addressId'] },
@@ -26,6 +31,7 @@ const getResellerManufacturersList = async (resellerId) =>
       },
     },
   });
+};
 
 const getManufacturerRestLicenseAmount = async (manufacturerId) => {
   const lastLicenseAction = await LicenseAction.findOne({
@@ -75,7 +81,6 @@ const getManufacturerRedeemLicenseAmountByDate = async (manufacturerId, date) =>
     where: searchParams,
     order: [['actionDate', 'DESC']],
   });
-  console.log(lastLicenseAction);
   const redeemLicenseAmount = lastLicenseAction?.redeemLicenseAmount;
   return redeemLicenseAmount !== null ? redeemLicenseAmount : 0;
 };
@@ -83,57 +88,67 @@ const getManufacturerRedeemLicenseAmountByDate = async (manufacturerId, date) =>
 const getResellerManufacturersLicensesInfoListByDate = async (resellerManufacturersList, date) => {
   const resultList = [];
   for (let resellerManufacturer of resellerManufacturersList) {
-    let newManufacturer = {};
-    const redeemLicenseAmount = await getManufacturerRedeemLicenseAmountByDate(
-      resellerManufacturer.manufacturer.id,
-      date
-    );
-    if (redeemLicenseAmount) {
-      newManufacturer.id = resellerManufacturer.manufacturer.id;
-      newManufacturer.inn = resellerManufacturer.manufacturer.inn;
-      newManufacturer.title = resellerManufacturer.manufacturer.title;
-      newManufacturer.phone = resellerManufacturer.manufacturer.phone;
-      newManufacturer.email = resellerManufacturer.manufacturer.email;
-      newManufacturer.address = formatManufacturerAddress(resellerManufacturer.manufacturer);
-      newManufacturer.approved = resellerManufacturer.manufacturer.approved;
-      newManufacturer.activeCards = redeemLicenseAmount;
-      newManufacturer.restLicenses = null;
-      resultList.push(newManufacturer);
+    if (resellerManufacturer?.unsubscribeDate === null || new Date(date) <= resellerManufacturer?.unsubscribeDate) {
+      let newManufacturer = {};
+      const redeemLicenseAmount = await getManufacturerRedeemLicenseAmountByDate(
+        resellerManufacturer.manufacturer.id,
+        date
+      );
+      if (redeemLicenseAmount) {
+        newManufacturer.id = resellerManufacturer.manufacturer.id;
+        newManufacturer.inn = resellerManufacturer.manufacturer.inn;
+        newManufacturer.title = resellerManufacturer.manufacturer.title;
+        newManufacturer.phone = resellerManufacturer.manufacturer.phone;
+        newManufacturer.email = resellerManufacturer.manufacturer.email;
+        newManufacturer.address = formatManufacturerAddress(resellerManufacturer.manufacturer);
+        newManufacturer.approved = resellerManufacturer.manufacturer.approved;
+        newManufacturer.activeCards = redeemLicenseAmount;
+        newManufacturer.restLicenses = null;
+        resultList.push(newManufacturer);
+      }
     }
   }
   return resultList;
 };
 
-const getGroupedResellersManufacturersLicenseActions = (licenseActionsRaw) => {
+const getGroupedResellersManufacturersLicenseActions = (licenseActionsRaw, resellerManufacturers) => {
   const licenseActions = [];
   for (let curAction of licenseActionsRaw) {
-    const result = licenseActions.find(
-      (curFindLA) =>
-        curFindLA.actionDate.toISOString().split('T')[0] === curAction.actionDate.toISOString().split('T')[0]
-    );
-    if (result) {
-      result.redeemLicenseAmount += curAction.redeemLicenseAmount;
-      result.activeProductCardAmount += curAction.activeProductCardAmount;
-      result.draftProductCardAmount += curAction.draftProductCardAmount;
-    } else {
-      licenseActions.push({
-        id: licenseActions.length + 1,
-        actionDate: normalizeData(curAction.actionDate),
-        restLicenseAmount: null,
-        redeemLicenseAmount: curAction.redeemLicenseAmount,
-        purchaseLicenseAmount: null,
-        activeProductCardAmount: curAction.activeProductCardAmount,
-        draftProductCardAmount: curAction.draftProductCardAmount,
-        receiptTransactionId: null,
-      });
+    const curResellerManufacturer = resellerManufacturers.find((curMan) => {
+      return curMan.manufacturerId === curAction.manufacturerId
+    });
+    if (
+      curResellerManufacturer?.unsubscribeDate === null ||
+      curAction.actionDate <= curResellerManufacturer?.unsubscribeDate
+    ) {
+      const result = licenseActions.find(
+        (curFindLA) =>
+          curFindLA.actionDate.toISOString().split('T')[0] === curAction.actionDate.toISOString().split('T')[0]
+      );
+      if (result) {
+        result.redeemLicenseAmount += curAction.redeemLicenseAmount;
+        result.activeProductCardAmount += curAction.activeProductCardAmount;
+        result.draftProductCardAmount += curAction.draftProductCardAmount;
+      } else {
+        licenseActions.push({
+          id: licenseActions.length + 1,
+          actionDate: normalizeData(curAction.actionDate),
+          restLicenseAmount: null,
+          redeemLicenseAmount: curAction.redeemLicenseAmount,
+          purchaseLicenseAmount: null,
+          activeProductCardAmount: curAction.activeProductCardAmount,
+          draftProductCardAmount: curAction.draftProductCardAmount,
+          receiptTransactionId: null,
+        });
+      }
     }
   }
   return licenseActions;
 };
 
 module.exports = {
-  getResellerManufacturersList,
   getResellerManufacturersLicensesInfoList,
   getResellerManufacturersLicensesInfoListByDate,
   getGroupedResellersManufacturersLicenseActions,
+  getResellerManufacturers,
 };

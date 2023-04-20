@@ -26,6 +26,7 @@ const ResellerManufacturer = sequelize.define(
   'reseller_manufacturer',
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    unsubscribeDate: { type: DataTypes.DATE },
   },
   { timestamps: false }
 );
