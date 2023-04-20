@@ -17,4 +17,10 @@ resellerRouter.post(
   resellerController.unregisterResellerManufacturer
 );
 
+resellerRouter.post(
+  '/reseller-manufacturer-license-actions',
+  authMiddleware,
+  resellerController.getResellerManufacturersLicenseActions
+);
+
 module.exports = resellerRouter;

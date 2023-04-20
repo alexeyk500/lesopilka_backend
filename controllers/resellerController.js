@@ -7,13 +7,21 @@ const { Manufacturer } = require('../models/manufacturerModels');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { Reseller, ResellerManufacturerCandidate, ResellerManufacturer } = require('../models/resellerModels');
 const resellerRegisterManufacturerConfirmEmail = require('../nodemailer/resellerManufacturerCandidateConfirmEmail');
-const { getResellerManufacturersList, getResellerManufacturersLicensesInfoList } = require('../utils/resellerUtils');
+const {
+  getResellerManufacturersList,
+  getResellerManufacturersLicensesInfoList,
+  getGroupedResellersManufacturersLicenseActions,
+} = require('../utils/resellerUtils');
 const {
   checkIsUserExist,
   checkIsManufacturerExist,
   checkIsResellerManufacturerCandidateExist,
   checkIsValuePositiveNumber,
+  checkIsDateStrIsValidDate,
 } = require('../utils/checkFunctions');
+const { normalizeData, dateDayShift } = require('../utils/functions');
+const { Op } = require('sequelize');
+const { LicenseAction } = require('../models/licenseModels');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -109,6 +117,7 @@ class ResellerController {
       const resellerEmail = userCandidate.email;
       const subject = `Подтверждение регистрации поставщика на ${process.env.SITE_NAME}`;
       const html = resellerRegisterManufacturerConfirmEmail({ resellerFIO, resellerPhone, resellerEmail, code });
+      // const mailData = makeMailData({ to: email, subject, html });
       const mailData = makeMailData({ to: 'alexeyk500@yandex.ru', subject, html });
       return await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
@@ -176,6 +185,52 @@ class ResellerController {
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'unregisterResellerManufacturer - unknownError')
+      );
+    }
+  }
+
+  async getResellerManufacturersLicenseActions(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { dateFrom, dateTo } = req.body;
+      if (!userId || !checkIsDateStrIsValidDate(dateFrom) || !checkIsDateStrIsValidDate(dateTo)) {
+        return next(ApiError.badRequest('getResellerManufacturersLicenseActions - request denied 1'));
+      }
+
+      const resellerCandidate = await Reseller.findOne({ where: { userId } });
+      if (!resellerCandidate) {
+        return next(ApiError.badRequest(`getResellerManufacturersLicenseActions - request denied 2`));
+      }
+
+      const resellerManufacturers = await ResellerManufacturer.findAll({ where: { resellerId: resellerCandidate.id } });
+      const manufacturersIdList = resellerManufacturers.map((resMan) => resMan.manufacturerId);
+
+      let searchParams = {};
+      searchParams.manufacturerId = manufacturersIdList;
+      const normDateFrom = normalizeData(dateFrom);
+      const normDateTo = normalizeData(dateDayShift(dateTo, 1));
+      searchParams.actionDate = {
+        [Op.and]: {
+          [Op.gte]: normDateFrom,
+          [Op.lte]: normDateTo,
+        },
+      };
+      console.log(searchParams);
+
+      const licenseActionsRaw = await LicenseAction.findAll({
+        where: searchParams,
+        attributes: { exclude: ['manufacturerId'] },
+        order: ['actionDate'],
+      });
+
+      const licenseActions = getGroupedResellersManufacturersLicenseActions(licenseActionsRaw);
+
+      return res.json(licenseActions);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(
+          e?.original?.detail ? e.original.detail : 'getResellerManufacturersLicenseActions - unknownError'
+        )
       );
     }
   }

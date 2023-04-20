@@ -4,6 +4,7 @@ const { Address, Location, Region } = require('../models/addressModels');
 const { LicenseAction } = require('../models/licenseModels');
 const { getProductCardsAmountsByManufacturerId } = require('../jobs/licenseJob');
 const { formatManufacturerAddress } = require('./priceListFunctions');
+const { normalizeData } = require('./functions');
 
 const getResellerManufacturersList = async (resellerId) =>
   await ResellerManufacturer.findAll({
@@ -56,7 +57,38 @@ const getResellerManufacturersLicensesInfoList = async (resellerManufacturersLis
   return resultList;
 };
 
+const getGroupedResellersManufacturersLicenseActions = (licenseActionsRaw) => {
+  const licenseActions = [];
+
+  for (let curAction of licenseActionsRaw) {
+    console.log('actionDate =', curAction.actionDate.toISOString().split('T')[0]);
+    const result = licenseActions.find(
+      (curFindLA) =>
+        curFindLA.actionDate.toISOString().split('T')[0] === curAction.actionDate.toISOString().split('T')[0]
+    );
+    if (result) {
+      result.redeemLicenseAmount += curAction.redeemLicenseAmount;
+      result.activeProductCardAmount += curAction.activeProductCardAmount;
+      result.draftProductCardAmount += curAction.draftProductCardAmount;
+    } else {
+      licenseActions.push({
+        id: licenseActions.length + 1,
+        actionDate: normalizeData(curAction.actionDate),
+        restLicenseAmount: null,
+        redeemLicenseAmount: curAction.redeemLicenseAmount,
+        purchaseLicenseAmount: null,
+        activeProductCardAmount: curAction.activeProductCardAmount,
+        draftProductCardAmount: curAction.draftProductCardAmount,
+        receiptTransactionId: null,
+      });
+    }
+  }
+
+  return licenseActions;
+};
+
 module.exports = {
   getResellerManufacturersList,
   getResellerManufacturersLicensesInfoList,
+  getGroupedResellersManufacturersLicenseActions,
 };
