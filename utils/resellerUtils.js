@@ -115,7 +115,7 @@ const getGroupedResellersManufacturersLicenseActions = (licenseActionsRaw, resel
   const licenseActions = [];
   for (let curAction of licenseActionsRaw) {
     const curResellerManufacturer = resellerManufacturers.find((curMan) => {
-      return curMan.manufacturerId === curAction.manufacturerId
+      return curMan.manufacturerId === curAction.manufacturerId;
     });
     if (
       curResellerManufacturer?.unsubscribeDate === null ||
