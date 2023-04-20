@@ -9,6 +9,8 @@ const { Basket } = require('../models/basketModels');
 const { getUserResponse } = require('../utils/userFunction');
 const { updateModelsField } = require('../utils/functions');
 const { Address } = require('../models/addressModels');
+const { checkIsTest } = require('../utils/checkFunctions');
+const { TEST_EMAIL } = require('../utils/constants');
 
 class UserController {
   async login(req, res, next) {
@@ -61,7 +63,6 @@ class UserController {
   async createUserCandidate(req, res, next) {
     try {
       const { email, password } = req.body;
-      const isTest = email.split('-')?.[0] === 'test';
       if (!email && !password) {
         return next(ApiError.internal('Bad request no user email or password'));
       }
@@ -85,7 +86,8 @@ class UserController {
 
       const subject = `Подтверждение регистрации на ${process.env.SITE_NAME}`;
       const html = makeRegistrationConfirmLetter(code);
-      const mailData = makeMailData({ to: isTest ? 'alexeyk500@yandex.ru' : email, subject, html });
+      const isTest = checkIsTest(email);
+      const mailData = makeMailData({ to: isTest ? TEST_EMAIL : email, subject, html });
       await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending Confirmation Registration letter, ${err}`));
@@ -150,7 +152,6 @@ class UserController {
   async sendRecoveryPasswordEmail(req, res, next) {
     try {
       const { email } = req.body;
-      const isTest = email.split('-')?.[0] === 'test';
       if (!email) {
         return next(ApiError.internal('Bad request no user email'));
       }
@@ -162,7 +163,8 @@ class UserController {
       const code = uuid.v4().slice(0, 6);
       const subject = `Востановление пароля на ${process.env.SITE_NAME}`;
       const html = passwordRecoveryCodeEmail(code);
-      const mailData = makeMailData({ to: isTest ? 'alexeyk500@yandex.ru' : email, subject, html });
+      const isTest = checkIsTest(email);
+      const mailData = makeMailData({ to: isTest ? TEST_EMAIL : email, subject, html });
       await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending recovery password letter, ${err}`));

@@ -1,12 +1,13 @@
 const { Order } = require('../models/orderModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { User } = require('../models/userModels');
-const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS, MessageFromToOptions } = require('./constants');
+const { AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS, MessageFromToOptions, TEST_EMAIL } = require('./constants');
 const { normalizeData, dateDayShift } = require('./functions');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const ApiError = require('../error/apiError');
 const { getOrderMessageHTML } = require('../nodemailer/getOrderMessageHTML');
 const { OrderMessage } = require('../models/orderMessageModels');
+const { checkIsTest } = require('./checkFunctions');
 
 const isOrderShouldBeInArchive = (orderDeliveryDate) => {
   const nowDate = normalizeData(new Date());
@@ -57,11 +58,13 @@ const sendNewMessageForOrder = async ({ orderId, messageFromTo, messageText, nex
     return next(ApiError.internal(`Error with message receiver`));
   }
 
-  if (messageReceiver.email && messageText) {
+  const email = messageReceiver.email;
+  if (email && messageText) {
     const subject = `Сообщение по заказу № ${orderId} от ${process.env.SITE_NAME}`;
     const html = getOrderMessageHTML(orderId, messageFromTo, messageText);
     if (html) {
-      const mailData = makeMailData({ to: messageReceiver.email, subject, html });
+      const isTest = checkIsTest(email);
+      const mailData = makeMailData({ to: isTest ? TEST_EMAIL : email, subject, html });
       await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending new order message letter, ${err}`));

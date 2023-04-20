@@ -5,7 +5,8 @@ const { Op } = require('sequelize');
 const { updateModelsField } = require('../utils/functions');
 const { makeMailData, transporter } = require('../nodemailer/nodemailer');
 const { getLicensesRunOutHTML } = require('../nodemailer/getLicensesRunOutHTML');
-const { checkIsValueExist } = require('../utils/checkFunctions');
+const { checkIsValueExist, checkIsTest } = require('../utils/checkFunctions');
+const { TEST_EMAIL } = require('../utils/constants');
 
 const depublishProductsByManufacturerId = async (manufacturerId) => {
   try {
@@ -124,11 +125,13 @@ const informLicensesRunOutByManufacturerId = async (manufacturerId) => {
 
         if (products.length > 0) {
           const manufacturer = await Manufacturer.findOne({ where: { id: manufacturerId } });
-          if (manufacturer.email) {
+          const email = manufacturer.email;
+          if (email) {
             const subject = `Сообщение об исчерпании запаса лицензий на ${process.env.SITE_NAME}`;
             const html = getLicensesRunOutHTML(manufacturer.title ?? manufacturer.email);
             if (html) {
-              const mailData = makeMailData({ to: manufacturer.email, subject, html });
+              const isTest = checkIsTest(email);
+              const mailData = makeMailData({ to: isTest ? TEST_EMAIL : email, subject, html });
               await transporter.sendMail(mailData, async function (err) {
                 if (err) {
                   console.log('Error with sending licenses run out letter', err);

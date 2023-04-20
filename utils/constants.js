@@ -8,6 +8,8 @@ const ARCHIVED_ORDERS_STATUS = 'inArchive';
 
 const WELCOME_LICENSES_AMOUNT = 500;
 
+const TEST_EMAIL = 'alexeyk500@yandex.ru';
+
 const MessageFromToOptions = Object.freeze({
   ManufacturerToUser: 'MTU',
   UserToManufacturer: 'UTM',
@@ -21,5 +23,6 @@ module.exports = {
   AMOUNT_OF_DAYS_FOR_ARCHIVED_ORDERS,
   ARCHIVED_ORDERS_STATUS,
   WELCOME_LICENSES_AMOUNT,
+  TEST_EMAIL,
   MessageFromToOptions,
 };

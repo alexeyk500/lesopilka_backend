@@ -19,10 +19,12 @@ const {
   checkIsResellerManufacturerCandidateExist,
   checkIsValuePositiveNumber,
   checkIsDateStrIsValidDate,
+  checkIsTest,
 } = require('../utils/checkFunctions');
 const { normalizeData, dateDayShift } = require('../utils/functions');
 const { Op } = require('sequelize');
 const { LicenseAction } = require('../models/licenseModels');
+const { TEST_EMAIL } = require('../utils/constants');
 
 class ResellerController {
   async createReseller(req, res, next) {
@@ -118,8 +120,8 @@ class ResellerController {
       const resellerEmail = userCandidate.email;
       const subject = `Подтверждение регистрации поставщика на ${process.env.SITE_NAME}`;
       const html = resellerRegisterManufacturerConfirmEmail({ resellerFIO, resellerPhone, resellerEmail, code });
-      // const mailData = makeMailData({ to: email, subject, html });
-      const mailData = makeMailData({ to: 'alexeyk500@yandex.ru', subject, html });
+      const isTest = checkIsTest(email);
+      const mailData = makeMailData({ to: isTest ? TEST_EMAIL : email, subject, html });
       return await transporter.sendMail(mailData, async function (err, info) {
         if (err) {
           return next(ApiError.internal(`Error with sending resellerRegisterManufacturerConfirmEmail letter, ${err}`));
@@ -127,7 +129,9 @@ class ResellerController {
           console.log(`sendMail-${info}`);
         }
         return res.json({
-          message: `Reseller register new manufacturer confirmation email has been sent to ${email} in ${time}`,
+          message: `Reseller register new manufacturer confirmation email has been sent to ${email} in ${time} ${
+            isTest ? `$${code}` : ''
+          }`,
         });
       });
     } catch (e) {

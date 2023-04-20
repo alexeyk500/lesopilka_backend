@@ -114,6 +114,10 @@ const checkIsUserIsAdmin = (userId) => {
   return userId === 1;
 };
 
+const checkIsTest = (email) => {
+  return email.split('-')?.[0] === 'test';
+};
+
 module.exports = {
   checkIsValueBoolean,
   checkIsValuePositiveNumber,
@@ -127,4 +131,5 @@ module.exports = {
   checkIsManufacturerExist,
   checkIsResellerManufacturerCandidateExist,
   checkIsUserIsAdmin,
+  checkIsTest,
 };
