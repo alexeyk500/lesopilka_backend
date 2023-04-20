@@ -23,4 +23,10 @@ resellerRouter.post(
   resellerController.getResellerManufacturersLicenseActions
 );
 
+resellerRouter.post(
+  '/reseller-manufacturers-list-by-date',
+  authMiddleware,
+  resellerController.getResellerManufacturersListByDate
+);
+
 module.exports = resellerRouter;

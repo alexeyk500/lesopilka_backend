@@ -162,7 +162,16 @@ const doJobForManufacturers = async (job) => {
 };
 
 const getProductCardsAmountsByManufacturerId = async (manufacturerId) => {
-  const allProducts = await Product.findAll({ where: { manufacturerId } });
+  const allProducts = await Product.findAll({
+    where: { manufacturerId },
+    include: [
+      {
+        model: Manufacturer,
+        where: { approved: true },
+        required: true,
+      },
+    ],
+  });
   const activeProductCards = allProducts.filter((product) => product.publicationDate !== null);
   const activeProductCardAmount = activeProductCards.length;
   const draftProductCardAmount = allProducts.length - activeProductCardAmount;

@@ -11,6 +11,7 @@ const {
   getResellerManufacturersList,
   getResellerManufacturersLicensesInfoList,
   getGroupedResellersManufacturersLicenseActions,
+  getResellerManufacturersLicensesInfoListByDate,
 } = require('../utils/resellerUtils');
 const {
   checkIsUserExist,
@@ -230,6 +231,33 @@ class ResellerController {
       return next(
         ApiError.badRequest(
           e?.original?.detail ? e.original.detail : 'getResellerManufacturersLicenseActions - unknownError'
+        )
+      );
+    }
+  }
+
+  async getResellerManufacturersListByDate(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { date } = req.body;
+      if (!userId || !checkIsDateStrIsValidDate(date)) {
+        return next(ApiError.badRequest('getResellerManufacturersListByDate - request denied 1'));
+      }
+
+      console.log({ userId }, date);
+      const resellerCandidate = await Reseller.findOne({ where: { userId } });
+      if (!resellerCandidate) {
+        return next(ApiError.badRequest(`getResellerManufacturersListByDate - request denied 1`));
+      }
+
+      const resellerManufacturers = await getResellerManufacturersList(resellerCandidate.id);
+
+      const infoList = await getResellerManufacturersLicensesInfoListByDate(resellerManufacturers, date);
+      return res.json(infoList);
+    } catch (e) {
+      return next(
+        ApiError.badRequest(
+          e?.original?.detail ? e.original.detail : 'getResellerManufacturersListByDate - unknownError'
         )
       );
     }
