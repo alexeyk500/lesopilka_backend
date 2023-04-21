@@ -4,6 +4,8 @@ const { Address } = require('../models/addressModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Reseller } = require('../models/resellerModels');
+const { getManufacturerIdForUser } = require("../utils/functions");
+const { Product } = require("../models/productModels");
 
 class TestController {
   async deleteTestUser(req, res, next) {
@@ -239,6 +241,42 @@ class TestController {
       );
     }
   }
+
+  async deleteTestManufacturerProductsAll(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return next(ApiError.internal('deleteTestManufacturerProductsAll - bad request no test user email'));
+      }
+
+      const testKey = email.split('-')[0];
+      if (testKey !== 'test') {
+        return next(ApiError.internal('deleteTestManufacturerProductsAll - bad request no testKey in user email'));
+      }
+
+      const userCandidate = await User.findOne({ where: { email } });
+      if (!userCandidate) {
+        return next(ApiError.badRequest(`deleteTestManufacturerProductsAll - request denied 1`));
+      }
+      console.log({userCandidate});
+
+      const manufacturerId = await getManufacturerIdForUser(userCandidate.id);
+      if (!manufacturerId) {
+        return next(ApiError.badRequest('deleteTestManufacturerProductsAll - request denied 2'));
+      }
+
+      await Product.destroy({ where: { manufacturerId } });
+
+      return res.json({ message: `deleteTestManufacturerProductsAll - deleted` });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserResellerAddress - unknownError')
+      );
+    }
+  }
+
+
+
 }
 
 module.exports = new TestController();
