@@ -67,4 +67,5 @@ const getUserResponse = async (userId, tokenRaw) => {
 
 module.exports = {
   getUserResponse,
+  generateUserToken,
 };

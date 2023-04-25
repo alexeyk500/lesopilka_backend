@@ -4,8 +4,11 @@ const { Address } = require('../models/addressModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Reseller } = require('../models/resellerModels');
-const { getManufacturerIdForUser } = require("../utils/functions");
-const { Product } = require("../models/productModels");
+const { getManufacturerIdForUser } = require('../utils/functions');
+const { Product } = require('../models/productModels');
+const productController = require('./productController');
+const { serverResponseHandler, serverErrorHandler } = require('../utils/serverHandler');
+const { generateUserToken } = require('../utils/userFunction');
 
 class TestController {
   async deleteTestUser(req, res, next) {
@@ -258,14 +261,25 @@ class TestController {
       if (!userCandidate) {
         return next(ApiError.badRequest(`deleteTestManufacturerProductsAll - request denied 1`));
       }
-      console.log({userCandidate});
 
       const manufacturerId = await getManufacturerIdForUser(userCandidate.id);
       if (!manufacturerId) {
         return next(ApiError.badRequest('deleteTestManufacturerProductsAll - request denied 2'));
       }
 
-      await Product.destroy({ where: { manufacturerId } });
+      const token = generateUserToken(userCandidate);
+      const products = await Product.findAll({ where: { manufacturerId } });
+      for (let product of products) {
+        await productController.deleteProduct(
+          {
+            user: { id: userCandidate.id },
+            headers: { authorization: token },
+            body: { productId: product.id },
+          },
+          serverResponseHandler,
+          serverErrorHandler
+        );
+      }
 
       return res.json({ message: `deleteTestManufacturerProductsAll - deleted` });
     } catch (e) {
@@ -274,9 +288,6 @@ class TestController {
       );
     }
   }
-
-
-
 }
 
 module.exports = new TestController();

@@ -4,7 +4,7 @@ const ApiError = require('../error/apiError');
 const { Product, ProductDescription, ProductMaterial, ProductSort } = require('../models/productModels');
 const { SubCategory } = require('../models/categoryModels');
 const { Picture } = require('../models/pictureModels');
-const { Basket } = require('../models/basketModels');
+const { BasketProduct } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Address, Location, Region } = require('../models/addressModels');
 const { updateModelsField } = require('../utils/functions');
@@ -13,6 +13,7 @@ const { Op } = require('sequelize');
 const { checkIsUserManufacturerForProduct, checkIsValuePositiveNumber } = require('../utils/checkFunctions');
 const { formatProduct, getProductResponse } = require('../utils/productFunctions');
 const { LicenseAction } = require('../models/licenseModels');
+const { FavoriteProduct } = require('../models/favoriteModels');
 
 class ProductController {
   async updateProduct(req, res, next) {
@@ -272,14 +273,17 @@ class ProductController {
       const userId = req.user.id;
       const { productId } = req.body;
       if (!productId) {
-        return next(ApiError.badRequest('deleteProduct - not complete data'));
+        return next(ApiError.badRequest('deleteProduct - request denied 1'));
       }
       const checkManufacturer = await checkIsUserManufacturerForProduct({ userId, productId });
       if (!checkManufacturer) {
-        return next(ApiError.badRequest('Only manufacturer can delete the product'));
+        return next(ApiError.badRequest('deleteProduct - request denied 2'));
       }
+      await ProductDescription.destroy({ where: { productId } });
+      await BasketProduct.destroy({ where: { productId } });
+      await FavoriteProduct.destroy({ where: { productId } });
       const pictures = await Picture.findAll({ where: { productId } });
-      if (pictures.length > 0) {
+      if (pictures?.length > 0) {
         for (const picture in pictures) {
           if (picture && picture.fileName) {
             const fullFileName = path.resolve(__dirname, '..', 'static', picture.fileName);
@@ -287,8 +291,6 @@ class ProductController {
           }
         }
       }
-      await ProductDescription.destroy({ where: { productId } });
-      await Basket.destroy({ where: { productId } });
       await Picture.destroy({ where: { productId } });
       const result = await Product.destroy({ where: { id: productId } });
       return res.json({ productId, result });
