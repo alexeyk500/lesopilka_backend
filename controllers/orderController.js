@@ -92,9 +92,9 @@ const getOrderById = async (id) => {
   });
 };
 
-const getOrderHeaderByOrderId = async (id, isOrderForManufacturer) => {
+const getOrderHeaderByOrderId = async (id, isOrdersForManufacturer) => {
   const orderHeader = await getOrderById(id);
-  if (isOrderForManufacturer) {
+  if (isOrdersForManufacturer) {
     if (!orderHeader.inArchiveForManufacturer) {
       const orderShouldBeInArchive = isOrderShouldBeInArchive(orderHeader.deliveryDate);
       if (orderShouldBeInArchive) {
@@ -109,7 +109,7 @@ const getOrderHeaderByOrderId = async (id, isOrderForManufacturer) => {
       }
     }
   }
-  if (isOrderForManufacturer && orderHeader.userId) {
+  if (isOrdersForManufacturer && orderHeader.userId) {
     const userCandidate = await User.findOne({ where: { id: orderHeader.userId } });
     if (userCandidate) {
       const headerObject = await orderHeader.get();
@@ -125,8 +125,8 @@ const getOrderHeaderByOrderId = async (id, isOrderForManufacturer) => {
   return orderHeader;
 };
 
-const getOrderResponse = async ({ order, protocol, host, isOrderForManufacturer }) => {
-  const orderHeader = await getOrderHeaderByOrderId(order.id, isOrderForManufacturer);
+const getOrderResponse = async ({ order, protocol, host, isOrdersForManufacturer }) => {
+  const orderHeader = await getOrderHeaderByOrderId(order.id, isOrdersForManufacturer);
   const orderProducts = await getProductsInOrder(order.id, protocol, host);
   const confirmedProducts = await getConfirmedProductsByOrderId(
     order.id,
