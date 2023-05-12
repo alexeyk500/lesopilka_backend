@@ -1,6 +1,6 @@
 const ApiError = require('../error/apiError');
 const { User, UserCandidate, SearchRegionAndLocation } = require('../models/userModels');
-const { Address } = require('../models/addressModels');
+const { Address, PickUpAddress } = require('../models/addressModels');
 const { Basket } = require('../models/basketModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Reseller } = require('../models/resellerModels');
@@ -182,6 +182,37 @@ class TestController {
     } catch (e) {
       return next(
         ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserManufacturer - unknownError')
+      );
+    }
+  }
+
+  async deleteTestUserManufacturerPickUpAddress(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return next(ApiError.internal('deleteTestUserManufacturerPickUpAddress - bad request no test user email'));
+      }
+      const testKey = email.split('-')[0];
+      if (testKey !== 'test') {
+        return next(ApiError.internal('deleteTestUserManufacturerPickUpAddress - bad request no testKey in user email'));
+      }
+
+      const userCandidate = await User.findOne({
+        where: { email },
+        include: [Manufacturer],
+      });
+      if (!userCandidate) {
+        return next(ApiError.badRequest(`deleteTestUserManufacturerPickUpAddress - user with email ${email} do not exist`));
+      }
+
+      const result = await PickUpAddress.destroy({ where: { manufacturerId: userCandidate.manufacturer.id } });
+      if (result !== 1) {
+        return next(ApiError.badRequest(`deleteTestUserManufacturerPickUpAddress - PickUpAddress destroy error`));
+      }
+      return res.json({ message: `testUserManufacturerPickUpAddress - deleted` });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestUserManufacturerPickUpAddress - unknownError')
       );
     }
   }

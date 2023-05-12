@@ -1,5 +1,5 @@
 const ApiError = require('../error/apiError');
-const { Address } = require('../models/addressModels');
+const { Address, PickUpAddress } = require('../models/addressModels');
 const { Manufacturer } = require('../models/manufacturerModels');
 const { Reseller } = require('../models/resellerModels');
 const { checkIsManufacturerExist } = require('../utils/checkFunctions');
@@ -28,13 +28,24 @@ class ManufacturerController {
 
       const isManufacturerExist = await checkIsManufacturerExist({ email, phone, inn });
       if (isManufacturerExist) {
-        return next(ApiError.badRequest(isManufacturerExist));
+        return next(ApiError.badRequest(`createManufacturer - request denied 3`));
       }
 
       const address = await Address.create({ locationId, street, building, office, postIndex });
+      if (!address) {
+        return next(ApiError.badRequest(`createManufacturer - request denied 4`));
+      }
+
       const manufacturer = await Manufacturer.create({ title, inn, phone, userId, email, addressId: address.id });
       if (!manufacturer) {
-        return next(ApiError.badRequest(`createManufacturer - request denied 3`));
+        return next(ApiError.badRequest(`createManufacturer - request denied 5`));
+      }
+
+      const pickUpAddress =await PickUpAddress.create(
+        { locationId, street, building, office, postIndex, manufacturerId: manufacturer.id }
+      );
+      if (!pickUpAddress) {
+        return next(ApiError.badRequest(`createManufacturer - request denied 6`));
       }
 
       await setManufacturerWelcomeLicenses(manufacturer.id, next);
