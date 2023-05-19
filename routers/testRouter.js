@@ -11,6 +11,7 @@ testRouter.post('/delete-test-user-manufacturer-address', testController.deleteT
 testRouter.post('/delete-test-user-manufacturer-pick-up-address', testController.deleteTestUserManufacturerPickUpAddress);
 testRouter.post('/delete-test-user-reseller', testController.deleteTestUserReseller);
 testRouter.post('/delete-test-user-reseller-address', testController.deleteTestUserResellerAddress);
+testRouter.post('/delete-test-user-orders-all', testController.deleteTestUserOrdersAll);
 
 testRouter.post('/delete-test-manufacturer-products-all', testController.deleteTestManufacturerProductsAll);
 
