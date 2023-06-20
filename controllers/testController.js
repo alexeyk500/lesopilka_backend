@@ -9,8 +9,9 @@ const { Product } = require('../models/productModels');
 const productController = require('./productController');
 const { serverResponseHandler, serverErrorHandler } = require('../utils/serverHandler');
 const { generateUserToken } = require('../utils/userFunction');
-const { Order } = require("../models/orderModels");
+const { Order, OrderProduct } = require("../models/orderModels");
 const { OrderMessage } = require("../models/orderMessageModels");
+const { ConfirmedProduct } = require("../models/confirmedProducts");
 
 class TestController {
   async deleteTestUser(req, res, next) {
@@ -322,6 +323,42 @@ class TestController {
     }
   }
 
+  async deleteTestManufacturerOrdersAll(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return next(ApiError.internal('deleteTestManufacturerOrdersAll - bad request no test manufacturer email'));
+      }
+      const testKey = email.split('-')[0];
+      if (testKey !== 'test') {
+        return next(ApiError.internal('deleteTestManufacturerOrdersAll - bad request no testKey in user email'));
+      }
+      const userCandidate = await User.findOne({
+        where: { email },
+        include: [Manufacturer],
+      });
+      const manufacturerId = userCandidate.manufacturer.id
+      if (!manufacturerId) {
+        return next(ApiError.badRequest(`deleteTestManufacturerOrdersAll - manufacturer with email ${email} do not exist`));
+      }
+      const orders = await Order.findAll({where: {manufacturerId}})
+      if (!orders || !orders.length > 0) {
+        return res.json({ message: `testManufacturerOrdersAll - deleted` });
+      }
+      for (let order of orders ) {
+        await OrderMessage.destroy({where: {orderId: order.id}})
+        await ConfirmedProduct.destroy({where: {orderId: order.id}})
+        await OrderProduct.destroy({where: {orderId: order.id}})
+        await Order.destroy({where: {id: order.id}})
+      }
+      return res.json({ message: `testManufacturerOrdersAll - deleted` });
+    } catch (e) {
+      return next(
+        ApiError.badRequest(e?.original?.detail ? e.original.detail : 'deleteTestManufacturerOrdersAll - unknownError')
+      );
+    }
+  }
+
   async deleteTestUserOrdersAll(req, res, next) {
     try {
       const { email } = req.body;
@@ -341,7 +378,7 @@ class TestController {
       }
       const orders = await Order.findAll({where: {userId: userCandidate.id}})
       if (!orders || !orders.length > 0) {
-        return next(ApiError.badRequest(`deleteTestUserOrdersAll - user with email ${email} has no orders`));
+        return res.json({ message: `testUserOrdersAll - deleted` });
       }
 
       for (let order of orders ) {

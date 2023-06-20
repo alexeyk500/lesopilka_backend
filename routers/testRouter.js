@@ -14,5 +14,6 @@ testRouter.post('/delete-test-user-reseller-address', testController.deleteTestU
 testRouter.post('/delete-test-user-orders-all', testController.deleteTestUserOrdersAll);
 
 testRouter.post('/delete-test-manufacturer-products-all', testController.deleteTestManufacturerProductsAll);
+testRouter.post('/delete-test-manufacturer-orders-all', testController.deleteTestManufacturerOrdersAll);
 
 module.exports = testRouter;
